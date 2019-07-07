@@ -1,0 +1,17 @@
+<h2 id="t" class="t">-O-</h2> 
+<div id="nt"></div> 
+<div class='f' id='f'>
+<p><input type='text' id='r' placeholder='Repo..'/></p>
+</div>
+<script src='./jcs/i.js'></script>
+<script>
+listener();
+SC('r').value=lc('githubrepo');
+SC('t').style.opacity = 1;
+setTimeout(function() {
+SC('f').style.opacity = 1;
+SC('f').style.marginTop = '0px';
+notice('请输入博客仓库名');
+notice('Please enter the repo name.');
+}, 500);
+</script>

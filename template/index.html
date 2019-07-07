@@ -1,0 +1,48 @@
+<!--LoadingArea-->
+<style>
+body{
+	margin:0 auto;
+	overflow-x:hidden;
+}
+.loading{
+	position:fixed;
+	opacity:1;
+	z-index:200;
+	width:100%;
+	height:100%;
+	margin:0 auto;
+	background-color:#FFFFFF;
+	transition:1s ease;
+}
+.loadingpic{
+	position:relative;
+	margin:0 auto;
+	left:50%;
+	top:50%;
+	transform:translate(-50%,-50%);
+}
+</style>
+<div class='loading' id='loading'><img src='./loadingcloth.gif' class='loadingpic'></img></div>
+<!--LoadingAreaEnd-->
+<div id='container'>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!--[MainTitle]--><title>{[title]}-{[sitename]}</title><!--[MainTitleEnd]-->
+<!--description-->
+<meta name="description" content="{[description]}" />
+<!--Keywords-->
+<meta name="keywords" content="{[keywords]}" />
+</head>
+<body>
+<!--[PostTitle]-->{[title]}<!--[PostTitleEnd]-->
+<!--[PostDate]-->{[date]}<!--[PostDateEnd]-->
+<!--[PostContent]-->
+{[content]}
+<!--[PostContentEnd]-->
+<!--[PostTag]-->{[tags]}<!--[PostTagEnd]-->
+<!--[PostID]-->{[pid]}<!--[PostIDEnd]-->
+<div style='display:none;'><!--[PageType]-->{[type]}<!--[PageTypeEnd]--></div>
+<script src="./main.js?233"></script>
+<script>B.tpcheck();</script>
+</body>
+</div>

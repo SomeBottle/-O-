@@ -1,0 +1,36 @@
+<div id="nt"></div> 
+<div class='lb' style='opacity:0' id='lboard'>
+<!--Left Board-->
+<div class='rp' id='rp'>
+<p class='postitemp'><a class='postitema' href='#WaitWaitWait'>正在加载中..</a></p>
+</div>
+<div class='fm'>
+<input type='search' id='search' placeholder='Search...' class='sinput'></input>
+<button class='fb' onclick='eswitch()' id='fbtn'>O_o?</button>
+</div>
+</div>
+<div class='rb' style='opacity:0' id='rboard'>
+<!--SearchBoard-->
+<div class='sbr' id='sbr'>
+<a class='closebtn' href='javasccript:void(0);' onclick='sbrclose()'>×</a>
+</div>
+<!--Right Board-->
+<div class='rbt'>
+<!--Right Board Top-->
+<input type='title' id='title' placeholder='Title...' class='tinput'></input>
+<button class='adbtn' onclick='addnew()' id='adbtn'>+</button>
+<img class='tagico' src='./pics/tag.png'></img><input type='tag' id='tag' placeholder='Tags...' class='taginput'></input>
+<img class='dateico' src='./pics/date.png'></img><input type='dates' id='date' placeholder='........' class='dateinput'></input>
+</div>
+<div class='rbb'>
+<!--Right Board Bottom-->
+<textarea class='txt' placeholder='Write Something.....' id='content'></textarea>
+</div>
+</div>
+<script>
+setTimeout(function(){
+	SC('lboard').style.opacity=1;
+	SC('rboard').style.opacity=1;
+},100);
+</script>
+<script src='./jcs/cp.js'></script>
