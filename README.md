@@ -29,6 +29,10 @@ Just a simple static blog Generator with single static pages.
    7. 给博客仓库绑定域名（甚至还能定义404页，或者favicon）
    8. **Enjoy it!**  
    
+## 使用提示  
+   当日期一栏填的是非数字时会自动切换为创建页面模式，日期中填的内容将作为页面link.
+   页面不可转为文章.  
+   
 ## 关于搜索  
    * 在文章列表页通过hash访问 #!搜索内容 可以进行搜索，需要注意的是，由于索引文件的限制，只支持根据文章部分内容和标题，标签，日期这类的搜索.  
    
@@ -49,7 +53,7 @@ Just a simple static blog Generator with single static pages.
      
    * 模板特殊占位  
    ```html
-     1. index.html  
+     1. index.html 媒介页面  
      <!--description-->
      <meta name="description" content="{[description]}" />   Description 
      <!--Keywords-->
@@ -67,17 +71,39 @@ Just a simple static blog Generator with single static pages.
      <script src="./main.js?233"></script>
      <script>B.tpcheck();</script>  引入mainjs，唤醒模板渲染器  
      
-     2. postitem.html
+     2. postitem.html 文章列表单项
      {[postitemtitle]}  文章列表每一项的标题  
      {[postitemintro]}  文章列表每一项的简介
      {[postitemdate]}  文章列表每一项的日期  
 
-     3. postlist.html  
+     3. postlist.html 文章列表   
      {[postitems]}  用于载入文章列表  
      <!--[PageType]{[pagetype]}[PageTypeEnd]-->  用于指定pagetype  
      <script>PJAX.autoprevent();PJAX.sel('container');PJAX.start();</script>  唤醒PJAX  
 
-     4. post.html  
+     4. post.html 文章/页面单页  
+     {[posttitle]}  文章标题  
+     {[postdate]}  文章日期  
+     {[postcontent]}  文章内容  
+     {[posttags]}  文章标签(html)  
+     <!--PostEnd-->  PostEnd以后的内容在页面中是不会显现的.  
+     {[comments]}  用于渲染评论(接comment.html)  
+
+     5. main.html 酥脆外皮,Footer  
+     {[contents]}  用于渲染页面内容  
+
+     6. cloth.html 外衣,导航栏  
+     {[main]}  用于渲染main.html  
+     {[title]}  装载标题  
+
+     7. archives.html 归档页  
+     {[archives]}  用于渲染归档  
+
+     8. tags.html 标签页  
+     {[tags]}  用于渲染标签  
+
+     9. comment.html 评论框页  
+     {[pid]}  文章唯一id  
    ```
      
      
