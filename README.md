@@ -1,6 +1,7 @@
 # -O-
 ![head](https://ws4.sinaimg.cn/large/006Xmmmggy1g5dkc14k9vj30m808cwel.jpg)  
-Just a simple static blog Generator with single static pages.  
+*Just a simple static blog Generator with single static pages.*  
+*现在开始就在GithubPages上撰写吧*
 
 -----------------------------------
 ![example](https://ws4.sinaimg.cn/large/006Xmmmggy1g5dkfebhulj31gr0pu0ud.jpg)  
@@ -120,3 +121,6 @@ Just a simple static blog Generator with single static pages.
 ## 感谢  
    * Ghosin 提了非常多很不错的意见！  
    * Ohmyga 帮助改进了LoadingPage...  
+   
+------------------------------------
+#### MIT LICENSE.
