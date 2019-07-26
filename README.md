@@ -108,6 +108,9 @@ Just a simple static blog Generator with single static pages.
      
      
 ## main.json可配置项  
+   * name 站点名，请务必在部署完毕后第一时间配置，后期修改不容易  
+   * posts_per_page 每页默认显示多少文章  
+   * more_per_page More按钮在同一页面能按多少次  
    
 ## 引用项目  
    * [Showdown](https://github.com/showdownjs/showdown)  
