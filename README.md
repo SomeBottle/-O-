@@ -19,12 +19,23 @@ Just a simple static blog Generator with single static pages.
    * 只需要Github Pages.(关键是省钱啊喂 #)3 )  
    
 ## 部署  
-   1.创建一个repo作为博客仓库(记得要创建README), 建议用小号(For Safety).  
-   2.选择一个静态网站服务器上传-O-，作为**后台** (建议用**Release**的版本)  
-   3.(可选)手动push该项目template目录下的loading图片到博客仓库.  
-   4.访问后台，根据提示开始初始化部署，直到Finished.  
-   5.进入后台，连续点击左下角蓝色按钮**6次**，生成归档/标签页.  
-   6.开始Hello World吧，发布之后会自动创建index.html
-   7.给博客仓库绑定域名（甚至还能定义404页，或者favicon）
-   8.**Enjoy it!**  
+   1. 创建一个repo作为博客仓库(记得要创建README), 建议用小号(For Safety).  
+   2. 选择一个静态网站服务器上传-O-，作为**后台** (建议用**Release**的版本)  
+   3. (可选)手动push该项目template目录下的loading图片到博客仓库.  
+   4. 访问后台，根据提示开始初始化部署，直到Finished.  
+   5. 进入后台，连续点击左下角蓝色按钮**6次**，生成归档/标签页.  
+   6. 开始Hello World吧，发布之后会自动创建index.html
+   7. 给博客仓库绑定域名（甚至还能定义404页，或者favicon）
+   8. **Enjoy it!**  
    
+## 关于搜索  
+   * 在文章列表页通过hash访问 #!搜索内容 可以进行搜索，需要注意的是，由于索引文件的限制，只支持根据文章部分内容和标题，标签，日期这类的搜索.  
+   
+## 引用项目  
+   * [Showdown](https://github.com/showdownjs/showdown)  
+   * [JS-Base64](https://github.com/dankogai/js-base64)  
+   * [Bueue.js](https://github.com/SomeBottle/Bueue.js)  
+   
+## 感谢  
+   * Ghosin 提了非常多很不错的意见！  
+   * Ohmyga 帮助改进了LoadingPage...  
