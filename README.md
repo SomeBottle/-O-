@@ -24,6 +24,7 @@ Just a simple static blog Generator with single static pages.
    3. (可选)手动push该项目template目录下的loading图片到博客仓库.  
    4. 访问后台，根据提示开始初始化部署，直到Finished.  
    5. 进入后台，连续点击左下角蓝色按钮**6次**，生成归档/标签页.  
+   6. 在**仓库**的main.json里配置站点名字(name).
    6. 开始Hello World吧，发布之后会自动创建index.html
    7. 给博客仓库绑定域名（甚至还能定义404页，或者favicon）
    8. **Enjoy it!**  
@@ -43,6 +44,16 @@ Just a simple static blog Generator with single static pages.
      | templatehtmls | 指定各类模板对应的文件，如果修改，上面几项也要进行修改 |  
      | generatehtmls | 主要是tags和archives模板对应的文件 |  
      
+     模板在部署到仓库后可以进行相应的修改，搭配对于**仓库**中template.json的修改.  
+     *PS：loading.html在template.json是无法配置的，请不要修改文件名.*  
+     
+   * 模板特殊占位  
+   ```html
+     <!--[LoadingArea]-->  用于放置Loading页面，不建议修改  
+     <!--[MainTitle]--><title>{[title]}-{[sitename]}</title><!--[MainTitleEnd]-->  注释用于识别标题所在位置，{[title]}为当前标题,{[sitename]}为站点名(在main.json配置)  
+   ```
+     
+## main.json可配置项  
    
 ## 引用项目  
    * [Showdown](https://github.com/showdownjs/showdown)  
