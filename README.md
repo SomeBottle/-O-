@@ -31,6 +31,19 @@ Just a simple static blog Generator with single static pages.
 ## 关于搜索  
    * 在文章列表页通过hash访问 #!搜索内容 可以进行搜索，需要注意的是，由于索引文件的限制，只支持根据文章部分内容和标题，标签，日期这类的搜索.  
    
+## 模板说明  
+   * template.json  
+     
+     | 项目 | 值 |  
+     |:-------:|:-------:|  
+     | alltp | 所有要部署到仓库的文件，不建议修改 |
+     | necessary | 加载页面时一定要加载的几个文件 |  
+     | include | 所有的模板文件 |  
+     | usemain | 使用main.json的几个页面 |  
+     | templatehtmls | 指定各类模板对应的文件，如果修改，上面几项也要进行修改 |  
+     | generatehtmls | 主要是tags和archives模板对应的文件 |  
+     
+   
 ## 引用项目  
    * [Showdown](https://github.com/showdownjs/showdown)  
    * [JS-Base64](https://github.com/dankogai/js-base64)  
