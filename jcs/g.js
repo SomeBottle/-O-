@@ -35,7 +35,7 @@ function gh(auth) {
             }
         }, 'get', auth, true);
     }
-    this.getfile = function(usr, repo, file, asyn, callback) { /*获得文件信息*/
+    this.getfile = function(usr, repo, file, asyn, cb) { /*获得文件信息*/
         window.gstate += 1;
         $.aj('https://api.github.com/repos/' + usr + '/' + repo + '/contents/' + file + '?' + timestamp(), {}, {
             success: function(msg) {
@@ -43,12 +43,12 @@ function gh(auth) {
                 if (t.message == 'Not Found') {
                     t = 'empty';
                 }
-                callback.success(t);
+                cb.success(t);
                 window.filestatu = true;
                 window.gstate -= 1;
             },
             failed: function(m) {
-                callback.failed(m);
+                cb.failed(m);
                 console.log('[GetSha]Failed');
                 window.filestatu = 'failed';
                 window.gstate -= 1;
@@ -79,7 +79,7 @@ function gh(auth) {
     }
     this.cr = function(usr, repo, file, commit, content, callback) { /*创建/编辑文件*/
         window.gstate += 1;
-        this.getfile(usr, repo, file, false, {
+        this.getfile(usr, repo, file, true, {
             success: function(fi) {
                 var shacode;
                 if (fi !== 'empty') {
@@ -96,22 +96,27 @@ function gh(auth) {
                         console.log('[CreateFile]Success');
                         window.gstate -= 1;
                     },
-                    failed: function(m) {
-                        callback.success(m);
-                        window.createstatu = 'failed';
-                        console.log('[CreateFile]Newly or Failed');
-                        window.gstate -= 1;
+                    failed: function(m, p) {
+                        console.log('code:' + m);
+                        if (parseInt(m) !== 201) { /*201 File Created*/
+                            callback.failed(m);
+                            window.createstatu = 'failed';
+                            console.log('[CreateFile]Failed');
+                            window.gstate -= 1;
+                        } else {
+                            this.success(p);
+                        }
                     }
                 }, 'put', auth, true);
             },
             failed: function(m) {
-                callback.failed(m);
+                this.success(m); /*文件不存在，是船新版本*/
             }
         });
     }
     this.del = function(usr, repo, file, commit, callback) { /*删除文件*/
         window.gstate += 1;
-        this.getfile(usr, repo, file, false, {
+        this.getfile(usr, repo, file, true, {
             success: function(fi) {
                 var shacode;
                 if (fi !== 'empty') {

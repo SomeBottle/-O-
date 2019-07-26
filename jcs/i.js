@@ -75,6 +75,9 @@ function initialization() { /*初始化*/
 			blog.cr(window.githubuser, window.githubrepo, tm[it], 'Initial Commit', m, {
 				success: function(f) {
 					$bueue.next();
+				},
+				failed:function(m){
+					notice('初始化出错');notice('请删除main.json.');notice('重新初始化.');errshow();
 				}
 			});
 		},
@@ -86,18 +89,18 @@ function initialization() { /*初始化*/
 		}
 	}, 'get', '', true);
 });*/
-            eval("$bueue.c(function(){$.aj('./template/" + tm[it] + "',{},{success:function(m){notice('" + tm[it] + "');blog.cr(window.githubuser,window.githubrepo,'" + tm[it] + "','Initial Commit',m,{success:function(f){$bueue.next()}})},failed:function(m){notice('初始化出错');notice('请删除main.json.');notice('重新初始化.');errshow()}},'get','',true)});"); /*添加队列*/
+            eval("$bueue.c(function(){$.aj('./template/" + tm[it] + "',{},{success:function(m){notice('" + tm[it] + "');blog.cr(window.githubuser,window.githubrepo,'" + tm[it] + "','Initial Commit',m,{success:function(f){$bueue.next()},failed:function(m){notice('初始化出错');notice('请删除main.json.');notice('重新初始化.');errshow();}})},failed:function(m){notice('初始化出错');notice('请删除main.json.');notice('重新初始化.');errshow()}},'get','',true)});"); /*添加队列*/
         }
         $bueue.start(); /*队列启动*/
         var checkt = setInterval(function() {
-            if ($bueue.state == 3) {
+            if ($bueue.state == 3 && window.gstate <= 0) {
                 notice('Finished');
-                notice('五秒后将刷新页面');
+                notice('三秒后将刷新页面');
                 SC('t').style.opacity = 0;
                 setTimeout(function() {
                     location.reload();
                 },
-                5000);
+                3000);
                 loadhide();
                 clearInterval(checkt);
             }

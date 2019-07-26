@@ -1,5 +1,5 @@
 /*ControlPosts - SomeBottle*/
-var md = new Markdown.Converter();
+var md = new showdown.Converter();
 var editpost = 'none';
 var tpjs = JSON.parse(window.tjson); /*编辑的文章*/
 if (!window.mainjson) {
@@ -33,12 +33,14 @@ function getdate() { /*获得今天日期*/
 }
 var B = { /*Replace Part*/
     r: function(a, o, p, g = true) { /*(All,Original,ReplaceStr,IfReplaceAll)*/
-        if (g) {
-            while (a.indexOf(o) !== -1) {
+        if (a) {
+            if (g) {
+                while (a.indexOf(o) !== -1) {
+                    a = a.replace(o, p);
+                }
+            } else {
                 a = a.replace(o, p);
             }
-        } else {
-            a = a.replace(o, p);
         }
         return a;
     },
@@ -129,6 +131,23 @@ var B = { /*Replace Part*/
             choose = 0;
         },
         1000);
+    }
+
+    function scriptcutter(h) { /*处理script标签*/
+        var c = document.createElement('div');
+        c.innerHTML = h;
+        var ss = c.getElementsByTagName('script');
+        for (var i in ss) {
+            var sc = ss[i].innerHTML;
+            if (sc !== undefined) {
+                sc = B.r(sc, '/*', ''); /*去除原有注释*/
+                sc = B.r(sc, '*/', '');
+                prc = '/*' + sc + '*/'; /*加上总体注释*/
+                ss[i].innerHTML = prc;
+            }
+        }
+        var rh = c.innerHTML;
+        return rh;
     }
 
     function tagarchive() { /*生成tag和归档页面*/
@@ -248,7 +267,7 @@ var B = { /*Replace Part*/
             date = getdate();
         }
         var tag = SC('tag').value;
-        var content = SC('content').value;
+        var content = scriptcutter(SC('content').value); /*scriptcutter先处理一下*/
         var ifpage = false; /*是否是页面*/
         if (isNaN(date)) {
             ifpage = true;

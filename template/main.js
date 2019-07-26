@@ -76,7 +76,7 @@ if (typeof($) !== 'object') {
             document.body.appendChild(script);
         }
     }
-    $.ht = function(h, e) {
+    $.ht = function(h, e, scinclude = true) { /*(html,element,run script or not when ht)*/
         var ht = SC(e);
         if (!ht) {
             console.log('Unable to find the Element:' + e);
@@ -89,7 +89,17 @@ if (typeof($) !== 'object') {
             if (os[o].src !== undefined && os[o].src !== null && os[o].src !== '') {
                 $.script(os[o].src);
             } else {
-                eval(os[o].innerHTML);
+                try { /*Oh...No Errors!*/
+                    var h = os[o].innerHTML;
+                    if (scinclude) { /*是否去除注释执行*/
+                        h = B.r(h, '/*', '');
+                        h = B.r(h, '*/', '');
+                    }
+                    eval(h);
+                }
+ catch (e) {
+                    console.log('Page script Error: ' + e.message);
+                }
             }
         }
     }
@@ -104,10 +114,23 @@ if (typeof($) !== 'object') {
     }
 }
 if (!B) { /*PreventInitializingTwice*/
-    /*Include MdJS*/
-    $.ht("<script src='./library.js'></script>" + SC('container').innerHTML, 'container');
+    /*Include LoadingPage*/
+    if (localStorage['obottle-ldpage']) {
+        var e = document.getElementsByTagName('html')[0].innerHTML;
+        document.getElementsByTagName('html')[0].innerHTML = e.replace('<!--[LoadingArea]-->', localStorage['obottle-ldpage']);
+    }
+    $.aj('./loading.html', '', {
+        success: function(m, p) {
+            B.hr('<!--[LoadingArea]-->', m);
+            localStorage['obottle-ldpage'] = m;
+        },
+        failed: function(m) { /*Failed*/
+            console.log('LoadingPage Load Failed');
+        }
+    }, 'get', '', true);
+    $.ht("<script src='./library.js'></script>" + SC('container').innerHTML, 'container'); /*Include Library*/
     window.htmls = new Object();
-    var B = { /*Replace Part*/
+    var B = { /*B Part*/
         moreperpage: 0,
         r: function(a, o, p, g = true) { /*(All,Original,ReplaceStr,IfReplaceAll)*/
             if (g) {
@@ -142,6 +165,7 @@ if (!B) { /*PreventInitializingTwice*/
         /*LoadingTemplates*/
         templateloaded: new Array(),
         tpcheck: function() { /*template check*/
+            this.loadshow();
             var pagetype = this.gt('<!--[PageType]-->', '<!--[PageTypeEnd]-->'); /*Get Page Type*/
             if (!window.templjson) {
                 var ot = this;
@@ -151,6 +175,7 @@ if (!B) { /*PreventInitializingTwice*/
                         return ot.tpcheck();
                     },
                     failed: function(m) { /*Failed*/
+                        console.log('TemplateJson Load Failed.');
                     }
                 }, 'get', '', true);
             } else if (!window.mainjson && window.templjson['usemain'].indexOf(pagetype) !== -1) { /*Some pages are in need of Main.json*/
@@ -158,7 +183,13 @@ if (!B) { /*PreventInitializingTwice*/
                 setTimeout(function() {
                     return o.tpcheck();
                 },
-                500);
+                200);
+            } else if (typeof showdown !== 'object') { /*Markdown is not ready!*/
+                var o = this;
+                setTimeout(function() {
+                    return o.tpcheck();
+                },
+                200);
             } else {
                 var o = this;
                 var j = window.templjson;
@@ -193,6 +224,7 @@ if (!B) { /*PreventInitializingTwice*/
                                 }
                             },
                             failed: function(m) { /*Failed*/
+                                console.log('Necessary HTML Load Failed...');
                             }
                         }, 'get', '', true);
                     }
@@ -214,6 +246,7 @@ if (!B) { /*PreventInitializingTwice*/
                         ot.moreperpage = parseInt(window.mainjson['more_per_page']); /*Update moreperpage*/
                     },
                     failed: function(m) { /*Failed*/
+                        console.log('MainJson Load Failed');
                     }
                 }, 'get', '', true);
             }
@@ -226,7 +259,7 @@ if (!B) { /*PreventInitializingTwice*/
         hashexist: false,
         renderer: function() {
             var j = window.templjson;
-            md = new Markdown.Converter();
+            md = new showdown.Converter();
             var cloth = window.htmls[j['templatehtmls']['cloth']];
             var main = window.htmls[j['templatehtmls']['main']];
             var comment = window.htmls[j['templatehtmls']['comment']];
@@ -478,12 +511,16 @@ if (!B) { /*PreventInitializingTwice*/
             }
         },
         loadshow: function() {
-            SC('loading').style.opacity = 1;
-            SC('loading').style.zIndex = 200;
+            setTimeout(function() {
+                SC('loading').style.opacity = 1;
+                SC('loading').style.zIndex = 200;
+            }, 100);
         },
         loadhide: function() {
-            SC('loading').style.opacity = 0;
-            SC('loading').style.zIndex = -1;
+            setTimeout(function() {
+                SC('loading').style.opacity = 0;
+                SC('loading').style.zIndex = -1;
+            }, 100);
         },
         more: function() {
             var j = window.templjson;
@@ -557,6 +594,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
         index: window.history.state === null ? 1 : window.history.state.page,
         PJAXStart: new CustomEvent('pjaxstart'),
         PJAXFinish: new CustomEvent('pjaxfinish'),
+        LoadedPage: {},
         lasthref: window.location.href,
         preventurl: new Array(),
         recenturl: '',
@@ -565,41 +603,51 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             this.replace = r;
         },
         jump: function(href) {
+            var ehref = encodeURIComponent(href);
             var ts = this;
             var usecache = false; /*是否使用缓存*/
+            var e = ts.replace;
             if (ts.recenturl.indexOf('#') !== -1 && href.indexOf('#') !== -1) { /*防止Tag页面的跳转问题*/
                 return false;
             } else if (ts.recenturl.indexOf('#') == -1 && href.indexOf('#') !== -1) {
                 B.nowpage = 0; /*防止页码bug*/
             }
             window.dispatchEvent(ts.PJAXStart); /*激活事件来显示加载动画*/
-            var cache = q('r', encodeURIComponent(href), '', '', ''); /*获取缓存信息*/
-            if (cache['c']) { /*如果有缓存*/
-                usecache = true;
-                var e = ts.replace;
-                $.ht(cache['c'], e); /*预填装缓存*/
-            }
-            $.aj(href, {}, {
-                success: function(m) {
-                    var e = ts.replace;
-                    ts.recenturl = href;
-                    if (!usecache) {
-                        $.ht(m, e);
-                        q('w', encodeURIComponent(href), m, timestamp(), '');
-                    } else {
-                        if (cache['c'] !== m) { /*缓存需要更新了*/
-                            q('w', encodeURIComponent(href), m, timestamp(), '');
-                            $.ht(m, e);
-                        } else {
-                            q('e', encodeURIComponent(href), '', '', 1); /*更新缓存读取次数*/
-                        }
-                    }
+            if (ts.LoadedPage[ehref]) { /*临时缓存*/
+                $.ht(ts.LoadedPage[ehref], e, false);
+                setTimeout(function() {
                     window.dispatchEvent(ts.PJAXFinish);
-                },
-                failed: function(m) {
-                    window.dispatchEvent(ts.PJAXFinish);
+                }, 1000);
+            } else {
+                var cache = q('r', ehref, '', '', ''); /*获取缓存信息*/
+                if (cache['c']) { /*如果有缓存*/
+                    usecache = true;
+                    $.ht(cache['c'], e, false); /*预填装缓存*/
                 }
-            }, 'get', '', true);
+                $.aj(href, {}, {
+                    success: function(m) {
+                        ts.recenturl = href;
+                        ts.LoadedPage[ehref] = m;
+                        if (!usecache) {
+                            $.ht(m, e, false);
+                            q('w', ehref, m, timestamp(), '');
+                        } else {
+                            if (cache['c'] !== m) { /*缓存需要更新了*/
+                                q('w', ehref, m, timestamp(), '');
+                                $.ht(m, e, false);
+                            } else {
+                                q('e', ehref, '', '', 1); /*更新缓存读取次数*/
+                            }
+                        }
+                        setTimeout(function() {
+                            window.dispatchEvent(ts.PJAXFinish)
+                        }, 1000);
+                    },
+                    failed: function(m) {
+                        window.dispatchEvent(ts.PJAXFinish);
+                    }
+                }, 'get', '', true);
+            }
         },
         start: function() {
             var ts = this;
@@ -687,3 +735,4 @@ function timestamp() {
     var a = new Date().getTime();
     return a;
 }
+B.tpcheck(); /*Activate Template Checker*/
