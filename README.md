@@ -49,9 +49,21 @@ Just a simple static blog Generator with single static pages.
      
    * 模板特殊占位  
    ```html
+     1. index.html  
      <!--[LoadingArea]-->  用于放置Loading页面，不建议修改  
      <!--[MainTitle]--><title>{[title]}-{[sitename]}</title><!--[MainTitleEnd]-->  注释用于识别标题所在位置，{[title]}为当前标题,{[sitename]}为站点名(在main.json配置)  
+     <!--[PostTitle]-->{[title]}<!--[PostTitleEnd]-->  文章标题，一般和上面的{[title]}一致  
+     <!--[PostDate]-->{[date]}<!--[PostDateEnd]-->  文章日期  
+     <!--[PostContent]-->
+     {[content]}   文章内容
+     <!--[PostContentEnd]-->
+     <!--[PostTag]-->{[tags]}<!--[PostTagEnd]-->  文章tags
+     <!--[PostID]-->{[pid]}<!--[PostIDEnd]-->  文章pid  
+     <!--[PageType]-->{[type]}<!--[PageTypeEnd]-->  用于指定页面类型  
+     <script src="./main.js?233"></script>
+     <script>B.tpcheck();</script>  引入mainjs，唤醒模板渲染器  
    ```
+     
      
 ## main.json可配置项  
    
