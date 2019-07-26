@@ -6,44 +6,46 @@ if (typeof($) !== 'object') {
     $.ls = new Array();
     $.lss = '';
     $.aj = function(p, d, sf, m, hd, as) { /*(path,data,success or fail,method,authheader,async)*/
-        var xhr = new XMLHttpRequest();
-        var hm = '';
-        for (var ap in d) {
-            hm = hm + ap + '=' + d[ap] + '&';
-        }
-        hm = hm.substring(0, hm.length - 1);
-        if (m == 'get') {
-            xhr.open('get', p, as);
-        } else if (m == 'put') {
-            xhr.open('PUT', p, as);
-            xhr.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
-            hm = JSON.stringify(d);
-        } else if (m == 'delete') {
-            xhr.open('DELETE', p, as);
-            xhr.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
-            hm = JSON.stringify(d);
-        } else {
-            xhr.open('post', p, as);
-        }
-        xhr.setRequestHeader('Authorization', hd);
-        if (m !== 'multipart/form-data') {
-            xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xhr.send(hm);
-        } else {
-            xhr.send(d);
-        }
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                sf.success(xhr.responseText, p);
-            } else if (xhr.readyState == 4 && xhr.status !== 200) {
-                sf.failed(xhr.status, p);
+        if (p !== 'false' && p) { /*奇妙的false问题*/
+            var xhr = new XMLHttpRequest();
+            var hm = '';
+            for (var ap in d) {
+                hm = hm + ap + '=' + d[ap] + '&';
             }
-        };
-        if (!as) {
-            if (xhr.responseText !== undefined) {
-                sf.success(xhr.responseText, p);
+            hm = hm.substring(0, hm.length - 1);
+            if (m == 'get') {
+                xhr.open('get', p, as);
+            } else if (m == 'put') {
+                xhr.open('PUT', p, as);
+                xhr.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
+                hm = JSON.stringify(d);
+            } else if (m == 'delete') {
+                xhr.open('DELETE', p, as);
+                xhr.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
+                hm = JSON.stringify(d);
             } else {
-                sf.failed(xhr.status, p);
+                xhr.open('post', p, as);
+            }
+            xhr.setRequestHeader('Authorization', hd);
+            if (m !== 'multipart/form-data') {
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xhr.send(hm);
+            } else {
+                xhr.send(d);
+            }
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    sf.success(xhr.responseText, p);
+                } else if (xhr.readyState == 4 && xhr.status !== 200) {
+                    sf.failed(xhr.status, p);
+                }
+            };
+            if (!as) {
+                if (xhr.responseText !== undefined) {
+                    sf.success(xhr.responseText, p);
+                } else {
+                    sf.failed(xhr.status, p);
+                }
             }
         }
     }
@@ -128,7 +130,7 @@ if (!B) { /*PreventInitializingTwice*/
             console.log('LoadingPage Load Failed');
         }
     }, 'get', '', true);
-    $.ht("<script src='./library.js'></script>" + SC('container').innerHTML, 'container'); /*Include Library*/
+    $.script('./library.js'); /*Include Library*/
     window.htmls = new Object();
     var B = { /*B Part*/
         moreperpage: 0,
@@ -145,6 +147,15 @@ if (!B) { /*PreventInitializingTwice*/
         hr: function(o, p) { /*htmlreplace*/
             var e = document.getElementsByTagName('html')[0].innerHTML;
             document.getElementsByTagName('html')[0].innerHTML = this.r(e, o, p);
+        },
+        preventscript: function() {
+            var e = document.getElementsByTagName('html')[0];
+            var sc = e.getElementsByTagName('script');
+            for (var i in sc) {
+                if (sc[i].src && $.scripturl.indexOf(sc[i].src) == -1) {
+                    $.scripturl.push(sc[i].src);
+                }
+            }
         },
         gt: function(p1, p2, ct = false) { /*htmlget*/
             var e;
@@ -191,6 +202,7 @@ if (!B) { /*PreventInitializingTwice*/
                 },
                 200);
             } else {
+                this.preventscript(); /*剔除已加载scripts*/
                 var o = this;
                 var j = window.templjson;
                 j['necessary'].push(pagetype); /*Pagetype Pushed*/
