@@ -17,7 +17,8 @@
    * 支持页码，标签页，归档页  
    * 自带简单搜索功能  
    * 原生PJAX  
-   * 只需要Github Pages.(关键是省钱啊喂 #)3 )  
+   * 只需要Github Pages.(关键是省钱啊喂 #)3 ) 
+   * 硬核图片Lazyload  
    
 ## 部署  
    1. 创建一个repo作为博客仓库(记得要创建README), 建议用小号(For Safety).  
