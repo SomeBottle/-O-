@@ -1,3 +1,42 @@
+/*From OBottle*/
+blockquote {
+	font: 14px/22px normal helvetica, sans-serif;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	margin-left: 50px;
+	padding-left: 15px;
+	padding-top: 10px;
+	padding-right: 10px;
+	padding-bottom: 10px;
+	border-left: 3px solid #ccc;
+	background-color: #f1f1f1
+}
+pre {
+	box-sizing: border-box;
+	overflow: auto;
+	font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-size: 13px;
+	padding: 9.5px;
+	margin-top: 0px;
+	margin-bottom: 10px;
+	line-height: 1.42857;
+	color: #333333;
+	word-break: break-all;
+	word-wrap: break-word;
+	border: 1px solid #CCCCCC;
+	border-radius: 4px;
+	background-color: #F5F5F5;
+	white-space: pre-wrap;
+ /*css-3*/
+	white-space: -moz-pre-wrap;
+ /*Mozilla,since1999*/
+	white-space: -pre-wrap;
+ /*Opera4-6*/
+	white-space: -o-pre-wrap;
+ /*Opera7*/
+	word-wrap: break-word;
+ /*InternetExplorer5.5+*/
+}
 a{
 	text-decoration:none;
 	color:#848484;
