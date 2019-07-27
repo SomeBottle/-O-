@@ -540,10 +540,11 @@ function searchrender(v) {
     var tj = JSON.parse(Base64.decode(window.mainjson.content.replace(/[\r\n]/g, ""))); /*获得json*/
     var pt = tj['postindex'];
     for (var i in pt) {
-        var tt = Base64.decode(pt[i]['title']);
-        var cc = Base64.decode(pt[i]['intro']);
-        var dd = pt[i]['date'];
-        var tg = pt[i]['tags'];
+        var tt = (Base64.decode(pt[i]['title'])).toLowerCase();
+        var cc = (Base64.decode(pt[i]['intro'])).toLowerCase();
+        var dd = (pt[i]['date']).toLowerCase();
+        var tg = (pt[i]['tags']).toLowerCase();
+        v = v.toLowerCase();
         if (tt.indexOf(v) !== -1 || cc.indexOf(v) !== -1 || dd.indexOf(v) !== -1 || tg.indexOf(v) !== -1) {
             rendertp += "<p class='scitemp'><a class='scitema' href='javascript:void(0);' onclick='postopen(" + i + ")'>" + tt + "</a></p>";
         }
