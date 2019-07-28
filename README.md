@@ -19,6 +19,7 @@
    * 原生PJAX  
    * 只需要Github Pages.(关键是省钱啊喂 #)3 ) 
    * 硬核图片Lazyload  
+   * 平滑回滚至头部 2ax=V²  
    
 ## 部署  
    1. 创建一个repo作为博客仓库(记得要创建README), 建议用小号(For Safety).  
@@ -109,7 +110,46 @@
      {[pid]}  文章唯一id  
    ```
      
-     
+## 函数供应  
+   * 平滑滚动至顶部  
+   ```javascript
+   B.scrolltop();
+   ```
+   
+   * 向页面引入js  
+   ```javascript
+   $.script(url);
+   ```
+   
+   * 抓取元素(id)  
+   ```javascript
+   SC(id); //return element
+   ```
+   
+   * 控制Loading的显示和隐藏  
+   ```javascript
+   B.loadshow(); //show
+   B.loadhide(); //hide
+   ```
+   
+   * CSS3Transition过渡检查器  
+   ```javascript
+   transitionchecker(e, func); //e为元素id , func为transition执行完后执行的函数.  
+   ```
+   
+   * PJAX自动操作  
+   ```javascript
+   PJAX.sel(id); //选择PJAX操作的容器  
+   PJAX.autoprevent(); //自动排查当前页是否有外站地址并放入忽略名单  
+   PJAX.start(); //开始监听所有a标签，开启PJAX  
+   PJAX.pause(); //暂停PJAX,可以用start来重激活  
+   ```
+   
+   * 获得当前时间戳  
+   ```javascript
+   timestamp();
+   ```
+
 ## main.json可配置项  
    * name 站点名，请务必在部署完毕后第一时间配置，后期修改不容易  
    * posts_per_page 每页默认显示多少文章  
