@@ -99,7 +99,7 @@ if (typeof($) !== 'object') {
                     }
                     eval(h);
                 }
- catch (e) {
+                catch (e) {
                     console.log('Page script Error: ' + e.message);
                 }
             }
@@ -231,9 +231,14 @@ if (!B) { /*PreventInitializingTwice*/
         templonload: 0,
         /*LoadingTemplates*/
         templateloaded: new Array(),
+        tpcheckstatu: false,
+        /*模板拼接状态*/
+        loadstatu: false,
+        /*加载div显示状态*/
         tpcheck: function() { /*template check*/
             var ot = this,
                 o = this;
+            ot.tpcheckstatu = true; /*正在检查模板*/
             ot.loadshow();
             var pagetype = ot.gt('<!--[PageType]-->', '<!--[PageTypeEnd]-->'); /*Get Page Type*/
             if (!window.templjson) {
@@ -487,6 +492,7 @@ if (!B) { /*PreventInitializingTwice*/
                 $.ht(render4, 'container');
                 ot.loadhide();
             }
+            ot.tpcheckstatu = false; /*模板检查拼接完毕*/
         },
         nowtag: '',
         alltaghtml: '',
@@ -552,6 +558,7 @@ if (!B) { /*PreventInitializingTwice*/
                     if (!isNaN(pg)) {
                         var pnum = parseInt(pg) - 1;
                         if (ot.nowpage !== pnum) {
+                            ot.searchw = ''; /*不在搜索模式,重置搜索词*/
                             ot.nowpage = pnum;
                             var allps = maxrender * pnum * ot.moreperpage; /*根据页码计算当前页*/
                             ot.itempage = allps;
@@ -574,25 +581,46 @@ if (!B) { /*PreventInitializingTwice*/
                             var cc = (Base64.decode(pt[i]['intro'])).toLowerCase();
                             var dd = (pt[i]['date']).toLowerCase();
                             var tg = (pt[i]['tags']).toLowerCase();
-                            v = v.toLowerCase();
+                            v = v.toLowerCase(); /*大小写忽略*/
                             if (tt.indexOf(v) !== -1 || cc.indexOf(v) !== -1 || dd.indexOf(v) !== -1 || tg.indexOf(v) !== -1) {
                                 var render1 = B.r(item, '{[postitemtitle]}', tt);
                                 var render2 = B.r(render1, '{[postitemintro]}', cc + '...');
                                 var render3 = B.r(render2, '{[postitemdate]}', dd);
-                                var render4 = B.r(render3, '{[postitemlink]}', 'post-' + i + '.html');
+                                var render4;
+                                if (!pt[i]['link']) {
+                                    render4 = B.r(render3, '{[postitemlink]}', 'post-' + i + '.html'); /*把页面也算入*/
+                                } else {
+                                    render4 = B.r(render3, '{[postitemlink]}', pt[i]['link'] + '.html');
+                                }
                                 rendertp += render4; /*渲染到列表模板*/
                             }
                         }
                         if (rendertp == '') {
                             rendertp = '<h2>啥都没找到</h2>';
                         }
-                        window.scrollTo(0, 0);
-                        SC('postitems').innerHTML = rendertp;
-                        SC('morebtn').style.display = 'none';
-                        PJAX.start(); /*refresh pjax links*/
+
+                        function process() { /*局部函数*/
+                            if (SC('postitems') && SC('morebtn')) {
+                                window.scrollTo(0, 0);
+                                SC('postitems').innerHTML = rendertp;
+                                SC('morebtn').style.display = 'none';
+                                PJAX.start(); /*refresh pjax links*/
+                            } else {
+                                setTimeout(function() {
+                                    return process();
+                                }, 500); /*如果没有需要的元素存在滞留一下*/
+                            }
+                        }
+                        if (!ot.tpcheckstatu && !ot.loadstatu) { /*如果页面加载完,模板拼接完毕就可以打印搜索结果了*/
+                            process();
+                        }
+                    }
+                    if (ot.tpcheckstatu || ot.loadstatu) { /*如果模板未拼接完毕，清理搜索词延续循环(外层setInterval)*/
+                        ot.searchw = '';
                     }
                 }
             } else {
+                ot.searchw = ''; /*不在搜索模式,重置搜索词*/
                 if (ot.hashexist) {
                     ot.realpage = 1;
                     ot.switchpage = 0;
@@ -601,12 +629,14 @@ if (!B) { /*PreventInitializingTwice*/
             }
         },
         loadshow: function() {
+            this.loadstatu = true; /*加载未就绪*/
             setTimeout(function() {
                 SC('loading').style.opacity = 1;
                 SC('loading').style.zIndex = 200;
             }, 100);
         },
         loadhide: function() {
+            this.loadstatu = false; /*加载就绪*/
             setTimeout(function() {
                 SC('loading').style.opacity = 0;
                 SC('loading').style.zIndex = -1;
@@ -671,6 +701,7 @@ if (!B) { /*PreventInitializingTwice*/
             PJAX.start(); /*refresh pjax links*/
         }
     };
+    window.addEventListener('scroll', B.lazycheck, false); /*LazyLoadCheck*/
     window.addEventListener('pjaxstart',
 
     function() { /*加载动画*/
@@ -725,6 +756,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             var ts = this;
             var usecache = false; /*是否使用缓存*/
             var e = ts.replace;
+            var listener; /*初始化监听器*/
             if (ts.recenturl.indexOf('#') !== -1 && href.indexOf('#') !== -1) { /*防止Tag页面的跳转问题*/
                 return false;
             } else if (ts.recenturl.indexOf('#') == -1 && href.indexOf('#') !== -1) {
@@ -770,31 +802,37 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                 }
             });
         },
+        pjaxautojump: function() {
+            if (window.location.href.indexOf(mainhost) !== -1) {
+                PJAX.jump(window.location.href);
+            }
+        },
         start: function() {
             var ts = this;
             ts.recenturl = window.location.href;
             var p = document.getElementsByTagName("a");
             for (var i in p) {
-                p[i].onclick = function(e) {
-                    if (ts.preventurl.indexOf(this.href) !== -1) {
-                        return true;
-                    } else {
-                        window.history.pushState(null, null, this.href); /*加入历史*/
-                        e.preventDefault();
-                        ts.jump(this.href);
-                    }
-                };
-            }
-            window.onpopstate = function(e) { /*回退或者前进时触发*/
+                if (typeof(p[i].addEventListener) == 'function') { /*防止不是函数的凑数*/
+                    p[i].addEventListener('click', function(e) {
+                        if (ts.preventurl.indexOf(this.href) !== -1) {
+                            return true;
+                        } else {
+                            window.history.pushState(null, null, this.href); /*加入历史*/
+                            e.preventDefault();
+                            ts.jump(this.href);
+                        }
+                    }, false); /*监听A标签*/
+                }
+            } /*回退或者前进时触发*/
+            window.addEventListener('popstate', PJAX.pjaxautojump, false);
+            /*window.onpopstate = function(e) { 
                 if (window.location.href.indexOf(mainhost) !== -1) {
                     PJAX.jump(window.location.href);
                 }
-            }
+            }*/
         },
         pause: function() {
-            window.onpopstate = function(e) {
-                return true;
-            }
+            window.removeEventListener('popstate', PJAX.pjaxautojump); /*移除实践，暂停pjax*/
         },
         autoprevent: function() {
             var ts = this;
@@ -855,8 +893,5 @@ function q(md, k, c, t, rt) { /*(mode,key,content,timestamp,readtime)*/
 function timestamp() {
     var a = new Date().getTime();
     return a;
-}
-window.onscroll = function() { /*LazyLoadCheck*/
-    B.lazycheck();
 }
 B.tpcheck(); /*Activate Template Checker*/
