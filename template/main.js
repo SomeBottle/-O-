@@ -99,7 +99,7 @@ if (typeof($) !== 'object') {
                     }
                     eval(h);
                 }
-                catch (e) {
+ catch (e) {
                     console.log('Page script Error: ' + e.message);
                 }
             }
@@ -383,7 +383,10 @@ if (!B) { /*PreventInitializingTwice*/
                 var render6 = ot.r(render5, '{[pid]}', pid); /*SetPid*/
                 var render6 = ot.r(render6, '{[pagetype]}', pagetype); /*SetPageType*/
                 if (isNaN(date)) {
-                    render6 = render6.split('<!--PostEnd-->')[0] + '<!--PostEnd-->';
+                    //render6 = render6.split('<!--PostEnd-->')[0] + '<!--PostEnd-->';
+                    var r7 = render6.split('<!--PostEnd-->')[0] + '<!--PostEnd-->';
+                    var r8 = '<!--Footer-->' + render6.split('<!--Footer-->')[1];
+                    render6 = r7 + r8;
                 }
                 $.ht(render6, 'container');
                 transitionchecker('loading', function() {
