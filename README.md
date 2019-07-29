@@ -113,7 +113,7 @@
 ## 函数供应  
    * 平滑滚动至顶部  
    ```javascript
-   B.scrolltop();
+   B.scrolltop(maxspeed,minspeed); //(最大速度,最小速度)单位：px/10ms
    ```
    
    * 向页面引入js  
@@ -141,8 +141,8 @@
    ```javascript
    PJAX.sel(id); //选择PJAX操作的容器  
    PJAX.autoprevent(); //自动排查当前页是否有外站地址并放入忽略名单  
-   PJAX.start(); //开始监听所有a标签，开启PJAX  
-   PJAX.pause(); //暂停PJAX,可以用start来重激活  
+   PJAX.start(); //开始监听所有a标签和popstate，开启PJAX  
+   PJAX.pause(); //暂停PJAX对于popstate的监听,可以用start来重激活  
    ```
    
    * 获得当前时间戳  
