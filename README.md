@@ -90,11 +90,12 @@
      {[postdate]}  文章日期  
      {[postcontent]}  文章内容  
      {[posttags]}  文章标签(html)  
-     <!--PostEnd-->  PostEnd以后的内容在页面中是不会显现的.  
+     <!--PostEnd-->  (需要保留) 指定文章结束的地方.  
      {[comments]}  用于渲染评论(接comment.html)  
 
      5. main.html 酥脆外皮,Footer  
      {[contents]}  用于渲染页面内容  
+     <!--Footer-->  (需要保留) 指定页脚开始的地方  
 
      6. cloth.html 外衣,导航栏  
      {[main]}  用于渲染main.html  
