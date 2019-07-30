@@ -172,6 +172,10 @@ if (!B) { /*PreventInitializingTwice*/
                 }
             }, 10);
         },
+        hc: function(v) { /*反转义html的某些字符*/
+            v = ((v.replace(/&amp;/g, "&")).replace(/&lt;/g, "<")).replace(/&gt;/g, ">");
+            return v;
+        },
         hr: function(o, p) { /*htmlreplace*/
             var e = document.getElementsByTagName('html')[0].innerHTML;
             document.getElementsByTagName('html')[0].innerHTML = this.r(e, o, p);
@@ -207,13 +211,17 @@ if (!B) { /*PreventInitializingTwice*/
             for (var p in s) {
                 if (s[p].src) {
                     var sr = s[p].src;
-                    s[p].src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAACyCAYAAAD1XdWcAAAB8klEQVR4nO3SQRHAIADAsDH/ngEVcEcTBX10zO2Dx/23A+AEo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ0Eo5NgdBKMToLRSTA6CUYnwegkGJ2EBaeOBWBLIAKeAAAAAElFTkSuQmCC';
+                    s[p].src = 'data:image/gif;base64,R0lGODlhkAGQAYAAAP///wAAACH5BAEAAAAALAAAAACQAZABAAL/hI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jef6zvf+DwwKh8Si8YhMKpfMpvMJjUqn1Kr1is1qt9yu9wsOi8fksvmMTqvX7Lb7DY/L5/S6/Y7P6/f8vv8PGCg4SFhoeIiYqLjI2Oj4CBkpOUlZaXmJmam5ydnp+QkaKjpKWmp6ipqqusra6voKGys7S1tre4ubq7vL2+v7CxwsPExcbHyMnKy8zNzs/AwdLT1NXW19jZ2tvc3d7f0NHi4+Tl5ufo6err7O3u7+Dh8vP09fb3+Pn6+/z9/v/w8woMCBBAsaPIgwocKFDBs6fAgxosSJFCtavIgxo8aN/xw7evwIMqTIkSRLmjyJMqXKlSxbunwJM6bMmTRr2ryJM6fOnTx7+vwJNKjQoUSLGj2KNKnSpUybOn0KNarUqVSrWr2KNavWrVy7ev0KNqzYsWTLmj2LNq3atWzbun0LN67cuXTr2r2LN6/evXz7+v0LOLDgwYQLGz6MOLHixYwbO34MObLkyZQrW76MObPmzZw7e/4MOrTo0aRLmz6NOrXq1axbu34NO7bs2bRr276NO7fu3bx7+/4NPLjw4cSLGz+OPLny5cybO38OPbr06dSrW7+OPbv27dy7e/8OPrz48eTLmz+PPr369ezbu38PP778+fTr27+PP7/+/fz7+03/D2CAAg5IYIEGHohgggouyGCDDj4IYYQSTkhhhRZeiGGGGm7IYYcefghiiCKOSGKJJp6IYooqrshiiy6+CGOMMs5IY4023ohjjm0UAAA7';
+                    if (s[p].style.width !== '') {
+                        sr = sr + '[width]' + s[p].style.width; /*记录元素原本的样式*/
+                    }
                     s[p].setAttribute('data-src', '[lazy]' + sr);
+                    s[p].style.width = '100%';
                 }
             }
             return i.innerHTML;
         },
-        lazycheck: function() {
+        lazycheck: function() { /*包租婆————怎么没水了呢？*/
             var H = window.innerHeight;
             var S = document.documentElement.scrollTop || document.body.scrollTop;
             var es = document.getElementsByTagName('img');
@@ -223,7 +231,15 @@ if (!B) { /*PreventInitializingTwice*/
                     var lazy = es[i].getAttribute('data-src');
                     if (lazy !== 'undefined' && lazy) {
                         es[i].setAttribute('data-src', '');
-                        es[i].src = lazy.split('[lazy]')[1];
+                        var mainsrc = lazy.split('[lazy]')[1];
+                        if (mainsrc.indexOf('[width]') !== -1) {
+                            var sp = mainsrc.split('[width]');
+                            es[i].src = sp[0];
+                            es[i].style.width = sp[1]; /*恢复原来的width样式*/
+                        } else {
+                            es[i].src = lazy.split('[lazy]')[1];
+                            es[i].style.width = 'auto';
+                        }
                     }
                 }
             }
@@ -361,7 +377,7 @@ if (!B) { /*PreventInitializingTwice*/
                 var pid = ot.gt('<!--[PostID]-->', '<!--[PostIDEnd]-->'); /*Get Post ID*/
                 var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
                 var post = window.htmls[j['templatehtmls']['post']];
-                var render11 = ot.r(post, '{[postcontent]}', ot.lazypre(md.makeHtml(content.trim()))); /*Analyse md*/
+                var render11 = ot.r(post, '{[postcontent]}', ot.lazypre(md.makeHtml(ot.hc(content.trim())))); /*Analyse md*/
                 var render12 = ot.r(render11, '{[posttitle]}', title);
                 var alltags = [];
                 if (isNaN(date)) {
