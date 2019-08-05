@@ -489,7 +489,7 @@ if (!B) { /*PreventInitializingTwice*/
                     var pg = href.split('#')[1];
                     ot.nowtag = pg;
                     if (pg !== 'alltags') {
-                        rendertg = '<script>B.taguper(\'' + pg + '\');PJAX.start();</script>';
+                        rendertg = '<script>B.taguper(\'' + pg + '\');PJAX.sel(\'container\');PJAX.start();</script>';
                     }
                 } /*Generate Finish*/
                 var timer = setInterval(function() { /*CheckTagPage*/
@@ -775,6 +775,9 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             var ts = this;
             var usecache = false; /*是否使用缓存*/
             var e = ts.replace;
+            if (e == '') {
+                e = 'container'; /*默认指定container*/
+            }
             var listener; /*初始化监听器*/
             if (ts.recenturl.indexOf('#') !== -1 && href.indexOf('#') !== -1) { /*防止Tag页面的跳转问题*/
                 return false;
