@@ -546,7 +546,7 @@ if (!B) { /*PreventInitializingTwice*/
             var href = $.tr(window.location.href);
             if (href.indexOf('#') == -1) {
                 PJAX.pause();
-                window.location.href += '#alltags';
+                window.location.replace(href + '#alltags'); /*利用replace防止浏览器记录history导致无法回退的bug*/
                 PJAX.start();
             } else {
                 var pg = href.split('#')[1];
@@ -845,7 +845,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                         }
                     }, false); /*监听A标签*/
                 }
-            } /*回退或者前进时触发*/
+            } /*回退时触发*/
             window.addEventListener('popstate', PJAX.pjaxautojump, false);
             /*window.onpopstate = function(e) { 
                 if (window.location.href.indexOf(mainhost) !== -1) {
