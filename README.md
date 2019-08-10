@@ -56,6 +56,10 @@
      模板在部署到仓库后可以进行相应的修改，搭配对于**仓库**中template.json的修改.  
      *PS：loading.html在template.json是无法配置的，请不要修改文件名.*  
      
+   * 模板渲染简单gif.  
+   
+     ![](https://wx4.sinaimg.cn/large/ed039e1fly1g5uh69qklvg20fa0b47rf)  
+     
    * 模板特殊占位  
    ```html
      1. index.html 媒介页面  
