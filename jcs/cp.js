@@ -51,9 +51,11 @@ var B = { /*Replace Part*/
         } else {
             e = ct;
         }
-        var k = e.split(p1)[1];
-        var d = k.split(p2)[0];
-        return d;
+        if (e.indexOf(p1) !== -1 && e.indexOf(p2) !== -1) {
+            var k = e.split(p1)[1];
+            var d = k.split(p2)[0];
+            return d;
+        }
     }
 }
 
@@ -149,6 +151,7 @@ var B = { /*Replace Part*/
         var rh = c.innerHTML;
         return rh;
     }
+
     function tagarchive() { /*生成tag和归档页面*/
         var pageh1 = tpjs['templatehtmls']['tags']; /*获得配置的页面链接，默认tags.html*/
         var pageh2 = tpjs['templatehtmls']['archives']; /*获得配置的页面链接，默认archives.html*/
@@ -189,6 +192,15 @@ var B = { /*Replace Part*/
         }
     }
 
+    function covercutter(rc) { /*从内容中去除所有<ifcover>的部分*/
+        var rst = rc;
+        while (rst.indexOf('<ifcover>') !== -1) {
+            var coverhtml = B.gt('<ifcover>', '</ifcover>', rst);
+            rst = B.r(rst, '<ifcover>' + coverhtml + '</ifcover>', ''); /*没有封面图就删掉整段*/
+        }
+        return rst;
+    }
+
     function indexrenderer(js) {
         var pageh = tpjs['templatehtmls']['postlist']; /*获得配置的页面链接，默认postlist.html*/
         /*首页渲染者*/
@@ -208,6 +220,11 @@ var B = { /*Replace Part*/
                     var render2 = B.r(render1, '{[postitemintro]}', Base64.decode(pt.intro) + '...');
                     var render3 = B.r(render2, '{[postitemdate]}', pt.date);
                     var render4 = B.r(render3, '{[postitemlink]}', 'post-' + pid + '.html');
+                    if (pt['cover']) {
+                        render4 = B.r(render4, '{[postcover]}', pt['cover']); /*如果有封面图就渲染一下*/
+                    } else {
+                        render4 = covercutter(render4); /*没有封面图就删掉整段*/
+                    }
                     listrender += render4; /*渲染到列表模板*/
                 } else {
                     nowrender -= 1;
@@ -252,6 +269,10 @@ var B = { /*Replace Part*/
         SC('sbr').style.zIndex = 50;
         SC('sbr').style.opacity = 1;
         SC('sbr').innerHTML = '<a class=\'closebtn\' href=\'javascript:void(0);\' onclick=\'sbrclose()\'>×<\/a><h2>Preview:<\/h2><style>img{max-width:100%;}</style>' + md.makeHtml(content);
+    }
+
+    function coverdrawer() { /*提取当前content的封面图片*/
+        return B.gt('-[cover:', ']-', SC('content').value);
     }
 
     function edit() {
@@ -314,39 +335,39 @@ var B = { /*Replace Part*/
                 tj['postnum'] += 1;
             }
             var render9 = B.r(render8, '{[pid]}', nownum); /*设定pid*/
+            /*Render---------------------*/
             var pagelink = ''; /*指定编辑的页面的link(不带.html)*/
             if (ifpage) { /*如果是页面直接获取当前时间*/
                 pagelink = date;
                 date = getdate();
             }
             tj['dateindex']['post' + nownum] = date + nownum.toString(); /*利用date进行排序*/
-			/*排查日期序列最长length*/
-			var maxdatelength=0;
-			for (var i in tj['dateindex']) {
-                var lens=(tj['dateindex'][i]).toString().length;
-				if(lens>maxdatelength){
-					maxdatelength=lens;
-				}
-            }
-			/*自动补全日期序列不足的*/
-			for (var i in tj['dateindex']) {
-				var ndt=tj['dateindex'][i];
-                var lens=(ndt).toString().length;
-				if(lens<maxdatelength){
-					var pid=(i.replace('post','')).toString();
-					var leftlen=maxdatelength-lens;
-					var st=0;
-					var zeroes='';
-					while(st<leftlen){
-						zeroes+=(0).toString();
-						st+=1;
-					}
-					var datelength=getdate().toString().length;/*千年虫？*/
-					var ldt=ndt.toString().substring(0,datelength);
-					var rdt=ndt.toString().substring(lens-pid.length);/*先把日期和pid拆解*/
-					var rpid=rdt.toString().replace(pid,zeroes+pid);/*单独处理pid,位数不够，用零来凑*/
-					tj['dateindex'][i]=parseInt(ldt+rpid);
-				}
+            /*排查日期序列最长length*/
+            var maxdatelength = 0;
+            for (var i in tj['dateindex']) {
+                var lens = (tj['dateindex'][i]).toString().length;
+                if (lens > maxdatelength) {
+                    maxdatelength = lens;
+                }
+            } /*自动补全日期序列不足的*/
+            for (var i in tj['dateindex']) {
+                var ndt = tj['dateindex'][i];
+                var lens = (ndt).toString().length;
+                if (lens < maxdatelength) {
+                    var pid = (i.replace('post', '')).toString();
+                    var leftlen = maxdatelength - lens;
+                    var st = 0;
+                    var zeroes = '';
+                    while (st < leftlen) {
+                        zeroes += (0).toString();
+                        st += 1;
+                    }
+                    var datelength = getdate().toString().length; /*千年虫？*/
+                    var ldt = ndt.toString().substring(0, datelength);
+                    var rdt = ndt.toString().substring(lens - pid.length); /*先把日期和pid拆解*/
+                    var rpid = rdt.toString().replace(pid, zeroes + pid); /*单独处理pid,位数不够，用零来凑*/
+                    tj['dateindex'][i] = parseInt(ldt + rpid);
+                }
             }
             var datearray = new Array();
             for (var dts in tj['dateindex']) {
@@ -378,6 +399,17 @@ var B = { /*Replace Part*/
             tj['postindex'][nownum] = new Object();
             tj['postindex'][nownum]['title'] = Base64.encode(title);
             tj['postindex'][nownum]['date'] = date;
+            var pcover = coverdrawer(); /*文章封面支持20190810*/
+            if (pcover) {
+                tj['postindex'][nownum]['cover'] = pcover; /*储存文章封面*/
+                var rp = '';
+                if (pcover == 'none') {
+                    delete tj['postindex'][nownum]['cover']; /*如果是none就删除文章封面*/
+                    rp = '';
+                }
+                render9 = B.r(render9, '{[cover]}', pcover); /*设定封面(此处会有none值)*/
+                /*Render---------------------*/
+            }
             if (ifpage) {
                 tj['postindex'][nownum]['link'] = pagelink; /*储存pagelink*/
             }
