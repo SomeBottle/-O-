@@ -408,7 +408,7 @@ if (!B) { /*PreventInitializingTwice*/
                 var render6 = ot.r(render5, '{[pid]}', pid); /*SetPid*/
                 render6 = ot.r(render6, '{[pagetype]}', pagetype); /*SetPageType*/
                 /*CoverProcess*/
-                if (cover && cover !== 'none') {
+                if (cover && cover !== 'none' && cover !== '') {
                     render6 = ot.r(render6, '{[postcover]}', cover); /*设定封面*/
                 } else { /*没有封面，按标签一起删掉*/
                     render6 = ot.cd(render6);
