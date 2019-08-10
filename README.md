@@ -20,6 +20,7 @@
    * 只需要Github Pages.(关键是省钱啊喂 #)3 ) 
    * 硬核图片Lazyload  
    * 平滑回滚至头部 2ax=V²  
+   * 封面图支持~  
    
 ## 部署  
    1. 创建一个repo作为博客仓库(记得要创建README), 建议用小号(For Safety).  
@@ -76,6 +77,7 @@
      <!--[PostContentEnd]-->
      <!--[PostTag]-->{[tags]}<!--[PostTagEnd]-->  文章tags
      <!--[PostID]-->{[pid]}<!--[PostIDEnd]-->  文章pid  
+     <!--[PostCover]-->{[cover]}<!--[PostCoverEnd]-->  (此处可能为none)文章封面，具体看上方封面设置
      <!--[PageType]-->{[type]}<!--[PageTypeEnd]-->  用于指定页面类型  
      <script src="./main.js?233"></script>
      <script>B.tpcheck();</script>  引入mainjs，唤醒模板渲染器  
@@ -84,6 +86,7 @@
      {[postitemtitle]}  文章列表每一项的标题  
      {[postitemintro]}  文章列表每一项的简介
      {[postitemdate]}  文章列表每一项的日期  
+     <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
 
      3. postlist.html 文章列表   
      {[postitems]}  用于载入文章列表  
@@ -97,6 +100,7 @@
      {[posttags]}  文章标签(html)  
      <!--PostEnd-->  (需要保留) 指定文章结束的地方.  
      {[comments]}  用于渲染评论(接comment.html)  
+     <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
 
      5. main.html 酥脆外皮,Footer  
      {[contents]}  用于渲染页面内容  
@@ -115,6 +119,11 @@
      9. comment.html 评论框页  
      {[pid]}  文章唯一id  
    ```
+   
+   * 特殊样式class  
+     标签页和归档页的内容是直接从main.json内拉取渲染的，因此有特殊样式：
+     1. 单个标签链接：taglink  
+     2. 单个归档链接：archivelink  
      
 ## 函数供应  
    * 平滑滚动至顶部  
