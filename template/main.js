@@ -360,6 +360,14 @@ if (!B) { /*PreventInitializingTwice*/
             }
             ot.itempage -= 1; /*项目会多计算一个，减去*/
         },
+        cd: function(rc) { /*covercutter封面<ifcover>去除器*/
+            var rst = rc;
+            while (rst.indexOf('<ifcover>') !== -1) {
+                var coverhtml = B.gt('<ifcover>', '</ifcover>', rst);
+                rst = B.r(rst, '<ifcover>' + coverhtml + '</ifcover>', ''); /*没有封面图就删掉整段*/
+            }
+            return rst;
+        },
         renderer: function() {
             var ot = this;
             var j = window.templjson;
@@ -375,6 +383,7 @@ if (!B) { /*PreventInitializingTwice*/
                 var date = ot.gt('<!--[PostDate]-->', '<!--[PostDateEnd]-->'); /*Get Post Date*/
                 var tags = ot.gt('<!--[PostTag]-->', '<!--[PostTagEnd]-->'); /*Get Post Content*/
                 var pid = ot.gt('<!--[PostID]-->', '<!--[PostIDEnd]-->'); /*Get Post ID*/
+                var cover = ot.gt('<!--[PostCover]-->', '<!--[PostCoverEnd]-->'); /*Get Post Cover*/
                 var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
                 var post = window.htmls[j['templatehtmls']['post']];
                 var render11 = ot.r(post, '{[postcontent]}', ot.lazypre(md.makeHtml(ot.hc(content.trim())))); /*Analyse md*/
@@ -388,7 +397,7 @@ if (!B) { /*PreventInitializingTwice*/
                     alltags.forEach(function(i, v) {
                         tags = tags + '<a href="' + j['generatehtmls']['tags'] + '#' + encodeURIComponent(i) + '" class="taglink">' + i + '</a>,';
                     });
-                    tags = tags.substr(0, tags.length - 1);
+                    tags = tags.substr(0, tags.length - 1); /*去掉末尾逗号*/
                 }
                 var render13 = ot.r(render12, '{[posttags]}', tags);
                 var render14 = ot.r(render13, '{[postdate]}', date);
@@ -397,7 +406,13 @@ if (!B) { /*PreventInitializingTwice*/
                 var render4 = ot.r(render3, '{[title]}', pagetitle);
                 var render5 = ot.r(render4, '{[comments]}', comment); /*LoadCommentsForPost*/
                 var render6 = ot.r(render5, '{[pid]}', pid); /*SetPid*/
-                var render6 = ot.r(render6, '{[pagetype]}', pagetype); /*SetPageType*/
+                render6 = ot.r(render6, '{[pagetype]}', pagetype); /*SetPageType*/
+                /*CoverProcess*/
+                if (cover && cover !== 'none') {
+                    render6 = ot.r(render6, '{[postcover]}', cover); /*设定封面*/
+                } else { /*没有封面，按标签一起删掉*/
+                    render6 = ot.cd(render6);
+                }
                 if (isNaN(date)) {
                     //render6 = render6.split('<!--PostEnd-->')[0] + '<!--PostEnd-->';
                     var r7 = render6.split('<!--PostEnd-->')[0] + '<!--PostEnd-->';
@@ -453,9 +468,9 @@ if (!B) { /*PreventInitializingTwice*/
                     var pid = td.replace('post', '');
                     var title = Base64.decode(tj['postindex'][pid]['title']);
                     if (!tj['postindex'][pid]['link']) {
-                        renderar += '<li><a class=\'taglink\' href=\'post-' + pid + '.html\'>' + title + '</a></li>';
+                        renderar += '<li><a class=\'taglink archivelink\' href=\'post-' + pid + '.html\'>' + title + '</a></li>';
                     } else {
-                        renderar += '<li><a class=\'taglink\' href=\'' + tj['postindex'][pid]['link'] + '.html\'>' + title + '</a></li>';
+                        renderar += '<li><a class=\'taglink archivelink\' href=\'' + tj['postindex'][pid]['link'] + '.html\'>' + title + '</a></li>';
                     }
                 }
                 renderar += '</ul>'; /*Generate Finish*/
@@ -611,6 +626,11 @@ if (!B) { /*PreventInitializingTwice*/
                                 } else {
                                     render4 = B.r(render3, '{[postitemlink]}', pt[i]['link'] + '.html');
                                 }
+                                if (pt[i]['cover']) { /*如果有封面*/
+                                    render4 = B.r(render4, '{[postcover]}', pt[i]['cover']); /*把页面也算入*/
+                                } else {
+                                    render4 = ot.cd(render4); /*没有封面就删掉整段<ifcover>*/
+                                }
                                 rendertp += render4; /*渲染到列表模板*/
                             }
                         }
@@ -686,6 +706,11 @@ if (!B) { /*PreventInitializingTwice*/
                             var render2 = B.r(render1, '{[postitemintro]}', Base64.decode(pt.intro) + '...');
                             var render3 = B.r(render2, '{[postitemdate]}', pt.date);
                             var render4 = B.r(render3, '{[postitemlink]}', 'post-' + pid + '.html');
+                            if (pt['cover']) { /*如果有封面*/
+                                render4 = B.r(render4, '{[postcover]}', pt['cover']); /*把页面也算入*/
+                            } else {
+                                render4 = ot.cd(render4); /*没有封面就删掉所有<ifcover>*/
+                            }
                             listrender += render4; /*渲染到列表模板*/
                         } else {
                             ot.itempage += 1;
