@@ -33,8 +33,20 @@ function initialcheck() { /*检查是否初始化*/
                     success: function(k) {
                         var j = Base64.decode(k['content']);
                         window.tjson = j;
-                        loadhide();
-                        PJAX.jump('editor.html');
+                        var mj = JSON.parse(j);
+                        blog.getfile(window.githubuser, window.githubrepo, mj['templatehtmls']['postitem'], true, { /*获得postitem模板内容*/
+                            success: function(k) {
+                                var pi = Base64.decode(k['content']);
+                                window.htmls['postitem.html'] = pi;
+                                loadhide();
+                                PJAX.jump('editor.html');
+                            },
+                            failed: function(k) {
+                                notice('Failed to get Necessary Template.');
+                                loadhide();
+                                errshow();
+                            }
+                        });
                     },
                     failed: function(k) {
                         notice('Failed to get Templates.');

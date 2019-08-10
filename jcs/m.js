@@ -8,16 +8,6 @@ if (!window.htmls['index.html']) {
             errshow();
         }
     }, 'get', '', true);
-}
-if (!window.htmls['postitem.html']) {
-    $.aj('./template/postitem.html', '', {
-        success: function(m) {
-            window.htmls['postitem.html'] = m;
-        },
-        failed: function(m) { /*Failed*/
-            errshow();
-        }
-    }, 'get', '', true);
 } /*TemplatePreloadFinished*/
 setTimeout(function() {
     SC('t').style.opacity = 1;
