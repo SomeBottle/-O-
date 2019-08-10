@@ -403,12 +403,14 @@ var B = { /*Replace Part*/
             if (pcover) {
                 tj['postindex'][nownum]['cover'] = pcover; /*储存文章封面*/
                 var rp = '';
-                if (pcover == 'none') {
+                if (pcover == 'none' && tj['postindex'][nownum]['cover']) {
                     delete tj['postindex'][nownum]['cover']; /*如果是none就删除文章封面*/
                     rp = '';
                 }
                 render9 = B.r(render9, '{[cover]}', pcover); /*设定封面(此处会有none值)*/
                 /*Render---------------------*/
+            } else {
+                render9 = B.r(render9, '{[cover]}', 'none'); /*没有封面也要替换掉占位符*/
             }
             if (ifpage) {
                 tj['postindex'][nownum]['link'] = pagelink; /*储存pagelink*/
