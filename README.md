@@ -8,11 +8,11 @@
 
 -----------------------------------
 
-## 想法  
+## 想法🤔  
    之前逛v2社区的时候看到有人写了一个利用github api的博客，顿时非常心动，但项目已经久未更新，我便有了自己写一个的想法..  
    * Simple: https://github.com/isnowfy/simple  
    
-## 特点
+## 特点💊  
    * 模板可配置  
    * 支持页码，标签页，归档页  
    * 自带简单搜索功能  
@@ -22,7 +22,7 @@
    * 平滑回滚至头部 2ax=V²  
    * 封面图支持~  
    
-## 部署  
+## 部署📖  
    1. 创建一个repo作为博客仓库(记得要创建README), 建议用小号(For Safety).  
    2. 选择一个静态网站服务器上传-O-，作为**后台** (建议用**Release**的版本)  
    3. (可选)手动push该项目template目录下的loading图片到博客仓库.  
@@ -33,16 +33,16 @@
    7. 给博客仓库绑定域名（甚至还能定义404页，或者favicon）
    8. **Enjoy it!**  
    
-## 使用提示  
+## 使用提示💡  
    * 当日期一栏填的是非数字时会自动切换为创建页面模式，日期中填的内容将作为页面link.   
    * 页面不可转为文章.  
    * 发布文章时js会自动被注释，但是访问对应页面时还是会执行的.  
    * 如果页面未指定PJAX操作容器，PJAX会自动选择**id为container**的容器进行操作.因此建议模板中保留id='container'.  
    
-## 关于搜索  
+## 关于搜索🔍  
    * 在文章列表页通过hash访问 #!搜索内容 可以进行搜索，需要注意的是，由于索引文件的限制，只支持根据文章部分内容和标题，标签，日期这类的搜索.  
    
-## 文章封面  
+## 文章封面📋  
    2019.8.10，老瓶<del>闲着蛋疼</del>加了个文章封面的支持.  
    ![](https://wx4.sinaimg.cn/large/ed039e1fly1g5uy7t1446j20qo0k0t9o)  
    
@@ -66,7 +66,7 @@
      然后编辑发布文章，即可删除封面.(由于pages缓存问题，可能要稍等一下才能看到效果)  
      Have fun~  
      
-## 模板说明  
+## 模板说明🔨  
    * template.json  
      
      | 项目 | 值 |  
@@ -149,7 +149,7 @@
      1. 单个标签链接：taglink  
      2. 单个归档链接：archivelink  
      
-## 函数供应  
+## 函数供应💬  
    * 平滑滚动至顶部  
    ```javascript
    B.scrolltop(maxspeed,minspeed); //(最大速度,最小速度)单位：px/10ms
@@ -189,17 +189,17 @@
    timestamp();
    ```
 
-## main.json可配置项  
+## main.json可配置项🔧  
    * name 站点名，请务必在部署完毕后第一时间配置，后期修改不容易  
    * posts_per_page 每页默认显示多少文章  
    * more_per_page More按钮在同一页面能按多少次  
    
-## 引用项目  
+## 引用项目⚙️  
    * [Showdown](https://github.com/showdownjs/showdown)  
    * [JS-Base64](https://github.com/dankogai/js-base64)  
    * [Bueue.js](https://github.com/SomeBottle/Bueue.js)  
    
-## 感谢  
+## 感谢❤  
    * Ghosin 提了非常多很不错的意见！  
    * Ohmyga 帮助改进了LoadingPage...  
    
