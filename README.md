@@ -38,13 +38,14 @@
    * 页面不可转为文章.  
    * 发布文章时js会自动被注释，但是访问对应页面时还是会执行的.  
    * 如果页面未指定PJAX操作容器，PJAX会自动选择**id为container**的容器进行操作.因此建议模板中保留id='container'.  
-   * 不建议修改模板的**index.html**，本身这个模板也只是一个媒介，在前台并不展现外观，另外若修改index.html需要同时修改后台和前台部分的（所以还是不要瞎折腾啦=A=）  
+   * 不建议修改模板的**index.html**，本身这个模板也只是一个媒介，并不会被直接上传到博客仓库，在前台并不展现外观，另外若修改index.html需要修改后台部分的（所以还是不要瞎折腾啦=A=）  
    
 ## 关于搜索🔍  
    * 在文章列表页通过hash访问 #!搜索内容 可以进行搜索，需要注意的是，由于索引文件的限制，只支持根据文章部分内容和标题，标签，日期这类的搜索.  
    
 ## 文章封面📋  
    2019.8.10，老瓶<del>闲着蛋疼</del>加了个文章封面的支持.  
+   
    ![](https://wx4.sinaimg.cn/large/ed039e1fly1g5uy7t1446j20qo0k0t9o)  
    
    编辑文章时在无论哪个位置以注释的形式插入**一条**：
@@ -68,7 +69,7 @@
      Have fun~  
      
 ## 模板说明🔨  
-   * template.json  
+   * **template.json**  
      
      | 项目 | 值 |  
      |:-------:|:-------:|  
@@ -82,13 +83,14 @@
      模板在部署到仓库后可以进行相应的修改，搭配对于**仓库**中template.json的修改.  
      *PS：loading.html在template.json是无法配置的，请不要修改文件名.*  
      
-   * 模板渲染简单gif.  
+   * **模板渲染简单gif**.  
    
      ![](https://wx4.sinaimg.cn/large/ed039e1fly1g5uh69qklvg20fa0b47rf)  
      
-   * 模板特殊占位  
-   ```html
-     1. index.html 媒介页面  
+   * **模板特殊占位**   
+     
+     1. index.html **媒介页面(建议不要修改，不影响外观)**  
+     ```html
      <!--description-->
      <meta name="description" content="{[description]}" />   Description 
      <!--Keywords-->
@@ -106,19 +108,25 @@
      <!--[PageType]-->{[type]}<!--[PageTypeEnd]-->  用于指定页面类型  
      <script src="./main.js?233"></script>
      <script>B.tpcheck();</script>  引入mainjs，唤醒模板渲染器  
+     ```
      
-     2. postitem.html 文章列表单项
+     2. postitem.html **文章列表单项**
+     ```html
      {[postitemtitle]}  文章列表每一项的标题  
      {[postitemintro]}  文章列表每一项的简介
      {[postitemdate]}  文章列表每一项的日期  
      <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
-
-     3. postlist.html 文章列表   
+     ```
+     
+     3. postlist.html **文章列表**   
+     ```html
      {[postitems]}  用于载入文章列表  
      <!--[PageType]{[pagetype]}[PageTypeEnd]-->  用于指定pagetype  
      <script>PJAX.autoprevent();PJAX.sel('container');PJAX.start();</script>  唤醒PJAX  
-
-     4. post.html 文章/页面单页  
+     ```
+     
+     4. post.html **文章/页面单页**  
+     ```html
      {[posttitle]}  文章标题  
      {[postdate]}  文章日期  
      {[postcontent]}  文章内容  
@@ -126,29 +134,39 @@
      <!--PostEnd-->  (需要保留) 指定文章结束的地方.  
      {[comments]}  用于渲染评论(接comment.html)  
      <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
+     ```
 
-     5. main.html 酥脆外皮,Footer  
+     5. main.html **酥脆外皮,Footer**  
+     ```html
      {[contents]}  用于渲染页面内容  
      <!--Footer-->  (需要保留) 指定页脚开始的地方  
+     ```
 
-     6. cloth.html 外衣,导航栏  
+     6. cloth.html **外衣,导航栏**  
+     ```html
      {[main]}  用于渲染main.html  
      {[title]}  装载标题  
+     ```
 
-     7. archives.html 归档页  
+     7. archives.html **归档页**  
+     ```html
      {[archives]}  用于渲染归档  
+     ```
 
-     8. tags.html 标签页  
+     8. tags.html **标签页**  
+     ```html
      {[tags]}  用于渲染标签  
+     ```
 
-     9. comment.html 评论框页  
+     9. comment.html **评论框页**  
+     ```html
      {[pid]}  文章唯一id  
-   ```
+     ```
    
-   * 特殊样式class  
+   * **特殊样式class**    
      标签页和归档页的内容是直接从main.json内拉取渲染的，因此有特殊样式：
-     1. 单个标签链接：taglink  
-     2. 单个归档链接：archivelink  
+     1. **单个**标签链接：taglink  
+     2. **单个**归档链接：archivelink  
      
 ## 函数供应💬  
    * 平滑滚动至顶部  
