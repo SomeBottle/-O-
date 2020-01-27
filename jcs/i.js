@@ -25,51 +25,57 @@ function typer() { /*重定义typer*/
 
 function initialcheck() { /*检查是否初始化*/
     loadshow();
-    blog.getfile(window.githubuser, window.githubrepo, 'main.json', true, {
-        success: function(m) { /*已经初始化*/
-            window.mainjson = m;
-            if (!window.tjson) {
-                blog.getfile(window.githubuser, window.githubrepo, 'template.json', true, { /*获得仓库模板内容*/
+    var j, mj, pi;
+    new Promise(function(res, rej) {
+        blog.getfile(window.githubuser, window.githubrepo, 'template.json', true, { /*获得仓库模板内容*/
+            success: function(k) {
+                j = Base64.decode(k['content']);
+                window.tjson = j;
+                mj = JSON.parse(j);
+                res(k);
+            },
+            failed: function(m) { /*未初始化*/
+                $.aj('./template/template.json', {}, { /*获得本地模板内容*/
                     success: function(k) {
-                        var j = Base64.decode(k['content']);
-                        window.tjson = j;
-                        var mj = JSON.parse(j);
-                        blog.getfile(window.githubuser, window.githubrepo, mj['templatehtmls']['postitem'], true, { /*获得postitem模板内容*/
-                            success: function(k) {
-                                var pi = Base64.decode(k['content']);
-                                window.htmls['postitem.html'] = pi;
-                                loadhide();
-                                PJAX.jump('editor.html');
-                            },
-                            failed: function(k) {
-                                notice('Failed to get Necessary Template.');
-                                loadhide();
-                                errshow();
-                            }
-                        });
+                        window.tjson = JSON.parse(k); /*储存模板json*/
+                        initialization();
                     },
                     failed: function(k) {
-                        notice('Failed to get Templates.');
-                        loadhide();
-                        errshow();
+                        notice('Initialization Failed.');
                     }
-                });
-            } else {
-                loadhide();
-                PJAX.jump('editor.html'); /*Jump*/
+                }, 'get', '', true);
             }
-        },
-        failed: function(m) {
-            $.aj('./template/template.json', {}, { /*获得本地模板内容*/
+        });
+    }).then(function(d) {
+        return new Promise(function(res, rej) {
+            blog.getfile(window.githubuser, window.githubrepo, mj['templatehtmls']['postitem'], true, { /*获得postitem模板内容*/
                 success: function(k) {
-                    window.tjson = JSON.parse(k); /*储存模板json*/
-                    initialization();
+                    pi = Base64.decode(k['content']);
+                    window.htmls['postitem.html'] = pi;
+                    res(k);
                 },
                 failed: function(k) {
-                    notice('Initialize Failed.');
+                    notice('Failed to get Necessary Template.');
+                    loadhide();
+                    errshow();
                 }
-            }, 'get', '', true);
-        }
+            });
+        });
+    }).then(function(d) {
+        return new Promise(function(res, rej) { /*check main.json*/
+            blog.getfile(window.githubuser, window.githubrepo, mj['mainjson'], true, {
+                success: function(m) { /*已经初始化*/
+                    window.mainjson = m;
+                    loadhide();
+                    PJAX.jump('editor.php'); /*Jump*/
+                },
+                failed: function(msg) {
+                    notice('Failed to get Main.json.');
+                    loadhide();
+                    errshow();
+                }
+            });
+        });
     });
     notice('Checking...');
 }
@@ -80,28 +86,33 @@ function initialization() { /*初始化*/
         var tm = window.tjson['alltp'];
         for (var it in tm) {
             console.log('file:' + tm[it]);
-            /*$bueue.c(function() {
-	$.aj('./template/' + tm[it], {}, {
-		success: function(m) {
-			notice(tm[it]);
-			blog.cr(window.githubuser, window.githubrepo, tm[it], 'Initial Commit', m, {
-				success: function(f) {
-					$bueue.next();
-				},
-				failed:function(m){
-					notice('初始化出错');notice('请删除main.json.');notice('重新初始化.');errshow();
-				}
-			});
-		},
-		failed: function(m) {
-			notice('初始化出错');
-			notice('请删除main.json.');
-			notice('重新初始化.');
-			errshow();
-		}
-	}, 'get', '', true);
-});*/
-            eval("$bueue.c(function(){$.aj('./template/" + tm[it] + "',{},{success:function(m){notice('" + tm[it] + "');blog.cr(window.githubuser,window.githubrepo,'" + tm[it] + "','Initial Commit',m,{success:function(f){$bueue.next()},failed:function(m){notice('初始化出错');notice('请删除main.json.');notice('重新初始化.');errshow();}})},failed:function(m){notice('初始化出错');notice('请删除main.json.');notice('重新初始化.');errshow()}},'get','',true)});"); /*添加队列*/
+            (function(tmt) {
+                $bueue.c(function() {
+                    $.aj('./template/' + tmt, {}, {
+                        success: function(m) {
+                            notice(tmt);
+                            blog.cr(window.githubuser, window.githubrepo, tmt, 'Initial Commit', m, {
+                                success: function(f) {
+                                    $bueue.next();
+                                },
+                                failed: function(m) {
+                                    notice('初始化出错');
+                                    notice('请删除main.json.');
+                                    notice('重新初始化.');
+                                    errshow();
+                                }
+                            });
+                        },
+                        failed: function(m) {
+                            notice('初始化出错');
+                            notice('请删除main.json.');
+                            notice('重新初始化.');
+                            errshow();
+                        }
+                    }, 'get', '', true);
+                });
+            })(tm[it]); /*闭包传参，终于解决了！>A<*/
+            /*添加队列*/
         }
         $bueue.start(); /*队列启动*/
         var checkt = setInterval(function() {

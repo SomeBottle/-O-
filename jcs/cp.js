@@ -4,7 +4,7 @@ var editpost = 'none';
 var tpjs = JSON.parse(window.tjson); /*编辑的文章*/
 if (!window.mainjson) {
     loadshow();
-    blog.getfile(window.githubuser, window.githubrepo, 'main.json', true, {
+    blog.getfile(window.githubuser, window.githubrepo, tpjs['mainjson'], true, {
         success: function(fi) {
             console.log('ok');
             window.mainjson = fi;
@@ -22,6 +22,11 @@ if (!window.mainjson) {
 }
 var choose = 0;
 var timer;
+
+function rmj() { /*获得随机的mainjson文件名*/
+    var str = Math.random().toString(36).substr(5);
+    return 'main.' + str + '.json';
+}
 
 function getdate() { /*获得今天日期*/
     var dt = new Date();
@@ -423,39 +428,82 @@ var B = { /*Replace Part*/
                 filename = pagelink + '.html';
             }
             var indexpage = indexrenderer(tj); /*渲染首页*/
-            blog.cr(window.githubuser, window.githubrepo, filename, commit, render9, {
-                success: function(m) {
-                    blog.cr(window.githubuser, window.githubrepo, 'main.json', commit, JSON.stringify(tj), {
+            var recentmjn = tpjs['mainjson']; /*上一次的main.json名字*/
+            tpjs['mainjson'] = rmj(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
+            /*Promise NB!*/
+            new Promise(function(res, rej) {
+                blog.cr(window.githubuser, window.githubrepo, filename, commit, render9, {
+                    success: function(m) {
+                        res(m);
+                    },
+                    failed: function(m) {
+                        notice('编辑/发布失败');
+                        loadhide();
+                    }
+                });
+            }).then(function(d) {
+                return new Promise(function(res, rej) {
+                    blog.cr(window.githubuser, window.githubrepo, tpjs['mainjson'], commit, JSON.stringify(tj), {
                         success: function(m) {
-                            blog.cr(window.githubuser, window.githubrepo, 'index.html', commit, indexpage, {
-                                success: function(m) {
-                                    if (recentlink !== '' && recentlink !== pagelink) { /*更新页面时如果更改链接,删除先前存在的页面*/
-                                        blog.del(window.githubuser, window.githubrepo, recentlink + '.html', 'Delete recent page', {
-                                            success: function(m) {},
-                                            failed: function(m) {
-                                                notice('页面更新出错');
-                                                loadhide();
-                                            }
-                                        });
-                                    }
-                                },
-                                failed: function(m) {
-                                    notice('首页刷新失败');
-                                    loadhide();
-                                }
-                            });
+                            res(m);
                         },
                         failed: function(m) {
-                            notice('编辑/发布失败');
+                            notice('索引上载失败');
                             loadhide();
                         }
-                    }); /*上载索引*/
-                },
-                failed: function(m) {
-                    notice('编辑/发布失败');
-                    loadhide();
-                }
-            }); /*上载文章*/
+                    });
+                });
+            }).then(function(d) {
+                return new Promise(function(res, rej) {
+                    blog.cr(window.githubuser, window.githubrepo, 'index.html', commit, indexpage, {
+                        success: function(m) {
+                            res(m);
+                        },
+                        failed: function(m) {
+                            notice('首页刷新失败');
+                            loadhide();
+                        }
+                    });
+                });
+            }).then(function(d) {
+                return new Promise(function(res, rej) {
+                    blog.cr(window.githubuser, window.githubrepo, 'template.json', commit, JSON.stringify(tpjs), {
+                        success: function(m) {
+                            res(m);
+                        },
+                        failed: function(m) {
+                            notice('索引模板更新失败');
+                            loadhide();
+                        }
+                    });
+                });
+            }).then(function(d) {
+                return new Promise(function(res, rej) {
+                    blog.del(window.githubuser, window.githubrepo, recentmjn, 'Delete recent json', {
+                        success: function(m) {
+                            res(m);
+                        },
+                        failed: function(m) {
+                            notice('旧索引移除出错');
+                            loadhide();
+                        }
+                    });
+                });
+            }).then(function(d) {
+                return new Promise(function(res, rej) {
+                    if (recentlink !== '' && recentlink !== pagelink) { /*更新页面时如果更改链接,删除先前存在的页面*/
+                        blog.del(window.githubuser, window.githubrepo, recentlink + '.html', 'Delete recent page', {
+                            success: function(m) {
+                                res(m);
+                            },
+                            failed: function(m) {
+                                notice('页面更新出错');
+                                loadhide();
+                            }
+                        });
+                    }
+                });
+            });
             window.mainjson.content = Base64.encode(JSON.stringify(tj)); /*更新本地json*/
             var tm = setInterval(function() {
                 if (window.gstate <= 0) {
@@ -492,34 +540,70 @@ var B = { /*Replace Part*/
                 filename = t.link + '.html';
             }
             var indexpage = indexrenderer(tj); /*渲染首页*/
-            blog.del(window.githubuser, window.githubrepo, filename, 'Delete post', {
-                success: function(m) {
-                    window.mainjson.content = Base64.encode(JSON.stringify(tj));
-                    blog.cr(window.githubuser, window.githubrepo, 'main.json', 'Delete post', JSON.stringify(tj), {
+            var recentmjn = tpjs['mainjson']; /*上一次的main.json名字*/
+            tpjs['mainjson'] = rmj(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
+            new Promise(function(res, rej) {
+                blog.del(window.githubuser, window.githubrepo, filename, 'Delete post', {
+                    success: function(m) {
+                        window.mainjson.content = Base64.encode(JSON.stringify(tj));
+                        res(m);
+                    },
+                    failed: function(f) {
+                        notice('删除失败TAT');
+                        loadhide();
+                    }
+                });
+            }).then(function(d) {
+                return new Promise(function(res, rej) {
+                    blog.cr(window.githubuser, window.githubrepo, tpjs['mainjson'], 'Delete post', JSON.stringify(tj), {
+                        success: function(m) {
+                            res(m);
+                        },
+                        failed: function(f) {
+                            notice('更新索引失败');
+                            loadhide();
+                        }
+                    });
+                });
+            }).then(function(d) {
+                return new Promise(function(res, rej) {
+                    blog.del(window.githubuser, window.githubrepo, recentmjn, 'Delete recent JSON', {
+                        success: function(m) {
+                            res(m);
+                        },
+                        failed: function(f) {
+                            notice('删除旧索引失败');
+                            loadhide();
+                        }
+                    });
+                });
+            }).then(function(d) {
+                return new Promise(function(res, rej) {
+                    blog.cr(window.githubuser, window.githubrepo, 'template.json', 'Update template', JSON.stringify(tpjs), {
                         success: function(m) {
                             addnew();
                             renderlist(); /*渲染最新文章列表*/
-                            blog.cr(window.githubuser, window.githubrepo, 'index.html', 'Delete post', indexpage, { /*渲染首页*/
-                                success: function(m) {
-                                    loadhide();
-                                    notice('删除成功');
-                                },
-                                failed: function(m) {
-                                    loadhide();
-                                    notice('首页更新失败');
-                                }
-                            });
+                            res(m);
                         },
                         failed: function(m) {
-                            notice('编辑/发布失败');
+                            notice('更新索引模板失败');
                             loadhide();
                         }
-                    }); /*上载索引*/
-                },
-                failed: function(f) {
-                    notice('删除失败TAT');
-                    loadhide();
-                }
+                    });
+                });
+            }).then(function(d) {
+                return new Promise(function(res, rej) {
+                    blog.cr(window.githubuser, window.githubrepo, 'index.html', 'Delete post', indexpage, { /*渲染首页*/
+                        success: function(m) {
+                            loadhide();
+                            notice('删除成功');
+                        },
+                        failed: function(m) {
+                            loadhide();
+                            notice('首页更新失败');
+                        }
+                    });
+                });
             });
         }
     }
