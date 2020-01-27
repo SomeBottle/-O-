@@ -16,5 +16,6 @@
 	"generatehtmls": {
 		"tags": "tag.html",
 		"archives": "archive.html"
-	}
+	},
+	"mainjson": "main.json"
 }
