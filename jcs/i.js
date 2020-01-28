@@ -67,7 +67,7 @@ function initialcheck() { /*检查是否初始化*/
                 success: function(m) { /*已经初始化*/
                     window.mainjson = m;
                     loadhide();
-                    PJAX.jump('editor.php'); /*Jump*/
+                    PJAX.jump('editor.html'); /*Jump*/
                 },
                 failed: function(msg) {
                     notice('Failed to get Main.json.');
