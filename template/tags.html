@@ -1,9 +1,19 @@
+<!--Tags-->
 <div class='posts'>
   <h3 class='paneltitle' id='tagtitle'>Tags</h3>
   <hr>
-  <!--Tags-->
-  <h2 id='tags'><!--[Tags]-->{[tags]}<!--[TagsEnd]-->
+  <h2 id='tags'>{[tags]}
     <!--[<a href='#Page' class='itemlink'>日常</a>]--></h2>
   <hr></div>
   <!--[PageType]{[pagetype]}[PageTypeEnd]-->
   <script>PJAX.autoprevent();PJAX.sel('container');PJAX.start();</script>
+<!--TagsEnd-->
+<!--TagItemTemplate-->
+[<a href='{[tagitemlink]}' class='itemlink'>{[tagitemtitle]}</a>]
+<!--TagItemTemplateEnd-->
+<!--TagListTemplate-->
+<ul>{[taglist]}</ul>
+<!--TagListTemplateEnd-->
+<!--TagListItemTemplate-->
+<li><a class='taglink' href='{[taglistitemlink]}'>{[taglistitemtitle]}</a></li><!--当前标签：{[tagcurrent]} 日期：{[taglistitemdate]}-->
+<!--TagListItemTemplateEnd-->

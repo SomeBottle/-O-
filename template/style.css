@@ -3,39 +3,37 @@ blockquote {
 	font: 14px/22px normal helvetica, sans-serif;
 	margin-top: 10px;
 	margin-bottom: 10px;
-	margin-left: 50px;
+	margin-left: 0px;
 	padding-left: 15px;
-	padding-top: 10px;
+	padding-top: 5px;
 	padding-right: 10px;
-	padding-bottom: 10px;
+	padding-bottom: 5px;
 	border-left: 3px solid #ccc;
 	background-color: #f1f1f1
+}
+@font-face{
+	font-display:swap;
 }
 pre {
 	box-sizing: border-box;
 	overflow: auto;
-	font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+	font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
 	font-size: 13px;
 	padding: 9.5px;
-	margin-top: 0px;
+	margin-top: 0;
 	margin-bottom: 10px;
 	line-height: 1.42857;
-	color: #333333;
+	color: #333;
 	word-break: break-all;
 	word-wrap: break-word;
-	border: 1px solid #CCCCCC;
+	border: 1px solid #CCC;
 	border-radius: 4px;
 	background-color: #F5F5F5;
 	white-space: pre-wrap;
- /*css-3*/
 	white-space: -moz-pre-wrap;
- /*Mozilla,since1999*/
 	white-space: -pre-wrap;
- /*Opera4-6*/
 	white-space: -o-pre-wrap;
- /*Opera7*/
-	word-wrap: break-word;
- /*InternetExplorer5.5+*/
+	word-wrap: break-word
 }
 a{
 	text-decoration:none;
@@ -132,11 +130,17 @@ h2{
 	line-height:1.2;
 	margin:0 0 8px 0;
 }
+.itemintro{
+	color:#555;
+}
 .postbody{
 	position:relative;
 	width:100%;
 	margin-top:1rem;
 	word-wrap:break-word;
+	line-height:25px;
+	color:#555;
+	margin-bottom:2rem;
 }
 .comments{
 	position:relative;
@@ -193,7 +197,7 @@ img{
 .avatar{
 	position:relative;
 	border-radius:50%;
-	height:50px;
+	height:50px !important;
 	top:50%;
 	transform:translateY(-50%);
 }

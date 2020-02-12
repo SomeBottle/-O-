@@ -1,8 +1,16 @@
+<!--Archives-->
 <div class='posts'>
   <h3 class='paneltitle'>Archives</h3>
   <hr>
-  <!--Archives-->
   {[archives]}
   <hr></div>
   <!--[PageType]{[pagetype]}[PageTypeEnd]-->
   <script>PJAX.autoprevent();PJAX.sel('container');PJAX.start();</script>
+  <!--ArchivesEnd-->
+<!--ArchiveTemplate-->
+<h2>{[archiveyear]}</h2>
+<ul>{[archiveitems]}</ul>
+<!--ArchiveTemplateEnd-->
+<!--ArchiveItemTemplate-->
+<li><a class='taglink archivelink' href='{[archiveitemlink]}'>{[archiveitemtitle]}</a></li><!--日期：{[archiveitemdate]}-->
+<!--ArchiveItemTemplateEnd-->

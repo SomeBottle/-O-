@@ -205,7 +205,10 @@ var B = { /*Replace Part*/
         }
         return rst;
     }
-
+    function transdate(v){/*date transformer*/
+	   var dt=String(v),md=dt.slice(-4),d=md.slice(-2),m=md.substring(0,2),y=dt.replace(md,''),changed=y+'-'+m+'-'+d;
+	   return changed;
+	}
     function indexrenderer(js) {
         var pageh = tpjs['templatehtmls']['postlist']; /*获得配置的页面链接，默认postlist.html*/
         /*首页渲染者*/
@@ -223,7 +226,7 @@ var B = { /*Replace Part*/
                 if (!pt['link']) { /*排除页面在外*/
                     var render1 = B.r(item, '{[postitemtitle]}', Base64.decode(pt.title));
                     var render2 = B.r(render1, '{[postitemintro]}', Base64.decode(pt.intro) + '...');
-                    var render3 = B.r(render2, '{[postitemdate]}', pt.date);
+                    var render3 = B.r(render2, '{[postitemdate]}', transdate(pt.date));
                     var render4 = B.r(render3, '{[postitemlink]}', 'post-' + pid + '.html');
                     if (pt['cover']) {
                         render4 = B.r(render4, '{[postcover]}', pt['cover']); /*如果有封面图就渲染一下*/

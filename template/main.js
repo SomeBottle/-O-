@@ -18,23 +18,11 @@ if (typeof($) !== 'object') {
             hm = hm.substring(0, hm.length - 1);
             if (m == 'get') {
                 xhr.open('get', p, as);
-            } else if (m == 'put') {
-                xhr.open('PUT', p, as);
-                xhr.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
-                hm = JSON.stringify(d);
-            } else if (m == 'delete') {
-                xhr.open('DELETE', p, as);
-                xhr.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
-                hm = JSON.stringify(d);
             } else {
                 xhr.open('post', p, as);
-            }
-            if (m !== 'multipart/form-data') {
-                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                xhr.send(hm);
-            } else {
-                xhr.send(d);
-            }
+            } /*PS:此处ajax代码相较后台进行了简化，去除了前台无用语句*/
+            xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhr.send(hm);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     sf.success(xhr.responseText, p);
@@ -51,7 +39,7 @@ if (typeof($) !== 'object') {
             }
         }
     }
-    var SC = function(e) {
+    var SC = function(e) { /*元素选择器*/
         if (e == 'body') {
             return document.body;
         } else if (e == 'html') {
@@ -60,7 +48,7 @@ if (typeof($) !== 'object') {
             return document.getElementById(e);
         }
     }
-    $.script = function(url) {
+    $.script = function(url) { /*外部js加载器，页面已经加载的不会重复加载*/
         if (!$.scripturl) {
             $.scripturl = [];
         }
@@ -80,7 +68,7 @@ if (typeof($) !== 'object') {
             document.body.appendChild(script);
         }
     }
-    $.ht = function(h, e, scinclude = true) { /*(html,element,run script or not when ht)*/
+    $.ht = function(h, e, scinclude = true) { /*元素内容设置器(html,element,run script or not when ht)*/
         var ht = SC(e);
         if (!ht) {
             console.log('Unable to find the Element:' + e);
@@ -101,7 +89,7 @@ if (typeof($) !== 'object') {
                     }
                     eval(h);
                 }
-                catch (e) {
+ catch (e) {
                     console.log('Page script Error: ' + e.message);
                 }
             }
@@ -114,6 +102,19 @@ if (typeof($) !== 'object') {
             return b[0];
         } else {
             return a;
+        }
+    }
+    $.dt = function(v) { /*date transformer*/
+        if (Number(v) >= 10000000) {
+            var dt = String(v),
+                md = dt.slice(-4),
+                d = md.slice(-2),
+                m = md.substring(0, 2),
+                y = dt.replace(md, ''),
+                changed = y + '-' + m + '-' + d;
+            return changed;
+        } else {
+            return v;
         }
     }
 }
@@ -132,7 +133,7 @@ if (!B) { /*PreventInitializingTwice*/
             console.log('LoadingPage Load Failed');
         }
     }, 'get', '', true);
-    $.script('./library.js'); /*Include Library*/
+    $.script('./library.js'); /*Include Library Once*/
     window.htmls = new Object();
     var B = { /*B Part*/
         moreperpage: 0,
@@ -145,6 +146,35 @@ if (!B) { /*PreventInitializingTwice*/
                 a = a.replace(o, p);
             }
             return a;
+        },
+        navlist: {
+            statu: false,
+            conf: {}
+        },
+        navcurrent: function(v = '') { /*getcurrentnav*/
+            return ((-1 == v.indexOf('http') ? v = v : (v.replace(window.location.protocol + '//' + window.location.hostname, ''))) || window.location.pathname).replace('.html', ''); /*割掉尾巴*/
+        },
+        navcheck: function() { /*modify html*/
+            var c = document.body,
+                o = this,
+                cl = o.navlist.conf;
+            if (o.navlist.statu) {
+                var e = c.getElementsByClassName(cl.navclass),
+                    path = o.navcurrent();
+                for (var i in e) {
+                    var p = o.navcurrent(e[i].href);
+                    if (path == p && e[i] instanceof Element) {
+                        e[i].classList.add(cl.activeclass); /*设置为焦点*/
+                    } else if (e[i] instanceof Element) {
+                        (e[i].classList.contains(cl.activeclass)) ? (e[i].classList.remove(cl.activeclass)) : p = p; /*取消其他的焦点*/
+                    }
+                }
+            }
+        },
+        nav: function(v) {
+            var o = this;
+            o.navlist.statu = true;
+            o.navlist.conf = v;
         },
         scrolltop: function(maxspeed, minspeed) {
             var nt = document.body.scrollTop;
@@ -285,12 +315,12 @@ if (!B) { /*PreventInitializingTwice*/
                 setTimeout(function() {
                     return o.tpcheck();
                 },
-                200);
+                100);
             } else if (typeof showdown !== 'object') { /*Markdown is not ready!*/
                 setTimeout(function() {
                     return o.tpcheck();
                 },
-                200);
+                100);
             } else {
                 ot.preventscript(); /*剔除已加载scripts*/
                 var j = window.templjson;
@@ -336,7 +366,7 @@ if (!B) { /*PreventInitializingTwice*/
                         o.renderer(); /*Call the renderer*/
                     }
                 },
-                500);
+                50); /*加快页面速度，我也是加把劲骑士！*/
             }
         },
         itempage: 0,
@@ -402,7 +432,7 @@ if (!B) { /*PreventInitializingTwice*/
                     tags = tags.substr(0, tags.length - 1); /*去掉末尾逗号*/
                 }
                 var render13 = ot.r(render12, '{[posttags]}', tags);
-                var render14 = ot.r(render13, '{[postdate]}', date);
+                var render14 = ot.r(render13, '{[postdate]}', $.dt(date));
                 var render2 = ot.r(main, '{[contents]}', render14);
                 var render3 = ot.r(cloth, '{[main]}', render2);
                 var render4 = ot.r(render3, '{[title]}', pagetitle);
@@ -450,34 +480,49 @@ if (!B) { /*PreventInitializingTwice*/
                     }
                     ot.indexpagechecker();
                 },
-                500);
+                100);
             } else if (pagetype == j['templatehtmls']['archives']) {
-                var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
-                /*Generate Archives*/
-                var din = tj['dateindex'];
-                var renderar = '';
-                var year = 0;
+                var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""),
+                    /*Get Page Title(No html characters)*/
+                    ar = window.htmls[j['templatehtmls']['archives']],
+                    /*get entire html*/
+                    archivemain = ot.gt('<!--Archives-->', '<!--ArchivesEnd-->', ar),
+                    /*Get archive main html*/
+                    archivetemp = ot.gt('<!--ArchiveTemplate-->', '<!--ArchiveTemplateEnd-->', ar),
+                    /*get section template*/
+                    archiveitemtemp = ot.gt('<!--ArchiveItemTemplate-->', '<!--ArchiveItemTemplateEnd-->', ar),
+                    /*get item template*/
+                    /*Generate Archives*/
+                    din = tj['dateindex'],
+                    renderar = '',
+                    /*archive section render*/
+                    renderarit = '',
+                    /*archive item render*/
+                    year = 0;
                 for (var td in din) {
                     var t = (din[td].toString()).substring(0, 4); /*get years*/
                     if (t !== year) {
                         year = t;
-                        if (renderar !== '') {
-                            renderar += '</ul><h2>· ' + t + '</h2><ul>';
-                        } else {
-                            renderar += '<h2>· ' + t + '</h2><ul>';
-                        }
+                        if (renderarit !== '') renderar = ot.r(renderar, '{[archiveitems]}', renderarit), renderarit = ''; /*apply items to section*/
+                        renderar += ot.r(archivetemp, '{[archiveyear]}', t); /*render year section*/
                     }
-                    var pid = td.replace('post', '');
-                    var title = Base64.decode(tj['postindex'][pid]['title']);
-                    if (!tj['postindex'][pid]['link']) {
-                        renderar += '<li><a class=\'taglink archivelink\' href=\'post-' + pid + '.html\'>' + title + '</a></li>';
+                    var pid = td.replace('post', ''),
+                        title = Base64.decode(tj['postindex'][pid]['title']),
+                        date = tj['postindex'][pid]['date'],
+                        itemlink = '';
+                    if (!tj['postindex'][pid]['link']) { /*render items*/
+                        itemlink = 'post-' + pid + '.html';
                     } else {
-                        renderar += '<li><a class=\'taglink archivelink\' href=\'' + tj['postindex'][pid]['link'] + '.html\'>' + title + '</a></li>';
+                        itemlink = tj['postindex'][pid]['link'];
                     }
+                    var itemrender = ot.r(archiveitemtemp, '{[archiveitemlink]}', itemlink),
+                        itemrender = ot.r(itemrender, '{[archiveitemtitle]}', title),
+                        itemrender = ot.r(itemrender, '{[archiveitemdate]}', date);
+                    renderarit += itemrender;
                 }
+                if (renderarit !== '') renderar = ot.r(renderar, '{[archiveitems]}', renderarit); /*apply items to section#2*/
                 renderar += '</ul>'; /*Generate Finish*/
-                var ar = window.htmls[j['templatehtmls']['archives']];
-                var render11 = ot.r(ar, '{[archives]}', renderar);
+                var render11 = ot.r(archivemain, '{[archives]}', renderar); /*渲染模板部分*/
                 var render2 = ot.r(main, '{[contents]}', render11);
                 var render3 = ot.r(cloth, '{[main]}', render2);
                 var render4 = ot.r(render3, '{[title]}', pagetitle);
@@ -485,11 +530,18 @@ if (!B) { /*PreventInitializingTwice*/
                 $.ht(render4, 'container');
                 ot.loadhide();
             } else if (pagetype == j['templatehtmls']['tags']) {
-                var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
-                var href = $.tr(window.location.href); /*Generate Tags*/
-                var rendertg = '';
-                var pts = tj['postindex'];
-                var tagarr = new Array();
+                var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""),
+                    /*Get Page Title(No html characters)*/
+                    tgs = window.htmls[j['templatehtmls']['tags']],
+                    tagmain = ot.gt('<!--Tags-->', '<!--TagsEnd-->', tgs),
+                    /*Get tag main html*/
+                    tagitemtemp = ot.gt('<!--TagItemTemplate-->', '<!--TagItemTemplateEnd-->', tgs),
+                    /*get item template*/
+                    href = $.tr(window.location.href),
+                    /*Generate Tags*/
+                    rendertg = '',
+                    pts = tj['postindex'],
+                    tagarr = new Array();
                 for (var i in pts) {
                     var t = pts[i]['tags'].split(',');
                     t.forEach(function(item, index) {
@@ -499,7 +551,9 @@ if (!B) { /*PreventInitializingTwice*/
                     });
                 }
                 tagarr.forEach(function(item, index) {
-                    rendertg += '[<a href=\'#' + encodeURIComponent(item) + '\' class=\'itemlink\'>' + item + '</a>]';
+                    var g = ot.r(tagitemtemp, '{[tagitemtitle]}', item); /*replace and render*/
+                    g = ot.r(g, '{[tagitemlink]}', '#' + encodeURIComponent(item));
+                    rendertg += g;
                 });
                 ot.alltaghtml = rendertg;
                 if (href.indexOf('#') !== -1) {
@@ -518,9 +572,8 @@ if (!B) { /*PreventInitializingTwice*/
                     }
                     ot.tagpagechecker();
                 },
-                500);
-                var tgs = window.htmls[j['templatehtmls']['tags']];
-                var render11 = ot.r(tgs, '{[tags]}', rendertg);
+                100);
+                var render11 = ot.r(tagmain, '{[tags]}', rendertg);
                 var render2 = ot.r(main, '{[contents]}', render11);
                 var render3 = ot.r(cloth, '{[main]}', render2);
                 var render4 = ot.r(render3, '{[title]}', pagetitle);
@@ -532,10 +585,18 @@ if (!B) { /*PreventInitializingTwice*/
         },
         nowtag: '',
         alltaghtml: '',
-        taguper: function(tg) {
+        taguper: function(tg) { /*渲染特定标签索引的文章列表*/
             tg = decodeURIComponent(tg);
-            var eh = document.getElementsByTagName('html')[0].innerHTML;
-            var tj = window.mainjson; /*get json*/
+            var eh = document.getElementsByTagName('html')[0].innerHTML,
+                ot = this,
+                j = window.templjson,
+                tgs = window.htmls[j['templatehtmls']['tags']],
+                /*get main tag html*/
+                taglisttemp = ot.gt('<!--TagListTemplate-->', '<!--TagListTemplateEnd-->', tgs),
+                /*get item template*/
+                taglistitemtemp = ot.gt('<!--TagListItemTemplate-->', '<!--TagListItemTemplateEnd-->', tgs),
+                /*get item template*/
+                tj = window.mainjson; /*get json*/
             var dti = tj['dateindex'];
             var pts = tj['postindex'];
             var postlist = new Array();
@@ -549,15 +610,21 @@ if (!B) { /*PreventInitializingTwice*/
             rendertgs += '<ul>';
             postlist.forEach(function(it, id) {
                 var post = pts[it];
-                var lk = 'post-' + it + '.html';
+                var lk = 'post-' + it + '.html',
+                    date = $.dt(post['date']);
                 if (post['link']) {
                     lk = post['link'] + '.html';
                 }
-                rendertgs += '<li><a class=\'taglink\' href=\'' + lk + '\'>' + Base64.decode(post['title']) + '</a></li>';
+                var g = ot.r(taglistitemtemp, '{[taglistitemlink]}', lk);
+                g = ot.r(g, '{[taglistitemtitle]}', Base64.decode(post['title']));
+                g = ot.r(g, '{[taglistitemdate]}', date);
+                g = ot.r(g, '{[tagcurrent]}', tg);
+                rendertgs += g;
             });
+            rendertgs = ot.r(taglisttemp, '{[taglist]}', rendertgs);
             SC('tags').innerHTML = rendertgs;
         },
-        tagpagechecker: function() {
+        tagpagechecker: function() { /*标签页hash更新检查器*/
             var ot = this;
             var eh = document.getElementsByTagName('html')[0].innerHTML; /*Get All html*/
             var href = $.tr(window.location.href);
@@ -621,7 +688,7 @@ if (!B) { /*PreventInitializingTwice*/
                             if (tt.indexOf(v) !== -1 || cc.indexOf(v) !== -1 || dd.indexOf(v) !== -1 || tg.indexOf(v) !== -1) {
                                 var render1 = B.r(item, '{[postitemtitle]}', tt);
                                 var render2 = B.r(render1, '{[postitemintro]}', cc + '...');
-                                var render3 = B.r(render2, '{[postitemdate]}', dd);
+                                var render3 = B.r(render2, '{[postitemdate]}', $.dt(dd));
                                 var render4;
                                 if (!pt[i]['link']) {
                                     render4 = B.r(render3, '{[postitemlink]}', 'post-' + i + '.html'); /*把页面也算入*/
@@ -674,14 +741,14 @@ if (!B) { /*PreventInitializingTwice*/
             setTimeout(function() {
                 SC('loading').style.opacity = 1;
                 SC('loading').style.zIndex = 200;
-            }, 100);
+            }, 10);
         },
         loadhide: function() {
             this.loadstatu = false; /*加载就绪*/
             setTimeout(function() {
                 SC('loading').style.opacity = 0;
                 SC('loading').style.zIndex = -1;
-            }, 100);
+            }, 10);
         },
         morehtmls: {},
         more: function() {
@@ -706,7 +773,7 @@ if (!B) { /*PreventInitializingTwice*/
                         if (!pt['link']) { /*排除页面在外*/
                             var render1 = B.r(item, '{[postitemtitle]}', Base64.decode(pt.title));
                             var render2 = B.r(render1, '{[postitemintro]}', Base64.decode(pt.intro) + '...');
-                            var render3 = B.r(render2, '{[postitemdate]}', pt.date);
+                            var render3 = B.r(render2, '{[postitemdate]}', $.dt(pt.date));
                             var render4 = B.r(render3, '{[postitemlink]}', 'post-' + pid + '.html');
                             if (pt['cover']) { /*如果有封面*/
                                 render4 = B.r(render4, '{[postcover]}', pt['cover']); /*把页面也算入*/
@@ -816,9 +883,12 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                 window.scrollTo(0, 0); /*滚动到头部*/
                 if (ts.LoadedPage[ehref]) { /*临时缓存*/
                     $.ht(ts.LoadedPage[ehref], e, false);
-                    setTimeout(function() {
+                    transitionchecker('loading', function() {
                         window.dispatchEvent(ts.PJAXFinish);
-                    }, 1000);
+                    }); /*灵活检验loading页面动画是否结束*/
+                    /*setTimeout(function() {
+                        window.dispatchEvent(ts.PJAXFinish);
+                    }, 1000);*/
                 } else {
                     var cache = q('r', ehref, '', '', ''); /*获取缓存信息*/
                     if (cache['c']) { /*如果有缓存*/
@@ -840,9 +910,9 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                                     q('e', ehref, '', '', 1); /*更新缓存读取次数*/
                                 }
                             }
-                            setTimeout(function() {
-                                window.dispatchEvent(ts.PJAXFinish)
-                            }, 1000);
+                            transitionchecker('loading', function() {
+                                window.dispatchEvent(ts.PJAXFinish);
+                            }); /*灵活检验loading页面动画是否结束*/
                         },
                         failed: function(m) {
                             window.dispatchEvent(ts.PJAXFinish);
