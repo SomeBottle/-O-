@@ -618,10 +618,10 @@ if (!B) { /*PreventInitializingTwice*/
                 var g = ot.r(taglistitemtemp, '{[taglistitemlink]}', lk);
                 g = ot.r(g, '{[taglistitemtitle]}', Base64.decode(post['title']));
                 g = ot.r(g, '{[taglistitemdate]}', date);
-                g = ot.r(g, '{[tagcurrent]}', tg);
                 rendertgs += g;
             });
             rendertgs = ot.r(taglisttemp, '{[taglist]}', rendertgs);
+			rendertgs = ot.r(rendertgs,'{[tagcurrent]}', tg);
             SC('tags').innerHTML = rendertgs;
         },
         tagpagechecker: function() { /*标签页hash更新检查器*/
@@ -933,7 +933,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             for (var i in p) {
                 if (typeof(p[i].addEventListener) == 'function') { /*防止不是函数的凑数*/
                     p[i].addEventListener('click', function(e) {
-                        if (ts.preventurl.indexOf(this.href) !== -1) {
+                        if (ts.preventurl.indexOf(this.href) !== -1||!this.href||this.href=='') {
                             return true;
                         } else {
                             window.history.pushState(null, null, this.href); /*加入历史*/
