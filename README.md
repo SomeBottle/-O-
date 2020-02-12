@@ -22,6 +22,11 @@
    * 平滑回滚至头部 2ax=V²  
    * 封面图支持~  
    
+## 可用主题🧻  
+   1. -O-程序自带
+   2. [Anatole](https://github.com/SomeBottle/-O-Anatole)  
+   3. 期待各位的移植和创造~  
+   
 ## 部署📖  
    1. 创建一个repo作为博客仓库(记得要创建README), 建议用小号(For Safety).  
    2. 选择一个静态网站服务器上传-O-，作为**后台** (建议用**Release**的版本)  
