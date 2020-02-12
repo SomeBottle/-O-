@@ -1,10 +1,10 @@
 # -O-
-![head](https://ws4.sinaimg.cn/large/006Xmmmggy1g5dkc14k9vj30m808cwel.jpg)  
+![head](https://ww2.sinaimg.cn/large/006Xmmmggy1g5dkc14k9vj30m808cwel.jpg)  
 *Just a simple static blog Generator with single static pages.*  
 *现在开始就在GithubPages上撰写吧*
 
 -----------------------------------
-![example](https://ws4.sinaimg.cn/large/006Xmmmggy1g5dkfebhulj31gr0pu0ud.jpg)  
+![example](https://ww2.sinaimg.cn/large/006Xmmmggy1g5dkfebhulj31gr0pu0ud.jpg)  
 
 -----------------------------------
 
@@ -112,6 +112,7 @@
      
      2. postitem.html **文章列表单项**
      ```html
+     {[postitemlink]}  文章列表每一项的链接
      {[postitemtitle]}  文章列表每一项的标题  
      {[postitemintro]}  文章列表每一项的简介
      {[postitemdate]}  文章列表每一项的日期  
@@ -125,7 +126,7 @@
      <script>PJAX.autoprevent();PJAX.sel('container');PJAX.start();</script>  唤醒PJAX  
      ```
      
-     4. post.html **文章/页面单页**  
+     4. post.html **文章/页面单页**  **-->具体看wiki**
      ```html
      {[posttitle]}  文章标题  
      {[postdate]}  文章日期  
@@ -136,39 +137,36 @@
      <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
      ```
 
-     5. main.html **酥脆外皮,Footer**  
+     5. main.html **酥脆外皮**  **-->具体看wiki**  
      ```html
      {[contents]}  用于渲染页面内容  
      <!--Footer-->  (需要保留) 指定页脚开始的地方  
      ```
 
-     6. cloth.html **外衣,导航栏**  
+     6. cloth.html **外衣**  
      ```html
      {[main]}  用于渲染main.html  
      {[title]}  装载标题  
      ```
 
      7. archives.html **归档页**  
-     ```html
-     {[archives]}  用于渲染归档  
-     ```
+     **具体介绍看wiki**
 
      8. tags.html **标签页**  
-     ```html
-     {[tags]}  用于渲染标签  
-     ```
+     **具体介绍看wiki**
 
      9. comment.html **评论框页**  
      ```html
      {[pid]}  文章唯一id  
-     ```
-   
-   * **特殊样式class**    
-     标签页和归档页的内容是直接从main.json内拉取渲染的，因此有特殊样式：
-     1. **单个**标签链接：taglink  
-     2. **单个**归档链接：archivelink  
+     ``` 
      
 ## 函数供应💬  
+   * 导航栏相关  
+   ```javascript
+   B.nav*
+   ```
+   **具体看wiki**
+   
    * 平滑滚动至顶部  
    ```javascript
    B.scrolltop(maxspeed,minspeed); //(最大速度,最小速度)单位：px/10ms
@@ -221,6 +219,7 @@
 ## 感谢❤  
    * Ghosin 提了非常多很不错的意见！  
    * Ohmyga 帮助改进了LoadingPage...  
+   * 匿名小伙伴们的资助~  
    
 ------------------------------------
 #### MIT LICENSE.
