@@ -1,10 +1,10 @@
 # -O-
-![head](https://ww2.sinaimg.cn/large/006Xmmmggy1g5dkc14k9vj30m808cwel.jpg)  
+![head](https://s2.ax1x.com/2020/02/12/1b1l5R.jpg)  
 *Just a simple static blog Generator with single static pages.*  
 *现在开始就在GithubPages上撰写吧*
 
 -----------------------------------
-![example](https://ww2.sinaimg.cn/large/006Xmmmggy1g5dkfebhulj31gr0pu0ud.jpg)  
+![example](https://s2.ax1x.com/2020/02/12/1b13P1.jpg)  
 
 -----------------------------------
 
