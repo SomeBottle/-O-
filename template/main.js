@@ -517,7 +517,7 @@ if (!B) { /*PreventInitializingTwice*/
                     }
                     var itemrender = ot.r(archiveitemtemp, '{[archiveitemlink]}', itemlink),
                         itemrender = ot.r(itemrender, '{[archiveitemtitle]}', title),
-                        itemrender = ot.r(itemrender, '{[archiveitemdate]}', date);
+                        itemrender = ot.r(itemrender, '{[archiveitemdate]}', $.dt(date));
                     renderarit += itemrender;
                 }
                 if (renderarit !== '') renderar = ot.r(renderar, '{[archiveitems]}', renderarit); /*apply items to section#2*/
@@ -617,7 +617,7 @@ if (!B) { /*PreventInitializingTwice*/
                 }
                 var g = ot.r(taglistitemtemp, '{[taglistitemlink]}', lk);
                 g = ot.r(g, '{[taglistitemtitle]}', Base64.decode(post['title']));
-                g = ot.r(g, '{[taglistitemdate]}', date);
+                g = ot.r(g, '{[taglistitemdate]}', $.dt(date));
                 rendertgs += g;
             });
             rendertgs = ot.r(taglisttemp, '{[taglist]}', rendertgs);
