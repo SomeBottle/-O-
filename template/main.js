@@ -759,7 +759,9 @@ if (!B) { /*PreventInitializingTwice*/
             var itemid = 0;
             var listrender = '';
             var tj = window.mainjson; /*get json*/
-            var item = window.htmls[j['templatehtmls']['postitem']];
+            var item = window.htmls[j['templatehtmls']['postitem']],
+			ptitem=ot.gt('<!--PostItem-->','<!--PostItemEnd-->',item),/*有项目的模板*/
+			noitem=ot.gt('<!--NoItem-->','<!--NoItemEnd-->',item);/*无项目的模板*/
             var maxrender = parseInt(tj['posts_per_page']);
             var end = start + maxrender;
             var tj = window.mainjson; /*get json*/
@@ -771,7 +773,7 @@ if (!B) { /*PreventInitializingTwice*/
                         var pid = i.replace('post', '');
                         var pt = tj['postindex'][pid];
                         if (!pt['link']) { /*排除页面在外*/
-                            var render1 = B.r(item, '{[postitemtitle]}', Base64.decode(pt.title));
+                            var render1 = B.r(ptitem, '{[postitemtitle]}', Base64.decode(pt.title));
                             var render2 = B.r(render1, '{[postitemintro]}', Base64.decode(pt.intro) + '...');
                             var render3 = B.r(render2, '{[postitemdate]}', $.dt(pt.date));
                             var render4 = B.r(render3, '{[postitemlink]}', 'post-' + pid + '.html');
@@ -793,8 +795,8 @@ if (!B) { /*PreventInitializingTwice*/
                     itemid += 1;
                 }
             }
-            if (listrender == '') {
-                listrender = '<h3 style=\'color:#AAA;\'>没有更多了呢</h3>';
+            if (listrender == '') {/*没有更多文章了*/
+                listrender = noitem;
                 SC('morebtn').style.display = 'none';
             } else {
                 SC('morebtn').style.display = 'block';
