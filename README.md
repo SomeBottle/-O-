@@ -117,11 +117,16 @@
      
      2. postitem.html **文章列表单项**
      ```html
+     <!--PostItem-->  主要postitem模板
      {[postitemlink]}  文章列表每一项的链接
      {[postitemtitle]}  文章列表每一项的标题  
      {[postitemintro]}  文章列表每一项的简介
      {[postitemdate]}  文章列表每一项的日期  
      <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
+     <!--PostItemEnd-->
+     <!--NoItem-->   加载more时没有更多文章的模板
+     <h3 style='color:#AAA;'>没有更多了呢</h3>   
+     <!--NoItemEnd-->
      ```
      
      3. postlist.html **文章列表**   
