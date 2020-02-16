@@ -79,6 +79,27 @@ $.ht = function(h, e) {
 	}
 
 }
+$.ce=function(v){/*if empty*/
+	if(v == null || String(v) == 'undefined' || v.match(/^\s*$/)) return false
+	else return true;
+}
+$.getquery=function(name) {
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+    var r = window.location.search.substr(1).match(reg);
+    if (r != null) return unescape(r[2]); return null;
+}
+$.param=function(pr,bs64=false){/*params(object)*/
+    var param='?';
+	for(var i in pr){
+		param+=i+'='+pr[i]+'&';
+	}
+	param=param.slice(0,param.length-1);
+	if(bs64){
+		return Base64.encode(JSON.stringify(pr));
+	}else{
+		return param;
+	}
+}
 $.aj = function(p, d, sf, m, hd, as) { /*(path,data,success or fail,method,authheader,async)*/
 	var xhr = new XMLHttpRequest();
 	var hm = '';
@@ -99,7 +120,9 @@ $.aj = function(p, d, sf, m, hd, as) { /*(path,data,success or fail,method,authh
 	} else {
 		xhr.open('post', p, as);
 	}
-	xhr.setRequestHeader('Authorization', hd);
+	if($.ce(hd)){
+	  xhr.setRequestHeader('Authorization', hd);
+	}
 	if (m !== 'multipart/form-data') {
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.send(hm);

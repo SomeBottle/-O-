@@ -1,11 +1,15 @@
 /*Initialization - SomeBottle*/
 $bueue.de(true);
-
+/*check user existence*/
+if(!window.githubuser){
+	blog.getusr(window.accesstoken,true);
+}
 function typer() { /*重定义typer*/
     var repo = SC('r').value;
+	if($.ce(repo)){
     window.githubrepo = SC('r').value;
     loadshow();
-    blog.getrepo(window.githubuser, repo, true, {
+    blog.getrepo(window.accesstoken, repo, true, {
         success: function(m) {
             loadhide();
             SC('f').style.marginTop = '1000px';
@@ -21,13 +25,14 @@ function typer() { /*重定义typer*/
     document.onkeydown = function() {
         return true;
     }
+	}
 }
 
 function initialcheck() { /*检查是否初始化*/
     loadshow();
     var j, mj, pi;
     new Promise(function(res, rej) {
-        blog.getfile(window.githubuser, window.githubrepo, 'template.json', true, { /*获得仓库模板内容*/
+        blog.getfile(window.accesstoken, window.githubrepo, 'template.json', true, { /*获得仓库模板内容*/
             success: function(k) {
                 j = Base64.decode(k['content']);
                 window.tjson = j;
@@ -48,7 +53,7 @@ function initialcheck() { /*检查是否初始化*/
         });
     }).then(function(d) {
         return new Promise(function(res, rej) {
-            blog.getfile(window.githubuser, window.githubrepo, mj['templatehtmls']['postitem'], true, { /*获得postitem模板内容*/
+            blog.getfile(window.accesstoken, window.githubrepo, mj['templatehtmls']['postitem'], true, { /*获得postitem模板内容*/
                 success: function(k) {
                     pi = Base64.decode(k['content']);
                     window.htmls['postitem.html'] = pi;
@@ -63,7 +68,7 @@ function initialcheck() { /*检查是否初始化*/
         });
     }).then(function(d) {
         return new Promise(function(res, rej) { /*check main.json*/
-            blog.getfile(window.githubuser, window.githubrepo, mj['mainjson'], true, {
+            blog.getfile(window.accesstoken, window.githubrepo, mj['mainjson'], true, {
                 success: function(m) { /*已经初始化*/
                     window.mainjson = m;
                     loadhide();
@@ -91,7 +96,7 @@ function initialization() { /*初始化*/
                     $.aj('./template/' + tmt, {}, {
                         success: function(m) {
                             notice(tmt);
-                            blog.cr(window.githubuser, window.githubrepo, tmt, 'Initial Commit', m, {
+                            blog.cr(window.accesstoken, window.githubrepo, tmt, 'Initial Commit', m, {
                                 success: function(f) {
                                     $bueue.next();
                                 },

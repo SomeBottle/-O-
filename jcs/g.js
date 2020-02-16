@@ -1,6 +1,8 @@
 /*Scripts for Github Actions - SomeBottle*/
-window.auth, window.ua = '';
-window.auth = 'Basic ' + Base64.encode(ua);
+ /*---------workers url---------------*/
+const workers = 'https://xxxx.xxxx.workers.dev'; 
+/*---------workers url end---------------*/
+window.ua = '';
 window.authstatu = false;
 window.gstate = 0; /*任务完成状况*/
 window.errnum = 0; /*出错次数*/
@@ -10,34 +12,26 @@ function timestamp() {
     return a;
 }
 
-function gh(auth) {
-    this.login = function(usr, pass, callback) {
+function gh() {
+    this.login = function(workerpass, cb) {
         window.gstate += 1;
-        ua = usr + ':' + pass;
-        auth = 'Basic ' + Base64.encode(ua);
-        window.auth = 'Basic ' + Base64.encode(ua);
-        $.aj('https://api.github.com/users/' + usr + '?' + timestamp(), {}, {
+        $.aj(workers + '/?a=gettoken&p=' + $.param({ /*请求accesstoken*/
+            pass: Base64.encode(workerpass)
+        }, true), {}, {
             success: function(msg) {
                 var t = JSON.parse(msg);
-                if (t.private_gists !== undefined) {
-                    console.log('Login Success');
-                    callback.success(msg);
-                    window.authstatu = true;
-                }
+                cb.success(t);
                 window.gstate -= 1;
             },
             failed: function(m) {
-                callback.failed(m);
-                console.log('Login Failed');
-                window.authstatu = 'failed';
-                window.errnum += 1;
+                cb.failed(m);
                 window.gstate -= 1;
             }
-        }, 'get', auth, true);
+        }, 'get', '', true);
     }
-    this.getfile = function(usr, repo, file, asyn, cb) { /*获得文件信息*/
+    this.getfile = function(token, repo, file, asyn, cb) { /*获得文件信息*/
         window.gstate += 1;
-        $.aj('https://api.github.com/repos/' + usr + '/' + repo + '/contents/' + file + '?' + timestamp(), {}, {
+        $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/contents/' + file + '?' + timestamp(), {}, {
             success: function(msg) {
                 var t = JSON.parse(msg);
                 if (t.message == 'Not Found') {
@@ -54,11 +48,24 @@ function gh(auth) {
                 window.gstate -= 1;
                 window.errnum += 1;
             }
-        }, 'get', auth, asyn);
+        }, 'get', 'token ' + token, asyn);
     }
-    this.getrepo = function(usr, repo, asyn, callback) { /*获得repo信息*/
+    this.getusr = function(token, asyn) {
+        loadshow();
+        $.aj('https://api.github.com/user', {}, {
+            success: function(m) {
+                loadhide();
+                var j = JSON.parse(m);
+                window.githubuser = j.login;
+            },
+            failed: function(m) {
+                notice('获取用户信息失败');
+            }
+        }, 'get', 'token ' + token, asyn);
+    }
+    this.getrepo = function(token, repo, asyn, callback) { /*获得repo信息*/
         window.gstate += 1;
-        $.aj('https://api.github.com/repos/' + usr + '/' + repo + '?' + timestamp(), {}, {
+        $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '?' + timestamp(), {}, {
             success: function(msg) {
                 var t = JSON.parse(msg);
                 if (t.message == 'Not Found') {
@@ -75,17 +82,17 @@ function gh(auth) {
                 window.gstate -= 1;
                 window.errnum += 1;
             }
-        }, 'get', auth, asyn);
+        }, 'get', 'token ' + token, asyn);
     }
-    this.cr = function(usr, repo, file, commit, content, callback) { /*创建/编辑文件*/
+    this.cr = function(token, repo, file, commit, content, callback) { /*创建/编辑文件*/
         window.gstate += 1;
-        this.getfile(usr, repo, file, true, {
+        this.getfile(token, repo, file, true, {
             success: function(fi) {
                 var shacode;
                 if (fi !== 'empty') {
                     shacode = fi.sha;
                 }
-                $.aj('https://api.github.com/repos/' + usr + '/' + repo + '/contents/' + file + '?' + timestamp(), {
+                $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/contents/' + file + '?' + timestamp(), {
                     message: commit,
                     content: Base64.encode(content),
                     sha: shacode
@@ -107,21 +114,21 @@ function gh(auth) {
                             this.success(p);
                         }
                     }
-                }, 'put', auth, true);
+                }, 'put', 'token ' + token, true);
             },
             failed: function(m) {
                 this.success(m); /*文件不存在，是船新版本*/
             }
         });
     }
-    this.del = function(usr, repo, file, commit, callback) { /*删除文件*/
+    this.del = function(token, repo, file, commit, callback) { /*删除文件*/
         window.gstate += 1;
-        this.getfile(usr, repo, file, true, {
+        this.getfile(token, repo, file, true, {
             success: function(fi) {
                 var shacode;
                 if (fi !== 'empty') {
                     shacode = fi.sha;
-                    $.aj('https://api.github.com/repos/' + usr + '/' + repo + '/contents/' + file + '?' + timestamp(), {
+                    $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/contents/' + file + '?' + timestamp(), {
                         message: commit,
                         sha: shacode
                     }, {
@@ -136,7 +143,7 @@ function gh(auth) {
                             window.gstate -= 1;
                             window.errnum += 1;
                         }
-                    }, 'delete', auth, true);
+                    }, 'delete', 'token ' + token, true);
                 } else {
                     console.log('[DeleteFile]Failed');
                 }
@@ -147,4 +154,4 @@ function gh(auth) {
         });
     }
 }
-var blog = new gh(window.auth);
+var blog = new gh();

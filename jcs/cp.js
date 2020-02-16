@@ -4,7 +4,7 @@ var editpost = 'none';
 var tpjs = JSON.parse(window.tjson); /*编辑的文章*/
 if (!window.mainjson) {
     loadshow();
-    blog.getfile(window.githubuser, window.githubrepo, tpjs['mainjson'], true, {
+    blog.getfile(window.accesstoken, window.githubrepo, tpjs['mainjson'], true, {
         success: function(fi) {
             console.log('ok');
             window.mainjson = fi;
@@ -176,9 +176,9 @@ var B = { /*Replace Part*/
         var rendera5 = B.r(rendera4, '{[type]}', pageh2);
         if (confirm('确定要生成标签和归档页面？')) {
             loadshow();
-            blog.cr(window.githubuser, window.githubrepo, pageg1, 'Generate Tag Page', rendert5, {
+            blog.cr(window.accesstoken, window.githubrepo, pageg1, 'Generate Tag Page', rendert5, {
                 success: function(m) {
-                    blog.cr(window.githubuser, window.githubrepo, pageg2, 'Generate Archive Page', rendera5, {
+                    blog.cr(window.accesstoken, window.githubrepo, pageg2, 'Generate Archive Page', rendera5, {
                         success: function(m) {
                             notice('Successful:D');
                             loadhide();
@@ -435,7 +435,7 @@ var B = { /*Replace Part*/
             tpjs['mainjson'] = rmj(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
             /*Promise NB!*/
             new Promise(function(res, rej) {
-                blog.cr(window.githubuser, window.githubrepo, filename, commit, render9, {
+                blog.cr(window.accesstoken, window.githubrepo, filename, commit, render9, {
                     success: function(m) {
                         res(m);
                     },
@@ -446,7 +446,7 @@ var B = { /*Replace Part*/
                 });
             }).then(function(d) {
                 return new Promise(function(res, rej) {
-                    blog.cr(window.githubuser, window.githubrepo, tpjs['mainjson'], commit, JSON.stringify(tj), {
+                    blog.cr(window.accesstoken, window.githubrepo, tpjs['mainjson'], commit, JSON.stringify(tj), {
                         success: function(m) {
                             res(m);
                         },
@@ -458,7 +458,7 @@ var B = { /*Replace Part*/
                 });
             }).then(function(d) {
                 return new Promise(function(res, rej) {
-                    blog.cr(window.githubuser, window.githubrepo, 'index.html', commit, indexpage, {
+                    blog.cr(window.accesstoken, window.githubrepo, 'index.html', commit, indexpage, {
                         success: function(m) {
                             res(m);
                         },
@@ -470,7 +470,7 @@ var B = { /*Replace Part*/
                 });
             }).then(function(d) {
                 return new Promise(function(res, rej) {
-                    blog.cr(window.githubuser, window.githubrepo, 'template.json', commit, JSON.stringify(tpjs), {
+                    blog.cr(window.accesstoken, window.githubrepo, 'template.json', commit, JSON.stringify(tpjs), {
                         success: function(m) {
                             res(m);
                         },
@@ -482,7 +482,7 @@ var B = { /*Replace Part*/
                 });
             }).then(function(d) {
                 return new Promise(function(res, rej) {
-                    blog.del(window.githubuser, window.githubrepo, recentmjn, 'Delete recent json', {
+                    blog.del(window.accesstoken, window.githubrepo, recentmjn, 'Delete recent json', {
                         success: function(m) {
                             res(m);
                         },
@@ -495,7 +495,7 @@ var B = { /*Replace Part*/
             }).then(function(d) {
                 return new Promise(function(res, rej) {
                     if (recentlink !== '' && recentlink !== pagelink) { /*更新页面时如果更改链接,删除先前存在的页面*/
-                        blog.del(window.githubuser, window.githubrepo, recentlink + '.html', 'Delete recent page', {
+                        blog.del(window.accesstoken, window.githubrepo, recentlink + '.html', 'Delete recent page', {
                             success: function(m) {
                                 res(m);
                             },
@@ -546,7 +546,7 @@ var B = { /*Replace Part*/
             var recentmjn = tpjs['mainjson']; /*上一次的main.json名字*/
             tpjs['mainjson'] = rmj(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
             new Promise(function(res, rej) {
-                blog.del(window.githubuser, window.githubrepo, filename, 'Delete post', {
+                blog.del(window.accesstoken, window.githubrepo, filename, 'Delete post', {
                     success: function(m) {
                         window.mainjson.content = Base64.encode(JSON.stringify(tj));
                         res(m);
@@ -558,7 +558,7 @@ var B = { /*Replace Part*/
                 });
             }).then(function(d) {
                 return new Promise(function(res, rej) {
-                    blog.cr(window.githubuser, window.githubrepo, tpjs['mainjson'], 'Delete post', JSON.stringify(tj), {
+                    blog.cr(window.accesstoken, window.githubrepo, tpjs['mainjson'], 'Delete post', JSON.stringify(tj), {
                         success: function(m) {
                             res(m);
                         },
@@ -570,7 +570,7 @@ var B = { /*Replace Part*/
                 });
             }).then(function(d) {
                 return new Promise(function(res, rej) {
-                    blog.del(window.githubuser, window.githubrepo, recentmjn, 'Delete recent JSON', {
+                    blog.del(window.accesstoken, window.githubrepo, recentmjn, 'Delete recent JSON', {
                         success: function(m) {
                             res(m);
                         },
@@ -582,7 +582,7 @@ var B = { /*Replace Part*/
                 });
             }).then(function(d) {
                 return new Promise(function(res, rej) {
-                    blog.cr(window.githubuser, window.githubrepo, 'template.json', 'Update template', JSON.stringify(tpjs), {
+                    blog.cr(window.accesstoken, window.githubrepo, 'template.json', 'Update template', JSON.stringify(tpjs), {
                         success: function(m) {
                             addnew();
                             renderlist(); /*渲染最新文章列表*/
@@ -596,7 +596,7 @@ var B = { /*Replace Part*/
                 });
             }).then(function(d) {
                 return new Promise(function(res, rej) {
-                    blog.cr(window.githubuser, window.githubrepo, 'index.html', 'Delete post', indexpage, { /*渲染首页*/
+                    blog.cr(window.accesstoken, window.githubrepo, 'index.html', 'Delete post', indexpage, { /*渲染首页*/
                         success: function(m) {
                             loadhide();
                             notice('删除成功');
@@ -642,7 +642,7 @@ var B = { /*Replace Part*/
         }
         if (!window.htmls[filename]) {
             var ot = this;
-            blog.getfile(window.githubuser, window.githubrepo, filename, true, {
+            blog.getfile(window.accesstoken, window.githubrepo, filename, true, {
                 success: function(fi) {
                     ot.loadpost(fi.content);
                     window.htmls[filename] = fi.content; /*已经加载过的文章先存着*/

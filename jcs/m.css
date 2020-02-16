@@ -11,6 +11,10 @@
 	opacity: 0;
 	color: #A4A4A4;
 }
+.uh3{
+	color:#A4A4A4;
+	text-align:center;
+}
 
 input[type="button"] {
 	cursor: hand;
