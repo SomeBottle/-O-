@@ -17,7 +17,7 @@
    * 支持页码，标签页，归档页  
    * 自带简单搜索功能  
    * 原生PJAX  
-   * 只需要Github Pages.(关键是省钱啊喂 #)3 ) 
+   * 只需要Github Pages和Cloudflare workers(这个其实可以不要).(关键是省钱啊喂 #)3 ) 
    * 硬核图片Lazyload  
    * 平滑回滚至头部 2ax=V²  
    * 封面图支持~  
