@@ -215,6 +215,7 @@ var B = { /*Replace Part*/
         var tj = js;
         var m = window.htmls['index.html'];
         var item = window.htmls['postitem.html'];
+		item=B.gt('<!--PostItem-->','<!--PostItemEnd-->',item);/*有项目的模板*/
         var postids = tj['dateindex'];
         var listrender = '';
         var maxrender = parseInt(tj['posts_per_page']); /*每页最大渲染数*/

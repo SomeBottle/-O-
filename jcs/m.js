@@ -28,10 +28,7 @@ function lc(v, t) {
         localStorage[v] = t;
     }
 }
-if (lc('workerpass') == undefined) { /*初始化本地储存*/
-    lc('workerpass', '');
-}
-if (lc('githubrepo') == undefined) {
+if (lc('githubrepo') == undefined) {/*初始化本地储存*/
     lc('githubrepo', '');
 }
 
@@ -40,7 +37,6 @@ function typer() {
         SC('b').style.marginTop = '500px';
         SC('b').style.opacity = 0;
         SC('f').style.marginTop = '0px';
-        SC('n').value = lc('workerpass');
         setTimeout(function() {
             SC('b').style.marginTop = '0px';
             SC('b').style.top = 'auto';
@@ -61,7 +57,6 @@ function typer() {
 					SC('f').style.marginTop = '1000px';
                     SC('b').style.opacity = 0;
                     notice('成功获得accesstoken');
-                    lc('workerpass', window.workerpass);
                     setTimeout(function() {
                         PJAX.sel('container');
                         PJAX.jump('./check.html');
