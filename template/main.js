@@ -131,7 +131,7 @@ if (!B) {
     /*Include LoadingPage*/
     if (localStorage['obottle-ldpage']) {
         var e = document.getElementsByTagName('html')[0].innerHTML;
-        document.getElementsByTagName('html')[0].innerHTML = e.replace('{(LoadingArea)}', localStorage['obottle-ldpage']);
+        document.getElementsByTagName('html')[0].innerHTML = e.replace('<!--[LoadingArea]-->', localStorage['obottle-ldpage']);
     }
     $.aj('./loading.html', '', {
         success: function(m, p) {
@@ -886,8 +886,6 @@ if (!B) {
             PJAX.start(); /*refresh pjax links*/
         }
     };
-	/*处理LoadingAREA*/
-	B.hr('{(LoadingArea)}','<!--LoadingArea-->');
     window.addEventListener('scroll', B.lazycheck, false); /*LazyLoadCheck*/
     window.addEventListener('pjaxstart',
 
