@@ -2,5 +2,5 @@
   <h3 class='paneltitle'>Posts</h3>
   <hr><div id='postitems'>{[postitems]}</div>
   <button class='pagebtn' id='morebtn' onclick='B.more()'>More...</button></div>
-  <!--[PageType]{[pagetype]}[PageTypeEnd]-->
+  {(PageType)}{[pagetype]}{(PageTypeEnd)}
   <script>PJAX.autoprevent();PJAX.sel('container');PJAX.start();</script>

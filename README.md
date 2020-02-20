@@ -17,7 +17,7 @@
    * 支持页码，标签页，归档页  
    * 自带简单搜索功能  
    * 原生PJAX  
-   * 只需要Github Pages和Cloudflare workers(这个其实可以不要).(关键是省钱啊喂 #)3 ) 
+   * 只需要Github Pages #)3 ) 
    * 硬核图片Lazyload  
    * 平滑回滚至头部 2ax=V²  
    * 封面图支持~  
@@ -44,7 +44,7 @@
    8. **Enjoy it!**  
    
 ## 使用提示💡  
-   * 当日期一栏填的是非数字时会自动切换为创建页面模式，日期中填的内容将作为页面link.   
+   * 当日期一栏填的是非数字时会**自动切换**为**创建页面**模式，日期中填的内容将作为页面link.   
    * 页面不可转为文章.  
    * 发布文章时js会自动被注释，但是访问对应页面时还是会执行的.  
    * 如果页面未指定PJAX操作容器，PJAX会自动选择**id为container**的容器进行操作.因此建议模板中保留id='container'.  
@@ -105,49 +105,50 @@
      <meta name="description" content="{[description]}" />   Description 
      <!--Keywords-->
      <meta name="keywords" content="{[keywords]}" />   Keywords
-     <!--[LoadingArea]-->  用于放置Loading页面，不建议修改  
-     <!--[MainTitle]--><title>{[title]}-{[sitename]}</title><!--[MainTitleEnd]-->  注释用于识别标题所在位置，{[title]}为当前标题,{[sitename]}为站点名(在main.json配置)  
-     <!--[PostTitle]-->{[title]}<!--[PostTitleEnd]-->  文章标题，一般和上面的{[title]}一致  
-     <!--[PostDate]-->{[date]}<!--[PostDateEnd]-->  文章日期  
-     <!--[PostContent]-->
+     {(LoadingArea)}  用于放置Loading页面，不建议修改  
+     {(MainTitle)}<title>{[title]}-{[sitename]}</title>{(MainTitleEnd)}  注释用于识别标题所在位置，{[title]}为当前标题,{[sitename]}为站点名(在main.json配置)  
+     {(PostTitle)}{[title]}{(PostTitleEnd)}  文章标题，一般和上面的{[title]}一致  
+     {(PostDate)}{[date]}{(PostDateEnd)}  文章日期  
+     {(PostContent)}
      {[content]}   文章内容
-     <!--[PostContentEnd]-->
-     <!--[PostTag]-->{[tags]}<!--[PostTagEnd]-->  文章tags
-     <!--[PostID]-->{[pid]}<!--[PostIDEnd]-->  文章pid  
-     <!--[PostCover]-->{[cover]}<!--[PostCoverEnd]-->  (此处可能为none)文章封面，具体看上方封面设置
-     <!--[PageType]-->{[type]}<!--[PageTypeEnd]-->  用于指定页面类型  
+     {(PostContentEnd)}
+     {(PostTag)}{[tags]}{(PostTagEnd)}  文章tags
+     {(PostID)}{[pid]}{(PostIDEnd)}  文章pid  
+     {(PostCover)}{[cover]}{(PostCoverEnd)}  (此处可能为none)文章封面，具体看上方封面设置
+     {(PageType)}{[type]}{(PageTypeEnd)}  用于指定页面类型  
      <script src="./main.js?233"></script>
      <script>B.tpcheck();</script>  引入mainjs，唤醒模板渲染器  
      ```
      
      2. postitem.html **文章列表单项**
      ```html
-     <!--PostItem-->  主要postitem模板
+     {(PostItem)}  主要postitem模板
      {[postitemlink]}  文章列表每一项的链接
      {[postitemtitle]}  文章列表每一项的标题  
      {[postitemintro]}  文章列表每一项的简介
      {[postitemdate]}  文章列表每一项的日期  
      <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
-     <!--PostItemEnd-->
-     <!--NoItem-->   加载more时没有更多文章的模板
+     {(PostItemEnd)}
+     {(NoItem)}   加载more时没有更多文章的模板
      <h3 style='color:#AAA;'>没有更多了呢</h3>   
-     <!--NoItemEnd-->
+     {(NoItemEnd)}
      ```
      
      3. postlist.html **文章列表**   
      ```html
      {[postitems]}  用于载入文章列表  
-     <!--[PageType]{[pagetype]}[PageTypeEnd]-->  用于指定pagetype  
+     {(PageType)}{[pagetype]}{(PageTypeEnd)}  用于指定pagetype  
      <script>PJAX.autoprevent();PJAX.sel('container');PJAX.start();</script>  唤醒PJAX  
      ```
      
      4. post.html **文章/页面单页**  **-->具体看wiki**
      ```html
+	 {(Post)}
      {[posttitle]}  文章标题  
      {[postdate]}  文章日期  
      {[postcontent]}  文章内容  
      {[posttags]}  文章标签(html)  
-     <!--PostEnd-->  (需要保留) 指定文章结束的地方.  
+     {(:PostEnd)}  (需要保留) 指定文章结束的地方.  
      {[comments]}  用于渲染评论(接comment.html)  
      <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
      ```
@@ -155,7 +156,7 @@
      5. main.html **酥脆外皮**  **-->具体看wiki**  
      ```html
      {[contents]}  用于渲染页面内容  
-     <!--Footer-->  (需要保留) 指定页脚开始的地方  
+     {(Footer:)}  (需要保留) 指定页脚开始的地方  
      ```
 
      6. cloth.html **外衣**  

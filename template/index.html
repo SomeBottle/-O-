@@ -6,20 +6,20 @@
 <!--Keywords-->
 <meta name="keywords" content="{[keywords]}" />
 </head>
-<!--[LoadingArea]-->
+{(LoadingArea)}
 <div id='container'>
 <style>#container{opacity:0;word-wrap:break-word;word-break:break-all;max-width:50%;overflow:hidden}</style>
-<!--[MainTitle]--><title>{[title]}-{[sitename]}</title><!--[MainTitleEnd]-->
+{(MainTitle)}<title>{[title]}-{[sitename]}</title>{(MainTitleEnd)}
 <body>
-<!--[PostTitle]-->{[title]}<!--[PostTitleEnd]-->
-<!--[PostDate]-->{[date]}<!--[PostDateEnd]-->
-<!--[PostContent]-->
+{(PostTitle)}{[title]}{(PostTitleEnd)}
+{(PostDate)}{[date]}{(PostDateEnd)}
+{(PostContent)}
 {[content]}
-<!--[PostContentEnd]-->
-<!--[PostTag]-->{[tags]}<!--[PostTagEnd]-->
-<!--[PostID]-->{[pid]}<!--[PostIDEnd]-->
-<!--[PostCover]-->{[cover]}<!--[PostCoverEnd]-->
-<div style='display:none;'><!--[PageType]-->{[type]}<!--[PageTypeEnd]--></div>
+{(PostContentEnd)}
+{(PostTag)}{[tags]}{(PostTagEnd)}
+{(PostID)}{[pid]}{(PostIDEnd)}
+{(PostCover)}{[cover]}{(PostCoverEnd)}
+<div style='display:none;'>{(PageType)}{[type]}{(PageTypeEnd)}</div>
 <script src="./main.js?233"></script>
 <script>B.tpcheck();</script>
 </body>

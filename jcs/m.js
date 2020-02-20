@@ -28,12 +28,19 @@ function lc(v, t) {
         localStorage[v] = t;
     }
 }
+if (lc('secretcode') == undefined) {/*初始化本地储存*/
+    lc('secretcode', '');
+}
 if (lc('githubrepo') == undefined) {/*初始化本地储存*/
     lc('githubrepo', '');
 }
 
 function typer() {
     if (step == 1) {
+		var code=lc('secretcode');
+		if(code!==''){
+			SC('n').style.display='none';
+		}
         SC('b').style.marginTop = '500px';
         SC('b').style.opacity = 0;
         SC('f').style.marginTop = '0px';
@@ -46,33 +53,27 @@ function typer() {
             listener();
         }, 1000);
         step += 1;
-    } else if (step >= 2) {
-        window.workerpass = document.getElementById('n').value;
-        loadshow();
-        blog.login(window.workerpass, {
-            success: function(m) {
-                var code = Number(m.code);
-                if (code == 1) {
-                    window.accesstoken = Base64.decode(m.data.access_token);
-					SC('f').style.marginTop = '1000px';
-                    SC('b').style.opacity = 0;
-                    notice('成功获得accesstoken');
-                    setTimeout(function() {
-                        PJAX.sel('container');
-                        PJAX.jump('./check.html');
-                    }, 1000);
-                } else {
-                    notice('获取accesstoken失败，请重试');
-                }
-                listener();
-                loadhide();
-            },
-            failed: function(m) {
-                listener();
-                notice('Login Failed');
-                loadhide();
-            }
-        }); /*发送表单登录*/
+    } else if (step >= 2) {/*get/set tokencode*/
+		var pass=SC('p').value,code=lc('secretcode'),token;
+        if(code!==''){
+			token=blog.crypt(code,pass,true);
+		}else{
+			token=SC('n').value,
+			lc('secretcode', blog.crypt(token,pass));
+		}
+		if(code!==''&&$.ce(pass)||code==''&&$.ce(pass)&&$.ce(token)){
+		window.accesstoken=token;
+		blog.getusr(window.accesstoken,true,{
+			success:function(){
+				PJAX.sel('container');
+                PJAX.jump('./check.html');
+			},failed:function(){
+				SC('n').style.display='block';/*弹出token键入框*/
+				notice('请检查token是否正确');
+				lc('secretcode','');
+			}
+		});
+		}
     }
 }
 

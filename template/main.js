@@ -1,12 +1,14 @@
 /*FrontMainJS - SomeBottle*/
- /*q.js*/
+/*q.js*/
 var md;
 if (typeof($) !== 'object') {
     $ = new Object();
     $.ls = new Array();
     $.lss = '';
-    $.aj = function(p, d, sf, m, proxy, as) { /*(path,data,success or fail,method,proxyurl,async)*/
-        if (p !== 'false' && p) { /*奇妙的false问题*/
+    $.aj = function(p, d, sf, m, proxy, as) {
+        /*(path,data,success or fail,method,proxyurl,async)*/
+        if (p !== 'false' && p) {
+            /*奇妙的false问题*/
             var xhr = new XMLHttpRequest();
             var hm = '';
             for (var ap in d) {
@@ -39,7 +41,8 @@ if (typeof($) !== 'object') {
             }
         }
     }
-    var SC = function(e) { /*元素选择器*/
+    var SC = function(e) {
+        /*元素选择器*/
         if (e == 'body') {
             return document.body;
         } else if (e == 'html') {
@@ -48,7 +51,8 @@ if (typeof($) !== 'object') {
             return document.getElementById(e);
         }
     }
-    $.script = function(url) { /*外部js加载器，页面已经加载的不会重复加载*/
+    $.script = function(url) {
+        /*外部js加载器，页面已经加载的不会重复加载*/
         if (!$.scripturl) {
             $.scripturl = [];
         }
@@ -68,7 +72,8 @@ if (typeof($) !== 'object') {
             document.body.appendChild(script);
         }
     }
-    $.ht = function(h, e, scinclude = true) { /*元素内容设置器(html,element,run script or not when ht)*/
+    $.ht = function(h, e, scinclude = true) {
+        /*元素内容设置器(html,element,run script or not when ht)*/
         var ht = SC(e);
         if (!ht) {
             console.log('Unable to find the Element:' + e);
@@ -81,21 +86,23 @@ if (typeof($) !== 'object') {
             if (os[o].src !== undefined && os[o].src !== null && os[o].src !== '') {
                 $.script(os[o].src);
             } else {
-                try { /*Oh...No Errors!*/
+                try {
+                    /*Oh...No Errors!*/
                     var h = os[o].innerHTML;
-                    if (scinclude) { /*是否去除注释执行*/
+                    if (scinclude) {
+                        /*是否去除注释执行*/
                         h = B.r(h, '/*', '');
                         h = B.r(h, '*/', '');
                     }
                     eval(h);
-                }
- catch (e) {
+                } catch (e) {
                     console.log('Page script Error: ' + e.message);
                 }
             }
         }
     }
-    $.tr = function(url) { /*PreventURLProblem(Fuck QQ Querying URI*/
+    $.tr = function(url) {
+        /*PreventURLProblem(Fuck QQ Querying URI*/
         var a = url;
         b = a.split('?');
         if (b[1]) {
@@ -104,7 +111,8 @@ if (typeof($) !== 'object') {
             return a;
         }
     }
-    $.dt = function(v) { /*date transformer*/
+    $.dt = function(v) {
+        /*date transformer*/
         if (Number(v) >= 10000000) {
             var dt = String(v),
                 md = dt.slice(-4),
@@ -118,26 +126,30 @@ if (typeof($) !== 'object') {
         }
     }
 }
-if (!B) { /*PreventInitializingTwice*/
+if (!B) {
+    /*PreventInitializingTwice*/
     /*Include LoadingPage*/
     if (localStorage['obottle-ldpage']) {
         var e = document.getElementsByTagName('html')[0].innerHTML;
-        document.getElementsByTagName('html')[0].innerHTML = e.replace('<!--[LoadingArea]-->', localStorage['obottle-ldpage']);
+        document.getElementsByTagName('html')[0].innerHTML = e.replace('{(LoadingArea)}', localStorage['obottle-ldpage']);
     }
     $.aj('./loading.html', '', {
         success: function(m, p) {
             B.hr('<!--[LoadingArea]-->', m);
             localStorage['obottle-ldpage'] = m;
         },
-        failed: function(m) { /*Failed*/
+        failed: function(m) {
+            /*Failed*/
             console.log('LoadingPage Load Failed');
         }
     }, 'get', '', true);
     $.script('./library.js'); /*Include Library Once*/
     window.htmls = new Object();
-    var B = { /*B Part*/
+    var B = {
+        /*B Part*/
         moreperpage: 0,
-        r: function(a, o, p, g = true) { /*(All,Original,ReplaceStr,IfReplaceAll)*/
+        r: function(a, o, p, g = true) {
+            /*(All,Original,ReplaceStr,IfReplaceAll)*/
             if (g) {
                 while (a.indexOf(o) !== -1) {
                     a = a.replace(o, p);
@@ -151,10 +163,12 @@ if (!B) { /*PreventInitializingTwice*/
             statu: false,
             conf: {}
         },
-        navcurrent: function(v = '') { /*getcurrentnav*/
+        navcurrent: function(v = '') {
+            /*getcurrentnav*/
             return ((-1 == v.indexOf('http') ? v = v : (v.replace(window.location.protocol + '//' + window.location.hostname, ''))) || window.location.pathname).replace('.html', ''); /*割掉尾巴*/
         },
-        navcheck: function() { /*modify html*/
+        navcheck: function() {
+            /*modify html*/
             var c = document.body,
                 o = this,
                 cl = o.navlist.conf;
@@ -188,9 +202,11 @@ if (!B) { /*PreventInitializingTwice*/
                 if (parseInt(ntnow) > (stages * 2)) {
                     vn += a1;
                     document.body.scrollTop = parseInt(ntnow) - vn;
-                } else if (parseInt(ntnow) > (stages)) { /*第二阶段*/
+                } else if (parseInt(ntnow) > (stages)) {
+                    /*第二阶段*/
                     document.body.scrollTop = parseInt(ntnow) - vn;
-                } else if (parseInt(ntnow) <= (stages)) { /*第三阶段*/
+                } else if (parseInt(ntnow) <= (stages)) {
+                    /*第三阶段*/
                     vn -= a1;
                     if (vn <= vmin) {
                         vn = vmin;
@@ -204,13 +220,26 @@ if (!B) { /*PreventInitializingTwice*/
                 }
             }, 10);
         },
-        hc: function(v) { /*反转义html的某些字符*/
+        hc: function(v) {
+            /*反转义html的某些字符*/
             v = ((v.replace(/&amp;/g, "&")).replace(/&lt;/g, "<")).replace(/&gt;/g, ">");
             return v;
         },
-        hr: function(o, p) { /*htmlreplace*/
+        hr: function(o, p) {
+            /*htmlreplace*/
             var e = document.getElementsByTagName('html')[0].innerHTML;
             document.getElementsByTagName('html')[0].innerHTML = this.r(e, o, p);
+        },
+        unrnspace: function(h) {
+            /*文章空格换行替换还原*/
+            h = h.replace(/{{s}}/g, " ");
+            h = h.replace(/{{rn}}/g, "\r\n");
+            h = h.replace(/{{n}}/g, "\n");
+            return h;
+        },
+        deltemptags: function(h) {
+            /*删除模板多余的标识符，像{(xxx)}一类*/
+            return h.replace(/\{\((.*?)\)\}/g, '');
         },
         preventscript: function() {
             var e = document.getElementsByTagName('html')[0];
@@ -221,7 +250,8 @@ if (!B) { /*PreventInitializingTwice*/
                 }
             }
         },
-        gt: function(p1, p2, ct = false) { /*htmlget*/
+        gt: function(p1, p2, ct = false) {
+            /*htmlget*/
             var e;
             if (!ct) {
                 e = document.getElementsByTagName('html')[0].innerHTML;
@@ -236,7 +266,8 @@ if (!B) { /*PreventInitializingTwice*/
                 return false;
             }
         },
-        lazypre: function(c) { /*处理Lazyload图片*/
+        lazypre: function(c) {
+            /*处理Lazyload图片*/
             var i = document.createElement('div');
             i.innerHTML = c;
             var s = i.getElementsByTagName('img');
@@ -253,7 +284,8 @@ if (!B) { /*PreventInitializingTwice*/
             }
             return i.innerHTML;
         },
-        lazycheck: function() { /*包租婆————怎么没水了呢？*/
+        lazycheck: function() {
+            /*包租婆————怎么没水了呢？*/
             var H = window.innerHeight;
             var S = document.documentElement.scrollTop || document.body.scrollTop;
             var es = document.getElementsByTagName('img');
@@ -283,44 +315,50 @@ if (!B) { /*PreventInitializingTwice*/
         /*模板拼接状态*/
         loadstatu: false,
         /*加载div显示状态*/
-        tpcheck: function() { /*template check*/
+        tpcheck: function() {
+            /*template check*/
             var ot = this,
                 o = this;
             ot.tpcheckstatu = true; /*正在检查模板*/
             ot.loadshow();
-            var pagetype = ot.gt('<!--[PageType]-->', '<!--[PageTypeEnd]-->'); /*Get Page Type*/
+            var pagetype = ot.gt('{(PageType)}', '{(PageTypeEnd)}'); /*Get Page Type*/
             if (!window.templjson) {
                 $.aj('template.json', '', {
                     success: function(m) {
                         window.templjson = JSON.parse(m);
                         return ot.tpcheck();
                     },
-                    failed: function(m) { /*Failed*/
+                    failed: function(m) {
+                        /*Failed*/
                         console.log('TemplateJson Load Failed.');
                     }
                 }, 'get', '', true);
-            } else if (!window.mainjson && window.templjson['usemain'].indexOf(pagetype) !== -1) { /*Some pages are in need of Main.json*/
-                if (!window.mainjsonrequest) { /*Include Mainjson*/
+            } else if (!window.mainjson && window.templjson['usemain'].indexOf(pagetype) !== -1) {
+                /*Some pages are in need of Main.json*/
+                if (!window.mainjsonrequest) {
+                    /*Include Mainjson*/
                     window.mainjsonrequest = true; /*make request flag*/
                     $.aj(window.templjson['mainjson'], '', {
                         success: function(m) {
                             window.mainjson = JSON.parse(m.replace(/[\r\n]/g, ""));
                             ot.moreperpage = parseInt(window.mainjson['more_per_page']); /*Update moreperpage*/
                         },
-                        failed: function(m) { /*Failed*/
+                        failed: function(m) {
+                            /*Failed*/
                             console.log('MainJson Load Failed');
                         }
                     }, 'get', '', true);
                 }
                 setTimeout(function() {
-                    return o.tpcheck();
-                },
-                100);
-            } else if (typeof showdown !== 'object') { /*Markdown is not ready!*/
+                        return o.tpcheck();
+                    },
+                    100);
+            } else if (typeof showdown !== 'object') {
+                /*Markdown is not ready!*/
                 setTimeout(function() {
-                    return o.tpcheck();
-                },
-                100);
+                        return o.tpcheck();
+                    },
+                    100);
             } else {
                 ot.preventscript(); /*剔除已加载scripts*/
                 var j = window.templjson;
@@ -333,7 +371,8 @@ if (!B) { /*PreventInitializingTwice*/
                         o.templonload += 1;
                         var usecache = false;
                         var cache = q('r', 'template-' + j['necessary'][i], '', '', ''); /*Test Cache*/
-                        if (cache['c']) { /*如果有缓存，先装载缓存*/
+                        if (cache['c']) {
+                            /*如果有缓存，先装载缓存*/
                             usecache = true;
                             var p = j['necessary'][i];
                             console.log('Template using cache:' + p);
@@ -348,25 +387,28 @@ if (!B) { /*PreventInitializingTwice*/
                                     o.templateloaded.push(p);
                                     o.templonload -= 1;
                                     q('w', 'template-' + p, m, timestamp(), '');
-                                } else if (cache['c'] !== m) { /*缓存需要更新*/
+                                } else if (cache['c'] !== m) {
+                                    /*缓存需要更新*/
                                     q('w', 'template-' + p, m, timestamp(), '');
-                                } else { /*增加缓存读取次数*/
+                                } else {
+                                    /*增加缓存读取次数*/
                                     q('e', 'template-' + p, '', '', 1);
                                 }
                             },
-                            failed: function(m) { /*Failed*/
+                            failed: function(m) {
+                                /*Failed*/
                                 console.log('Necessary HTML Load Failed...');
                             }
                         }, 'get', '', true);
                     }
                 }
                 var timer = setInterval(function() {
-                    if (o.templonload <= 0) {
-                        clearInterval(timer);
-                        o.renderer(); /*Call the renderer*/
-                    }
-                },
-                50); /*加快页面速度，我也是加把劲骑士！*/
+                        if (o.templonload <= 0) {
+                            clearInterval(timer);
+                            o.renderer(); /*Call the renderer*/
+                        }
+                    },
+                    50); /*加快页面速度，我也是加把劲骑士！*/
             }
         },
         itempage: 0,
@@ -392,7 +434,8 @@ if (!B) { /*PreventInitializingTwice*/
             }
             ot.itempage -= 1; /*项目会多计算一个，减去*/
         },
-        cd: function(rc) { /*covercutter封面<ifcover>去除器*/
+        cd: function(rc) {
+            /*covercutter封面<ifcover>去除器*/
             var rst = rc;
             while (rst.indexOf('<ifcover>') !== -1) {
                 var coverhtml = B.gt('<ifcover>', '</ifcover>', rst);
@@ -407,23 +450,24 @@ if (!B) { /*PreventInitializingTwice*/
             var cloth = window.htmls[j['templatehtmls']['cloth']];
             var main = window.htmls[j['templatehtmls']['main']];
             var comment = window.htmls[j['templatehtmls']['comment']];
-            var pagetype = ot.gt('<!--[PageType]-->', '<!--[PageTypeEnd]-->'); /*Get Page Type*/
+            var pagetype = ot.gt('{(PageType)}', '{(PageTypeEnd)}'); /*Get Page Type*/
             var tj = window.mainjson; /*get json*/
             if (pagetype == j['templatehtmls']['post']) {
-                var content = ot.gt('<!--[PostContent]-->', '<!--[PostContentEnd]-->'); /*Get Post Content*/
-                var title = ot.gt('<!--[PostTitle]-->', '<!--[PostTitleEnd]-->'); /*Get Post Title*/
-                var date = ot.gt('<!--[PostDate]-->', '<!--[PostDateEnd]-->'); /*Get Post Date*/
-                var tags = ot.gt('<!--[PostTag]-->', '<!--[PostTagEnd]-->'); /*Get Post Content*/
-                var pid = ot.gt('<!--[PostID]-->', '<!--[PostIDEnd]-->'); /*Get Post ID*/
-                var cover = ot.gt('<!--[PostCover]-->', '<!--[PostCoverEnd]-->'); /*Get Post Cover*/
-                var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
+                var content = ot.gt('{(PostContent)}', '{(PostContentEnd)}'); /*Get Post Content*/
+                var title = ot.gt('{(PostTitle)}', '{(PostTitleEnd)}'); /*Get Post Title*/
+                var date = ot.gt('{(PostDate)}', '{(PostDateEnd)}'); /*Get Post Date*/
+                var tags = ot.gt('{(PostTag)}', '{(PostTagEnd)}'); /*Get Post Content*/
+                var pid = ot.gt('{(PostID)}', '{(PostIDEnd)}'); /*Get Post ID*/
+                var cover = ot.gt('{(PostCover)}', '{(PostCoverEnd)}'); /*Get Post Cover*/
+                var pagetitle = (ot.gt('{(MainTitle)}', '{(MainTitleEnd)}')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
                 var post = window.htmls[j['templatehtmls']['post']];
-                var render11 = ot.r(post, '{[postcontent]}', ot.lazypre(md.makeHtml(ot.hc(content.trim())))); /*Analyse md*/
+                var render11 = ot.r(post, '{[postcontent]}', ot.lazypre(md.makeHtml(ot.hc(ot.unrnspace(content.trim()))))); /*unescape and Analyse md*/
                 var render12 = ot.r(render11, '{[posttitle]}', title);
                 var alltags = [];
                 if (isNaN(date)) {
                     tags = '页面';
-                } else { /*Tag Process*/
+                } else {
+                    /*Tag Process*/
                     alltags = tags.split(',');
                     tags = '';
                     alltags.forEach(function(i, v) {
@@ -439,58 +483,65 @@ if (!B) { /*PreventInitializingTwice*/
                 var render5 = ot.r(render4, '{[comments]}', comment); /*LoadCommentsForPost*/
                 var render6 = ot.r(render5, '{[pid]}', pid); /*SetPid*/
                 render6 = ot.r(render6, '{[pagetype]}', pagetype); /*SetPageType*/
+                render6 = ot.r(render6, '{(PageType)}', '<!--[PageType]'); /*SetPageType*/
+                render6 = ot.r(render6, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
                 /*CoverProcess*/
                 if (cover && cover !== 'none' && cover !== '') {
                     render6 = ot.r(render6, '{[postcover]}', cover); /*设定封面*/
-                } else { /*没有封面，按标签一起删掉*/
+                } else {
+                    /*没有封面，按标签一起删掉*/
                     render6 = ot.cd(render6);
                 }
                 if (isNaN(date)) {
                     //render6 = render6.split('<!--PostEnd-->')[0] + '<!--PostEnd-->';
-                    var r7 = render6.split('<!--PostEnd-->')[0] + '<!--PostEnd-->';
-                    var r8 = '<!--Footer-->' + render6.split('<!--Footer-->')[1];
+                    var r7 = render6.split('{(:PostEnd)}')[0] + '<!--PostEnd-->';
+                    var r8 = '<!--Footer-->' + render6.split('{(Footer:)}')[1];
                     render6 = r7 + r8;
                 }
-                $.ht(render6, 'container');
+                $.ht(ot.deltemptags(render6), 'container');
                 transitionchecker('loading', function() {
                     ot.lazycheck();
                 });
                 ot.loadhide();
             } else if (pagetype == j['templatehtmls']['postlist']) {
-                var content = ot.gt('<!--[PostContent]-->', '<!--[PostContentEnd]-->'); /*Get Post Content*/
-                var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
+                var content = ot.gt('{(PostContent)}', '{(PostContentEnd)}'); /*Get Post Content*/
+                var pagetitle = (ot.gt('{(MainTitle)}', '{(MainTitleEnd)}')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
                 var realtitle = pagetitle.replace('-', ''); /*Remove - */
                 var pt = window.htmls[j['templatehtmls']['postlist']];
-                var render11 = ot.r(pt, '{[postitems]}', md.makeHtml(content.trim())); /*Analyse md*/
+                var render11 = ot.r(pt, '{[postitems]}', md.makeHtml(ot.unrnspace((content.trim())))); /*Analyse md*/
                 var render2 = ot.r(main, '{[contents]}', render11);
                 var render3 = ot.r(cloth, '{[main]}', render2);
                 var render4 = ot.r(render3, '{[title]}', realtitle);
                 var render4 = ot.r(render4, '{[pagetype]}', pagetype); /*SetPageType*/
+                render4 = ot.r(render4, '{(PageType)}', '<!--[PageType]'); /*SetPageType*/
+                render4 = ot.r(render4, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
                 ot.itempage = parseInt(tj['posts_per_page']);
                 ot.itempagefixer(); /*修复因忽略页面而造成的列表重复*/
-                $.ht(render4, 'container');
+                $.ht(ot.deltemptags(render4), 'container');
                 ot.loadhide();
-                var timer = setInterval(function() { /*CheckIndexPage*/
-                    if (ot.gt('<!--[PageType]', '[PageTypeEnd]-->') !== j['templatehtmls']['postlist']) { /*跳离index页了*/
-                        PJAX.sel('container');
-                        PJAX.start(); /*修复more按钮的bug - 20190727*/
-                        ot.switchpage = 0;
-                        clearInterval(timer);
-                        return false;
-                    }
-                    ot.indexpagechecker();
-                },
-                100);
+                var timer = setInterval(function() {
+                        /*CheckIndexPage*/
+                        if (ot.gt('<!--[PageType]', '[PageTypeEnd]-->') !== j['templatehtmls']['postlist']) {
+                            /*跳离index页了*/
+                            PJAX.sel('container');
+                            PJAX.start(); /*修复more按钮的bug - 20190727*/
+                            ot.switchpage = 0;
+                            clearInterval(timer);
+                            return false;
+                        }
+                        ot.indexpagechecker();
+                    },
+                    100);
             } else if (pagetype == j['templatehtmls']['archives']) {
-                var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""),
+                var pagetitle = (ot.gt('{(MainTitle)}', '{(MainTitleEnd)}')).replace(/<\/?.+?>/g, ""),
                     /*Get Page Title(No html characters)*/
                     ar = window.htmls[j['templatehtmls']['archives']],
                     /*get entire html*/
-                    archivemain = ot.gt('<!--Archives-->', '<!--ArchivesEnd-->', ar),
+                    archivemain = ot.gt('{(Archives)}', '{(ArchivesEnd)}', ar),
                     /*Get archive main html*/
-                    archivetemp = ot.gt('<!--ArchiveTemplate-->', '<!--ArchiveTemplateEnd-->', ar),
+                    archivetemp = ot.gt('{(ArchiveTemplate)}', '{(ArchiveTemplateEnd)}', ar),
                     /*get section template*/
-                    archiveitemtemp = ot.gt('<!--ArchiveItemTemplate-->', '<!--ArchiveItemTemplateEnd-->', ar),
+                    archiveitemtemp = ot.gt('{(ArchiveItemTemplate)}', '{(ArchiveItemTemplateEnd)}', ar),
                     /*get item template*/
                     /*Generate Archives*/
                     din = tj['dateindex'],
@@ -510,7 +561,8 @@ if (!B) { /*PreventInitializingTwice*/
                         title = Base64.decode(tj['postindex'][pid]['title']),
                         date = tj['postindex'][pid]['date'],
                         itemlink = '';
-                    if (!tj['postindex'][pid]['link']) { /*render items*/
+                    if (!tj['postindex'][pid]['link']) {
+                        /*render items*/
                         itemlink = 'post-' + pid + '.html';
                     } else {
                         itemlink = tj['postindex'][pid]['link'];
@@ -527,15 +579,17 @@ if (!B) { /*PreventInitializingTwice*/
                 var render3 = ot.r(cloth, '{[main]}', render2);
                 var render4 = ot.r(render3, '{[title]}', pagetitle);
                 var render4 = ot.r(render4, '{[pagetype]}', pagetype); /*SetPageType*/
-                $.ht(render4, 'container');
+                render4 = ot.r(render4, '{(PageType)}', '<!--[PageType]'); /*SetPageType*/
+                render4 = ot.r(render4, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
+                $.ht(ot.deltemptags(render4), 'container');
                 ot.loadhide();
             } else if (pagetype == j['templatehtmls']['tags']) {
-                var pagetitle = (ot.gt('<!--[MainTitle]-->', '<!--[MainTitleEnd]-->')).replace(/<\/?.+?>/g, ""),
+                var pagetitle = (ot.gt('{(MainTitle)}', '{(MainTitleEnd)}')).replace(/<\/?.+?>/g, ""),
                     /*Get Page Title(No html characters)*/
                     tgs = window.htmls[j['templatehtmls']['tags']],
-                    tagmain = ot.gt('<!--Tags-->', '<!--TagsEnd-->', tgs),
+                    tagmain = ot.gt('{(Tags)}', '{(TagsEnd)}', tgs),
                     /*Get tag main html*/
-                    tagitemtemp = ot.gt('<!--TagItemTemplate-->', '<!--TagItemTemplateEnd-->', tgs),
+                    tagitemtemp = ot.gt('{(TagItemTemplate)}', '{(TagItemTemplateEnd)}', tgs),
                     /*get item template*/
                     href = $.tr(window.location.href),
                     /*Generate Tags*/
@@ -563,45 +617,51 @@ if (!B) { /*PreventInitializingTwice*/
                         rendertg = '<script>B.taguper(\'' + pg + '\');PJAX.sel(\'container\');PJAX.start();</script>';
                     }
                 } /*Generate Finish*/
-                var timer = setInterval(function() { /*CheckTagPage*/
-                    if (window.location.href.indexOf(j['generatehtmls']['tags']) == -1 && window.location.href.indexOf((j['generatehtmls']['tags']).replace('.html', '')) == -1) { /*跳离tag页了*/
-                        PJAX.sel('container');
-                        PJAX.start();
-                        clearInterval(timer);
-                        return false;
-                    }
-                    ot.tagpagechecker();
-                },
-                100);
+                var timer = setInterval(function() {
+                        /*CheckTagPage*/
+                        if (window.location.href.indexOf(j['generatehtmls']['tags']) == -1 && window.location.href.indexOf((j['generatehtmls']['tags']).replace('.html', '')) == -1) {
+                            /*跳离tag页了*/
+                            PJAX.sel('container');
+                            PJAX.start();
+                            clearInterval(timer);
+                            return false;
+                        }
+                        ot.tagpagechecker();
+                    },
+                    100);
                 var render11 = ot.r(tagmain, '{[tags]}', rendertg);
                 var render2 = ot.r(main, '{[contents]}', render11);
                 var render3 = ot.r(cloth, '{[main]}', render2);
                 var render4 = ot.r(render3, '{[title]}', pagetitle);
                 var render4 = ot.r(render4, '{[pagetype]}', pagetype); /*SetPageType*/
-                $.ht(render4, 'container');
+                render4 = ot.r(render4, '{(PageType)}', '<!--[PageType]'); /*SetPageType*/
+                render4 = ot.r(render4, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
+                $.ht(ot.deltemptags(render4), 'container');
                 ot.loadhide();
             }
             ot.tpcheckstatu = false; /*模板检查拼接完毕*/
         },
         nowtag: '',
         alltaghtml: '',
-        taguper: function(tg) { /*渲染特定标签索引的文章列表*/
+        taguper: function(tg) {
+            /*渲染特定标签索引的文章列表*/
             tg = decodeURIComponent(tg);
             var eh = document.getElementsByTagName('html')[0].innerHTML,
                 ot = this,
                 j = window.templjson,
                 tgs = window.htmls[j['templatehtmls']['tags']],
                 /*get main tag html*/
-                taglisttemp = ot.gt('<!--TagListTemplate-->', '<!--TagListTemplateEnd-->', tgs),
+                taglisttemp = ot.gt('{(TagListTemplate)}', '{(TagListTemplateEnd)}', tgs),
                 /*get item template*/
-                taglistitemtemp = ot.gt('<!--TagListItemTemplate-->', '<!--TagListItemTemplateEnd-->', tgs),
+                taglistitemtemp = ot.gt('{(TagListItemTemplate)}', '{(TagListItemTemplateEnd)}', tgs),
                 /*get item template*/
                 tj = window.mainjson; /*get json*/
             var dti = tj['dateindex'];
             var pts = tj['postindex'];
             var postlist = new Array();
             var rendertgs = '';
-            for (var i in dti) { /*Sel Posts in the order of date*/
+            for (var i in dti) {
+                /*Sel Posts in the order of date*/
                 var pid = i.replace('post', '');
                 if (pts[pid]['tags'].indexOf(tg) !== -1) {
                     postlist.push(pid);
@@ -621,10 +681,11 @@ if (!B) { /*PreventInitializingTwice*/
                 rendertgs += g;
             });
             rendertgs = ot.r(taglisttemp, '{[taglist]}', rendertgs);
-			rendertgs = ot.r(rendertgs,'{[tagcurrent]}', tg);
+            rendertgs = ot.r(rendertgs, '{[tagcurrent]}', tg);
             SC('tags').innerHTML = rendertgs;
         },
-        tagpagechecker: function() { /*标签页hash更新检查器*/
+        tagpagechecker: function() {
+            /*标签页hash更新检查器*/
             var ot = this;
             var eh = document.getElementsByTagName('html')[0].innerHTML; /*Get All html*/
             var href = $.tr(window.location.href);
@@ -672,7 +733,8 @@ if (!B) { /*PreventInitializingTwice*/
                             ot.switchpage = 0;
                         }
                     }
-                } else { /*Search mode*/
+                } else {
+                    /*Search mode*/
                     var rendertp = '';
                     var item = window.htmls[j['templatehtmls']['postitem']];
                     var v = href.split('#!')[1];
@@ -695,7 +757,8 @@ if (!B) { /*PreventInitializingTwice*/
                                 } else {
                                     render4 = B.r(render3, '{[postitemlink]}', pt[i]['link'] + '.html');
                                 }
-                                if (pt[i]['cover']) { /*如果有封面*/
+                                if (pt[i]['cover']) {
+                                    /*如果有封面*/
                                     render4 = B.r(render4, '{[postcover]}', pt[i]['cover']); /*把页面也算入*/
                                 } else {
                                     render4 = ot.cd(render4); /*没有封面就删掉整段<ifcover>*/
@@ -707,7 +770,8 @@ if (!B) { /*PreventInitializingTwice*/
                             rendertp = '<h2>啥都没找到</h2>';
                         }
 
-                        function process() { /*局部函数*/
+                        function process() {
+                            /*局部函数*/
                             if (SC('postitems') && SC('morebtn')) {
                                 window.scrollTo(0, 0);
                                 SC('postitems').innerHTML = rendertp;
@@ -719,11 +783,13 @@ if (!B) { /*PreventInitializingTwice*/
                                 }, 500); /*如果没有需要的元素存在滞留一下*/
                             }
                         }
-                        if (!ot.tpcheckstatu && !ot.loadstatu) { /*如果页面加载完,模板拼接完毕就可以打印搜索结果了*/
+                        if (!ot.tpcheckstatu && !ot.loadstatu) {
+                            /*如果页面加载完,模板拼接完毕就可以打印搜索结果了*/
                             process();
                         }
                     }
-                    if (ot.tpcheckstatu || ot.loadstatu) { /*如果模板未拼接完毕，清理搜索词延续循环(外层setInterval)*/
+                    if (ot.tpcheckstatu || ot.loadstatu) {
+                        /*如果模板未拼接完毕，清理搜索词延续循环(外层setInterval)*/
                         ot.searchw = '';
                     }
                 }
@@ -760,8 +826,9 @@ if (!B) { /*PreventInitializingTwice*/
             var listrender = '';
             var tj = window.mainjson; /*get json*/
             var item = window.htmls[j['templatehtmls']['postitem']],
-			ptitem=ot.gt('<!--PostItem-->','<!--PostItemEnd-->',item),/*有项目的模板*/
-			noitem=ot.gt('<!--NoItem-->','<!--NoItemEnd-->',item);/*无项目的模板*/
+                ptitem = ot.gt('{(PostItem)}', '{(PostItemEnd)}', item),
+                /*有项目的模板*/
+                noitem = ot.gt('{(NoItem)}', '{(NoItemEnd)}', item); /*无项目的模板*/
             var maxrender = parseInt(tj['posts_per_page']);
             var end = start + maxrender;
             var tj = window.mainjson; /*get json*/
@@ -772,12 +839,14 @@ if (!B) { /*PreventInitializingTwice*/
                     if (counter < maxrender) {
                         var pid = i.replace('post', '');
                         var pt = tj['postindex'][pid];
-                        if (!pt['link']) { /*排除页面在外*/
+                        if (!pt['link']) {
+                            /*排除页面在外*/
                             var render1 = B.r(ptitem, '{[postitemtitle]}', Base64.decode(pt.title));
                             var render2 = B.r(render1, '{[postitemintro]}', Base64.decode(pt.intro) + '...');
                             var render3 = B.r(render2, '{[postitemdate]}', $.dt(pt.date));
                             var render4 = B.r(render3, '{[postitemlink]}', 'post-' + pid + '.html');
-                            if (pt['cover']) { /*如果有封面*/
+                            if (pt['cover']) {
+                                /*如果有封面*/
                                 render4 = B.r(render4, '{[postcover]}', pt['cover']); /*把页面也算入*/
                             } else {
                                 render4 = ot.cd(render4); /*没有封面就删掉所有<ifcover>*/
@@ -795,7 +864,8 @@ if (!B) { /*PreventInitializingTwice*/
                     itemid += 1;
                 }
             }
-            if (listrender == '') {/*没有更多文章了*/
+            if (listrender == '') {
+                /*没有更多文章了*/
                 listrender = noitem;
                 SC('morebtn').style.display = 'none';
             } else {
@@ -816,22 +886,26 @@ if (!B) { /*PreventInitializingTwice*/
             PJAX.start(); /*refresh pjax links*/
         }
     };
+	/*处理LoadingAREA*/
+	B.hr('{(LoadingArea)}','<!--LoadingArea-->');
     window.addEventListener('scroll', B.lazycheck, false); /*LazyLoadCheck*/
     window.addEventListener('pjaxstart',
 
-    function() { /*加载动画*/
-        B.loadshow();
-    },
-    false);
+        function() {
+            /*加载动画*/
+            B.loadshow();
+        },
+        false);
     window.addEventListener('pjaxfinish',
 
-    function() {
-        B.loadhide();
-    },
-    false);
+        function() {
+            B.loadhide();
+        },
+        false);
 }
 
-function transitionchecker(e, func) { /*css3变换检查器(元素,执行完毕执行的函数)*/
+function transitionchecker(e, func) {
+    /*css3变换检查器(元素,执行完毕执行的函数)*/
     var ts = '';
     var tss = {
         'transition': 'transitionend',
@@ -853,7 +927,8 @@ function transitionchecker(e, func) { /*css3变换检查器(元素,执行完毕�
 } /*Simple PJAX For Front MAIN - SomeBottle*/
 var mainhost = window.location.host;
 var dt = new Date().getTime();
-if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
+if (PJAX == undefined || PJAX == null) {
+    /*防止重初始化*/
     var PJAX = {
         index: window.history.state === null ? 1 : window.history.state.page,
         PJAXStart: new CustomEvent('pjaxstart'),
@@ -875,7 +950,8 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                 e = 'container'; /*默认指定container*/
             }
             var listener; /*初始化监听器*/
-            if (ts.recenturl.indexOf('#') !== -1 && href.indexOf('#') !== -1) { /*防止Tag页面的跳转问题*/
+            if (ts.recenturl.indexOf('#') !== -1 && href.indexOf('#') !== -1) {
+                /*防止Tag页面的跳转问题*/
                 return false;
             } else if (ts.recenturl.indexOf('#') == -1 && href.indexOf('#') !== -1) {
                 B.nowpage = 0; /*防止页码bug*/
@@ -883,7 +959,8 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             window.dispatchEvent(ts.PJAXStart); /*激活事件来显示加载动画*/
             transitionchecker('loading', function() {
                 window.scrollTo(0, 0); /*滚动到头部*/
-                if (ts.LoadedPage[ehref]) { /*临时缓存*/
+                if (ts.LoadedPage[ehref]) {
+                    /*临时缓存*/
                     $.ht(ts.LoadedPage[ehref], e, false);
                     transitionchecker('loading', function() {
                         window.dispatchEvent(ts.PJAXFinish);
@@ -893,7 +970,8 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                     }, 1000);*/
                 } else {
                     var cache = q('r', ehref, '', '', ''); /*获取缓存信息*/
-                    if (cache['c']) { /*如果有缓存*/
+                    if (cache['c']) {
+                        /*如果有缓存*/
                         usecache = true;
                         $.ht(cache['c'], e, false); /*预填装缓存*/
                     }
@@ -905,7 +983,8 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                                 $.ht(m, e, false);
                                 q('w', ehref, m, timestamp(), '');
                             } else {
-                                if (cache['c'] !== m) { /*缓存需要更新了*/
+                                if (cache['c'] !== m) {
+                                    /*缓存需要更新了*/
                                     q('w', ehref, m, timestamp(), '');
                                     $.ht(m, e, false);
                                 } else {
@@ -933,9 +1012,10 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             ts.recenturl = window.location.href;
             var p = document.getElementsByTagName("a");
             for (var i in p) {
-                if (typeof(p[i].addEventListener) == 'function') { /*防止不是函数的凑数*/
+                if (typeof(p[i].addEventListener) == 'function') {
+                    /*防止不是函数的凑数*/
                     p[i].addEventListener('click', function(e) {
-                        if (ts.preventurl.indexOf(this.href) !== -1||!this.href||this.href=='') {
+                        if (ts.preventurl.indexOf(this.href) !== -1 || !this.href || this.href == '') {
                             return true;
                         } else {
                             window.history.pushState(null, null, this.href); /*加入历史*/
@@ -970,7 +1050,8 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
     };
 } /*CacheArea - Thank you OBottle*/
 
-function q(md, k, c, t, rt) { /*(mode,key,content,timestamp,readtime)*/
+function q(md, k, c, t, rt) {
+    /*(mode,key,content,timestamp,readtime)*/
     /*初始化本地cache*/
     if (typeof localStorage.obottle == 'undefined') {
         localStorage.obottle = '{}';
@@ -994,7 +1075,8 @@ function q(md, k, c, t, rt) { /*(mode,key,content,timestamp,readtime)*/
             localStorage.obottle = JSON.stringify(caches);
         } catch (e) {
             for (var d in caches) {
-                if (Number(caches[d].rt) <= 20 || Number(t) - Number(caches[d].t) >= 172800) { /*自动清理缓存空间*/
+                if (Number(caches[d].rt) <= 20 || Number(t) - Number(caches[d].t) >= 172800) {
+                    /*自动清理缓存空间*/
                     delete caches[d];
                 }
             }
