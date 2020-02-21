@@ -178,7 +178,14 @@ function unrnspace(h) {
     h = h.replace(/{{n}}/g, "\n");
     return h;
 }
-
+function enhtml(h){/*转义html*/
+	var temp=h.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+	return temp;
+}
+function dehtml(h){/*反转义html*/
+	var temp = h.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&nbsp;/g," ").replace(/&#39;/g,"\'").replace(/&quot;/g,"\"");
+    return temp;  
+}
 function tagarchive() {
     /*生成tag和归档页面*/
     var pageh1 = tpjs['templatehtmls']['tags']; /*获得配置的页面链接，默认tags.html*/
@@ -281,7 +288,7 @@ function indexrenderer(js) {
     var renderi3 = B.r(renderi2, '{[keywords]}', tj['name']); /*站点名字加入keywords*/
     var renderi4 = B.r(renderi3, '{[type]}', pageh);
     var renderi5 = B.r(renderi4, '{[sitename]}', tj['name']); /*设定title*/
-    var renderi6 = B.r(renderi5, '{[content]}', rnspace(listrender)); /*注入灵魂*/
+    var renderi6 = B.r(renderi5, '{[content]}', enhtml(rnspace(listrender))); /*注入灵魂*/
     return renderi6;
 }
 
@@ -351,7 +358,7 @@ function edit() {
         var render1 = B.r(m, '{[title]}', title);
         var render2 = B.r(render1, '{[date]}', date);
         var render3 = B.r(render2, '{[tags]}', tag);
-        var render4 = B.r(render3, '{[content]}', rnspace(content));
+        var render4 = B.r(render3, '{[content]}', enhtml(rnspace(content)));
         var render5 = B.r(render4, '{[description]}', intro.replace(/<\/?.+?>/g, "")); /*去除html标签作为description*/
         var render6 = B.r(render5, '{[keywords]}', tag + ',' + tj['name']); /*站点名字加入keywords*/
         var render7 = B.r(render6, '{[type]}', pageh);
@@ -676,7 +683,7 @@ function postopen(id) {
         }
         var tags = tj['postindex'][id]['tags'];
         var content = (B.gt('{(PostContent)}', '{(PostContentEnd)}', ht)).trim(); /*去除内容首尾的空格*/
-        SC('content').value = unrnspace(content);
+        SC('content').value = unrnspace(dehtml(content));
         SC('tag').value = tags;
         SC('title').value = title;
         SC('date').value = date;

@@ -250,6 +250,10 @@ if (!B) {
                 }
             }
         },
+		dehtml:function(h){/*decodehtml*/
+			  var temp = h.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&nbsp;/g," ").replace(/&#39;/g,"\'").replace(/&quot;/g,"\"");
+              return temp;  
+		},
         gt: function(p1, p2, ct = false) {
             /*htmlget*/
             var e;
@@ -261,7 +265,7 @@ if (!B) {
             try {
                 var k = e.split(p1)[1];
                 var d = k.split(p2)[0];
-                return d;
+                return this.dehtml(d);
             } catch (e) {
                 return false;
             }
