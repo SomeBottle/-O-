@@ -250,10 +250,11 @@ if (!B) {
                 }
             }
         },
-		dehtml:function(h){/*decodehtml*/
-			  var temp = h.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&nbsp;/g," ").replace(/&#39;/g,"\'").replace(/&quot;/g,"\"");
-              return temp;  
-		},
+        dehtml: function(h) {
+            /*decodehtml*/
+            var temp = h.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#39;/g, "\'").replace(/&quot;/g, "\"");
+            return temp;
+        },
         gt: function(p1, p2, ct = false) {
             /*htmlget*/
             var e;
@@ -740,7 +741,10 @@ if (!B) {
                 } else {
                     /*Search mode*/
                     var rendertp = '';
-                    var item = window.htmls[j['templatehtmls']['postitem']];
+                    var item = window.htmls[j['templatehtmls']['postitem']],
+                        ptitem = ot.gt('{(PostItem)}', '{(PostItemEnd)}', item),
+                        /*有项目的模板*/
+                        noitem = ot.gt('{(NoItem)}', '{(NoItemEnd)}', item); /*无项目的模板*/
                     var v = href.split('#!')[1];
                     if (v !== ot.searchw) {
                         ot.searchw = v;
@@ -752,7 +756,7 @@ if (!B) {
                             var tg = (pt[i]['tags']).toLowerCase();
                             v = v.toLowerCase(); /*大小写忽略*/
                             if (tt.indexOf(v) !== -1 || cc.indexOf(v) !== -1 || dd.indexOf(v) !== -1 || tg.indexOf(v) !== -1) {
-                                var render1 = B.r(item, '{[postitemtitle]}', tt);
+                                var render1 = B.r(ptitem, '{[postitemtitle]}', tt);
                                 var render2 = B.r(render1, '{[postitemintro]}', cc + '...');
                                 var render3 = B.r(render2, '{[postitemdate]}', $.dt(dd));
                                 var render4;
@@ -771,7 +775,7 @@ if (!B) {
                             }
                         }
                         if (rendertp == '') {
-                            rendertp = '<h2>啥都没找到</h2>';
+                            rendertp = noitem;
                         }
 
                         function process() {
