@@ -130,7 +130,7 @@ if (typeof($) !== 'object') {
         /*去头并返回处理后的内容*/
         var tp = document.createElement('html');
         tp.innerHTML = html;
-        var head = tp.getElementsByTagName('clothhead')[0];/*获得cloth.html内的头*/
+        var head = tp.getElementsByTagName('clothhead')[0]; /*获得cloth.html内的头*/
         head.parentNode.removeChild(head);
         return [tp.innerHTML, head.innerHTML];
     }
@@ -139,7 +139,7 @@ if (typeof($) !== 'object') {
         var e = SC('html'),
             head = e.getElementsByTagName('head')[0],
             clothhead = head.getElementsByTagName('clothhead');
-		if(head.parentNode.tagName.toLowerCase()!=='html') return false;/*父级元素不是html就算了*/
+        if (head.parentNode.tagName.toLowerCase() !== 'html') return false; /*父级元素不是html就算了*/
         if (clothhead.length <= 0) {
             /*还没有渲染cloth的头部*/
             var cloth = document.createElement('clothhead');
@@ -1032,6 +1032,16 @@ if (PJAX == undefined || PJAX == null) {
         preventurl: new Array(),
         recenturl: '',
         replace: '',
+        statu: false,
+        checker: setInterval(function() {
+            /*PJAX自检器，防止失效*/
+            if (PJAX.statu) {
+                var as = document.getElementsByTagName('a'); /*获取所有a标签*/
+                for (var i in as) {
+                    as[i] instanceof Element ? (null || undefined == as[i].getAttribute('pjax') ? PJAX.start() : as = as) : as = as; /*有没有部署的a标签就重新部署pjax*/
+                }
+            }
+        }, 500),
         sel: function(r) {
             this.replace = r;
         },
@@ -1103,11 +1113,13 @@ if (PJAX == undefined || PJAX == null) {
         },
         start: function() {
             var ts = this;
+            ts.statu = true; /*启动*/
             ts.recenturl = window.location.href;
             var p = document.getElementsByTagName("a");
             for (var i in p) {
                 if (typeof(p[i].addEventListener) == 'function') {
                     /*防止不是函数的凑数*/
+                    p[i].setAttribute('pjax', ''); /*设置标识*/
                     p[i].addEventListener('click', function(e) {
                         if (ts.preventurl.indexOf(this.href) !== -1 || !this.href || this.href == '') {
                             return true;
@@ -1127,6 +1139,7 @@ if (PJAX == undefined || PJAX == null) {
             }*/
         },
         pause: function() {
+            this.statu = false; /*暂停*/
             window.removeEventListener('popstate', PJAX.pjaxautojump); /*移除实践，暂停pjax*/
         },
         autoprevent: function() {
