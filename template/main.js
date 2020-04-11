@@ -130,7 +130,7 @@ if (typeof($) !== 'object') {
         /*去头并返回处理后的内容*/
         var tp = document.createElement('html');
         tp.innerHTML = html;
-        var head = tp.getElementsByTagName('head')[0];
+        var head = tp.getElementsByTagName('clothhead')[0];/*获得cloth.html内的头*/
         head.parentNode.removeChild(head);
         return [tp.innerHTML, head.innerHTML];
     }
@@ -138,15 +138,16 @@ if (typeof($) !== 'object') {
         /*接头霸王*/
         var e = SC('html'),
             head = e.getElementsByTagName('head')[0],
-            clothstyle = head.getElementsByTagName('clothstyle');
-        if (clothstyle.length <= 0) {
+            clothhead = head.getElementsByTagName('clothhead');
+		if(head.parentNode.tagName.toLowerCase()!=='html') return false;/*父级元素不是html就算了*/
+        if (clothhead.length <= 0) {
             /*还没有渲染cloth的头部*/
-            var cloth = document.createElement('clothstyle');
+            var cloth = document.createElement('clothhead');
             cloth.innerHTML = hd;
             head.appendChild(cloth);
         } else {
             /*渲染过了，直接改*/
-            clothstyle[0].innerHTML = hd;
+            clothhead[0].innerHTML = hd;
         }
     }
     $.ldparse = function(ld) {
