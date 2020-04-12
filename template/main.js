@@ -1032,7 +1032,7 @@ if (PJAX == undefined || PJAX == null) {
         preventurl: new Array(),
         recenturl: '',
         replace: '',
-        statu: false,
+        statu: true,
         checker: setInterval(function() {
             /*PJAX自检器，防止失效*/
             if (PJAX.statu) {
