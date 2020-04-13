@@ -72,7 +72,7 @@ if (typeof($) !== 'object') {
             $.scripturl.push(url);
             document.body.appendChild(script);
         }
-		script=null;
+        script = null;
     }
     $.ht = function(h, e, scinclude = true) {
         /*元素内容设置器(html,element,run script or not when ht)*/
@@ -149,12 +149,12 @@ if (typeof($) !== 'object') {
             var cloth = document.createElement('clothhead');
             cloth.innerHTML = hd;
             head.appendChild(cloth);
-			cloth=null;
+            cloth = null;
         } else {
             /*渲染过了，直接改*/
             clothhead[0].innerHTML = hd;
         }
-		head=clothhead=null;
+        head = clothhead = null;
     }
     $.ldparse = function(ld) {
         /*解析loading页面*/
@@ -169,7 +169,7 @@ if (typeof($) !== 'object') {
             console.log('Failed to initialize loading page.');
         }
         ht.remove(); /*移除临时元素*/
-        ht=obj=null;
+        ht = obj = null;
     }
     $.ecls = function(v, clsv, rmv = false, returne = false) {
         /*元素class应用(选择器,值,是否移除,是否返回元素)*/
@@ -195,7 +195,7 @@ if (typeof($) !== 'object') {
         } else {
             rmv ? es.classList.remove(clsv) : es.classList.add(clsv);
         }
-		es=content=null;
+        es = content = null;
     }
 }
 if (!B) {
@@ -257,9 +257,9 @@ if (!B) {
                         (e[i].classList.contains(cl.activeclass)) ? (e[i].classList.remove(cl.activeclass)) : p = p; /*取消其他的焦点*/
                     }
                 }
-				e=null;
+                e = null;
             }
-			c=null;
+            c = null;
         },
         nav: function(v) {
             var o = this;
@@ -325,7 +325,7 @@ if (!B) {
                     $.scripturl.push(sc[i].src);
                 }
             }
-			sc=null;
+            sc = null;
         },
         dehtml: function(h) {
             /*decodehtml*/
@@ -366,7 +366,7 @@ if (!B) {
             }
             var rt = i.innerHTML;
             i.remove(); /*移除临时元素*/
-            i =s= null;
+            i = s = null;
             return rt;
         },
         lazycheck: function() {
@@ -392,7 +392,7 @@ if (!B) {
                     }
                 }
             }
-			es=null;
+            es = null;
         },
         templonload: 0,
         /*LoadedTemplates*/
@@ -1062,7 +1062,7 @@ if (PJAX == undefined || PJAX == null) {
                 for (var i in as) {
                     as[i] instanceof Element ? (null || undefined == as[i].getAttribute('pjax') ? PJAX.start() : as = as) : as = as; /*有没有部署的a标签就重新部署pjax*/
                 }
-				as=null;
+                as = null;
             }
         }, 500),
         sel: function(r) {
@@ -1088,7 +1088,7 @@ if (PJAX == undefined || PJAX == null) {
                 window.scrollTo(0, 0); /*滚动到头部*/
                 if (ts.LoadedPage[ehref]) {
                     /*临时缓存*/
-					ts.clearevent(true); /*清除之前的监听器*/
+                    ts.clearevent(true); /*清除之前的监听器*/
                     $.ht(ts.LoadedPage[ehref], e, false);
                     anichecker($.ecls($.loadset['listening'], '', false, true), function() {
                         window.dispatchEvent(ts.PJAXFinish);
@@ -1098,7 +1098,7 @@ if (PJAX == undefined || PJAX == null) {
                     if (cache['c']) {
                         /*如果有缓存*/
                         usecache = true;
-						ts.clearevent(true); /*清除之前的监听器*/
+                        ts.clearevent(true); /*清除之前的监听器*/
                         $.ht(cache['c'], e, false); /*预填装缓存*/
                     }
                     $.aj(href, {}, {
@@ -1106,14 +1106,14 @@ if (PJAX == undefined || PJAX == null) {
                             ts.recenturl = href;
                             ts.LoadedPage[ehref] = m;
                             if (!usecache) {
-								ts.clearevent(true); /*清除之前的监听器*/
+                                ts.clearevent(true); /*清除之前的监听器*/
                                 $.ht(m, e, false);
                                 q('w', ehref, m, timestamp(), '');
                             } else {
                                 if (cache['c'] !== m) {
                                     /*缓存需要更新了*/
                                     q('w', ehref, m, timestamp(), '');
-									ts.clearevent(true); /*清除之前的监听器*/
+                                    ts.clearevent(true); /*清除之前的监听器*/
                                     $.ht(m, e, false);
                                 } else {
                                     q('e', ehref, '', '', 1); /*更新缓存读取次数*/
@@ -1144,7 +1144,7 @@ if (PJAX == undefined || PJAX == null) {
                 PJAX.jump(this.href);
             }
         },
-        clearevent: function(remove=false) {
+        clearevent: function(remove = false) {
             /*移除所有a标签事件*/
             var ts = this,
                 p = document.getElementsByTagName("a");
@@ -1152,10 +1152,10 @@ if (PJAX == undefined || PJAX == null) {
                 if (typeof(p[i].removeEventListener) == 'function') {
                     /*防止不是函数的凑数*/
                     p[i].removeEventListener('click', ts.clickevent); /*取消监听A标签*/
-					remove ? p[i].parentNode.removeChild(p[i]) : p[i]=p[i];/*remove模式全部删除*/
+                    remove ? p[i].parentNode.removeChild(p[i]) : p[i] = p[i]; /*remove模式全部删除*/
                 }
             }
-			p=null;
+            p = null;
         },
         start: function() {
             var ts = this;
@@ -1171,7 +1171,7 @@ if (PJAX == undefined || PJAX == null) {
                 }
             } /*回退时触发*/
             window.addEventListener('popstate', PJAX.pjaxautojump, false);
-			p=null;
+            p = null;
         },
         pause: function() {
             this.statu = false; /*暂停*/
@@ -1188,7 +1188,7 @@ if (PJAX == undefined || PJAX == null) {
                     }
                 }
             }
-			p=null;
+            p = null;
         }
     };
 } /*CacheArea - Thank you OBottle*/
