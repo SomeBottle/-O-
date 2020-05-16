@@ -183,7 +183,7 @@ function enhtml(h){/*转义html*/
 	return temp;
 }
 function dehtml(h){/*反转义html*/
-	var temp = h.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&nbsp;/g," ").replace(/&#39;/g,"\'").replace(/&quot;/g,"\"");
+	var temp = h.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&nbsp;/g," ").replace(/&#039;/g,"\'").replace(/&quot;/g,"\"");
     return temp;  
 }
 function tagarchive() {
