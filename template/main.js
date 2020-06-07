@@ -1055,16 +1055,16 @@ if (PJAX == undefined || PJAX == null) {
         recenturl: '',
         replace: '',
         statu: true,
-        checker: setInterval(function() {
-            /*PJAX自检器，防止失效*/
+        /*checker: setInterval(function() {
+            PJAX自检器，防止失效
             if (PJAX.statu) {
-                var as = document.getElementsByTagName('a'); /*获取所有a标签*/
+                var as = document.getElementsByTagName('a'); //获取所有a标签
                 for (var i in as) {
-                    as[i] instanceof Element ? (null || undefined == as[i].getAttribute('pjax') ? PJAX.start() : as = as) : as = as; /*有没有部署的a标签就重新部署pjax*/
+                    as[i] instanceof Element ? (null || undefined == as[i].getAttribute('pjax') ? PJAX.start() : as = as) : as = as; //有没有部署的a标签就重新部署pjax
                 }
                 as = null;
             }
-        }, 500),
+        }, 500),*/
         sel: function(r) {
             this.replace = r;
         },
@@ -1115,6 +1115,7 @@ if (PJAX == undefined || PJAX == null) {
                                     q('w', ehref, m, timestamp(), '');
                                     ts.clearevent(true); /*清除之前的监听器*/
                                     $.ht(m, e, false);
+									ts.start();
                                 } else {
                                     q('e', ehref, '', '', 1); /*更新缓存读取次数*/
                                 }
