@@ -1097,7 +1097,7 @@ if (PJAX == undefined || PJAX == null) {
                     var cache = q('r', ehref, '', '', ''); /*获取缓存信息*/
                     if (cache['c']) {
                         /*如果有缓存*/
-                        usecache = true;
+                        usecache = true;/*本地缓存使用模式*/
                         ts.clearevent(true); /*清除之前的监听器*/
                         $.ht(cache['c'], e, false); /*预填装缓存*/
                     }
@@ -1105,17 +1105,17 @@ if (PJAX == undefined || PJAX == null) {
                         success: function(m) {
                             ts.recenturl = href;
                             ts.LoadedPage[ehref] = m;
-                            if (!usecache) {
+                            if (!usecache) {/*如果没有使用本地缓存就缓存传输过来的数据*/
                                 ts.clearevent(true); /*清除之前的监听器*/
                                 $.ht(m, e, false);
                                 q('w', ehref, m, timestamp(), '');
                             } else {
                                 if (cache['c'] !== m) {
-                                    /*缓存需要更新了*/
+                                    /*缓存需要更新了，把新数据写入本地*/
                                     q('w', ehref, m, timestamp(), '');
-                                    ts.clearevent(true); /*清除之前的监听器*/
+                                    /*ts.clearevent(true); 
                                     $.ht(m, e, false);
-									ts.start();
+									ts.start();*//*缓存更新不在当页进行动态更新20200804*/
                                 } else {
                                     q('e', ehref, '', '', 1); /*更新缓存读取次数*/
                                 }
