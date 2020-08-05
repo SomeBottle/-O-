@@ -1,4 +1,4 @@
-/*FrontMainJS ver2.0.0 - SomeBottle*/
+/*FrontMainJS ver2.0.1 - SomeBottle*/
  /*q.js*/
 var md;
 if (typeof($) !== 'object') {
@@ -372,93 +372,95 @@ if (!B) { /*PreventInitializingTwice*/
         tpcheck: function() { /*template check*/
             var ot = this,
                 o = this;
-            ot.tpcheckstatu = true; /*正在检查模板*/
-            ot.loadshow();
-            var pagetype = ot.gt('{(PageType)}', '{(PageTypeEnd)}'); /*Get Page Type*/
-            if (!window.templjson) {
-                $.aj('template.json', '', {
-                    success: function(m) {
-                        window.templjson = JSON.parse(m);
-                        return ot.tpcheck();
-                    },
-                    failed: function(m) { /*Failed*/
-                        console.log('TemplateJson Load Failed.');
-                    }
-                }, 'get', '', true);
-            } else if (!window.mainjson && window.templjson['usemain'].indexOf(pagetype) !== -1) { /*Some pages are in need of Main.json*/
-                if (!window.mainjsonrequest) { /*Include Mainjson*/
-                    window.mainjsonrequest = true; /*make request flag*/
-                    $.aj(window.templjson['mainjson'], '', {
+            if (!ot.tpcheckstatu) { /*防止短时间内重复检查模板20200805*/
+                ot.tpcheckstatu = true; /*正在检查模板*/
+                ot.loadshow();
+                var pagetype = ot.gt('{(PageType)}', '{(PageTypeEnd)}'); /*Get Page Type*/
+                if (!window.templjson) {
+                    $.aj('template.json', '', {
                         success: function(m) {
-                            window.mainjson = JSON.parse(m.replace(/[\r\n]/g, ""));
-                            ot.moreperpage = parseInt(window.mainjson['more_per_page']); /*Update moreperpage*/
+                            window.templjson = JSON.parse(m);
+                            return ot.tpcheck();
                         },
                         failed: function(m) { /*Failed*/
-                            console.log('MainJson Load Failed');
+                            console.log('TemplateJson Load Failed.');
                         }
                     }, 'get', '', true);
-                }
-                setTimeout(function() {
-                    return o.tpcheck();
-                },
-                100);
-            } else if (typeof showdown !== 'object') { /*Markdown is not ready!*/
-                setTimeout(function() {
-                    return o.tpcheck();
-                },
-                100);
-            } else if (!localStorage['obottle-ldpage']) { /*loadingpage is not ready!*/
-                setTimeout(function() {
-                    return o.tpcheck();
-                },
-                100);
-            } else {
-                ot.preventscript(); /*剔除已加载scripts*/
-                var j = window.templjson;
-                j['necessary'].push(pagetype); /*Pagetype Pushed*/
-                if (pagetype == j['templatehtmls']['postlist']) {
-                    j['necessary'].push(j['templatehtmls']['postitem']); /*Extra Load*/
-                }
-                for (var i in j['necessary']) {
-                    if (o.templateloaded.indexOf(j['necessary'][i]) == -1) {
-                        o.templonload += 1;
-                        var usecache = false;
-                        var cache = q('r', 'template-' + j['necessary'][i], '', '', ''); /*Test Cache*/
-                        if (cache['c']) { /*如果有缓存，先装载缓存*/
-                            usecache = true;
-                            var p = j['necessary'][i];
-                            console.log('Template using cache:' + p);
-                            window.htmls[p] = cache['c'];
-                            o.templateloaded.push(p);
-                            o.templonload -= 1;
-                        }
-                        $.aj(j['necessary'][i], '', {
-                            success: function(m, p) {
-                                window.htmls[p] = m;
-                                if (!usecache) {
-                                    o.templateloaded.push(p);
-                                    o.templonload -= 1;
-                                    q('w', 'template-' + p, m, timestamp(), '');
-                                } else if (cache['c'] !== m) { /*缓存需要更新*/
-                                    q('w', 'template-' + p, m, timestamp(), '');
-                                } else { /*增加缓存读取次数*/
-                                    q('e', 'template-' + p, '', '', 1);
-                                }
+                } else if (!window.mainjson && window.templjson['usemain'].indexOf(pagetype) !== -1) { /*Some pages are in need of Main.json*/
+                    if (!window.mainjsonrequest) { /*Include Mainjson*/
+                        window.mainjsonrequest = true; /*make request flag*/
+                        $.aj(window.templjson['mainjson'], '', {
+                            success: function(m) {
+                                window.mainjson = JSON.parse(m.replace(/[\r\n]/g, ""));
+                                ot.moreperpage = parseInt(window.mainjson['more_per_page']); /*Update moreperpage*/
                             },
                             failed: function(m) { /*Failed*/
-                                console.log('Necessary HTML Load Failed...');
+                                console.log('MainJson Load Failed');
                             }
                         }, 'get', '', true);
                     }
-                }
-                var timer = setInterval(function() {
-                    if (o.templonload <= 0) {
-                        clearInterval(timer);
-                        o.renderer(); /*Call the renderer*/
+                    setTimeout(function() {
+                        return o.tpcheck();
+                    },
+                    100);
+                } else if (typeof showdown !== 'object') { /*Markdown is not ready!*/
+                    setTimeout(function() {
+                        return o.tpcheck();
+                    },
+                    100);
+                } else if (!localStorage['obottle-ldpage']) { /*loadingpage is not ready!*/
+                    setTimeout(function() {
+                        return o.tpcheck();
+                    },
+                    100);
+                } else {
+                    ot.preventscript(); /*剔除已加载scripts*/
+                    var j = window.templjson;
+                    j['necessary'].push(pagetype); /*Pagetype Pushed*/
+                    if (pagetype == j['templatehtmls']['postlist']) {
+                        j['necessary'].push(j['templatehtmls']['postitem']); /*Extra Load*/
                     }
-                },
-                200); /*加快页面速度，我也是加把劲骑士！*/
-                j = null; /*释放*/
+                    for (var i in j['necessary']) {
+                        if (o.templateloaded.indexOf(j['necessary'][i]) == -1) {
+                            o.templonload += 1;
+                            var usecache = false;
+                            var cache = q('r', 'template-' + j['necessary'][i], '', '', ''); /*Test Cache*/
+                            if (cache['c']) { /*如果有缓存，先装载缓存*/
+                                usecache = true;
+                                var p = j['necessary'][i];
+                                console.log('Template using cache:' + p);
+                                window.htmls[p] = cache['c'];
+                                o.templateloaded.push(p);
+                                o.templonload -= 1;
+                            }
+                            $.aj(j['necessary'][i], '', {
+                                success: function(m, p) {
+                                    window.htmls[p] = m;
+                                    if (!usecache) {
+                                        o.templateloaded.push(p);
+                                        o.templonload -= 1;
+                                        q('w', 'template-' + p, m, timestamp(), '');
+                                    } else if (cache['c'] !== m) { /*缓存需要更新*/
+                                        q('w', 'template-' + p, m, timestamp(), '');
+                                    } else { /*增加缓存读取次数*/
+                                        q('e', 'template-' + p, '', '', 1);
+                                    }
+                                },
+                                failed: function(m) { /*Failed*/
+                                    console.log('Necessary HTML Load Failed...');
+                                }
+                            }, 'get', '', true);
+                        }
+                    }
+                    var timer = setInterval(function() {
+                        if (o.templonload <= 0) {
+                            clearInterval(timer);
+                            o.renderer(); /*Call the renderer*/
+                        }
+                    },
+                    200); /*加快页面速度，我也是加把劲骑士！*/
+                    j = null; /*释放*/
+                }
             }
         },
         itempage: 0,
@@ -497,7 +499,7 @@ if (!B) { /*PreventInitializingTwice*/
         renderer: function() {
             var ot = this;
             if (!ot.rendering) {
-				ot.rendering=true;/*示意正在渲染20200805*/
+                ot.rendering = true; /*示意正在渲染20200805*/
                 var j = window.templjson;
                 md = new showdown.Converter();
                 var cloth = window.htmls[j['templatehtmls']['cloth']];
