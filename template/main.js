@@ -369,10 +369,10 @@ if (!B) { /*PreventInitializingTwice*/
         /*模板拼接状态*/
         loadstatu: false,
         /*加载div显示状态*/
-        tpcheck: function() { /*template check*/
+        tpcheck: function(re=false) { /*template check(re=是否轮询)*/
             var ot = this,
                 o = this;
-            if (!ot.tpcheckstatu) { /*防止短时间内重复检查模板20200805*/
+            if (!ot.tpcheckstatu||re) { /*防止短时间内重复检查模板20200805*/
                 ot.tpcheckstatu = true; /*正在检查模板*/
                 ot.loadshow();
                 var pagetype = ot.gt('{(PageType)}', '{(PageTypeEnd)}'); /*Get Page Type*/
@@ -380,7 +380,7 @@ if (!B) { /*PreventInitializingTwice*/
                     $.aj('template.json', '', {
                         success: function(m) {
                             window.templjson = JSON.parse(m);
-                            return ot.tpcheck();
+                            return ot.tpcheck(true);
                         },
                         failed: function(m) { /*Failed*/
                             console.log('TemplateJson Load Failed.');
@@ -400,19 +400,19 @@ if (!B) { /*PreventInitializingTwice*/
                         }, 'get', '', true);
                     }
                     setTimeout(function() {
-                        return o.tpcheck();
+                        return o.tpcheck(true);
                     },
-                    100);
+                    50);
                 } else if (typeof showdown !== 'object') { /*Markdown is not ready!*/
                     setTimeout(function() {
-                        return o.tpcheck();
+                        return o.tpcheck(true);
                     },
-                    100);
+                    50);
                 } else if (!localStorage['obottle-ldpage']) { /*loadingpage is not ready!*/
                     setTimeout(function() {
-                        return o.tpcheck();
+                        return o.tpcheck(true);
                     },
-                    100);
+                    50);
                 } else {
                     ot.preventscript(); /*剔除已加载scripts*/
                     var j = window.templjson;
@@ -458,7 +458,7 @@ if (!B) { /*PreventInitializingTwice*/
                             o.renderer(); /*Call the renderer*/
                         }
                     },
-                    200); /*加快页面速度，我也是加把劲骑士！*/
+                    50); /*加快页面速度，我也是加把劲骑士！*/
                     j = null; /*释放*/
                 }
             }
@@ -840,7 +840,7 @@ if (!B) { /*PreventInitializingTwice*/
                             } else {
                                 setTimeout(function() {
                                     return process();
-                                }, 500); /*如果没有需要的元素存在滞留一下*/
+                                }, 200); /*如果没有需要的元素存在滞留一下*/
                             }
                         }
                         if (!ot.tpcheckstatu && !ot.loadstatu) { /*如果页面加载完,模板拼接完毕就可以打印搜索结果了*/
