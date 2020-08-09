@@ -1,4 +1,4 @@
-/*FrontMainJS ver2.0.1 - SomeBottle*/
+/*FrontMainJS ver2.1.0 - SomeBottle*/
  /*q.js*/
 var md;
 if (typeof($) !== 'object') {
@@ -185,15 +185,20 @@ if (typeof($) !== 'object') {
 if (!B) { /*PreventInitializingTwice*/
     /*Include LoadingPage*/
     if (localStorage['obottle-ldpage']) {
-        var e = SC('html').innerHTML;
+        var e = SC('html').innerHTML,
+            ldlocalused = true;
         $.ldparse(localStorage['obottle-ldpage']); /*解析加载页*/
         SC('html').innerHTML = e.replace('<!--[LoadingArea]-->', localStorage['obottle-ldpage']);
+    } else {
+        var ldlocalused = false;
     }
     $.aj('./loading.html', '', {
         success: function(m, p) {
-            B.hr('<!--[LoadingArea]-->', m);
+            if (!ldlocalused) { /*如果本地已经有了就不热更新了20200808*/
+                B.hr('<!--[LoadingArea]-->', m);
+                $.ldparse(m); /*解析加载页*/
+            }
             localStorage['obottle-ldpage'] = m;
-            $.ldparse(m); /*解析加载页*/
         },
         failed: function(m) { /*Failed*/
             console.log('LoadingPage Load Failed');
@@ -369,10 +374,10 @@ if (!B) { /*PreventInitializingTwice*/
         /*模板拼接状态*/
         loadstatu: false,
         /*加载div显示状态*/
-        tpcheck: function(re=false) { /*template check(re=是否轮询)*/
+        tpcheck: function(re = false) { /*template check(re=是否轮询)*/
             var ot = this,
                 o = this;
-            if (!ot.tpcheckstatu||re) { /*防止短时间内重复检查模板20200805*/
+            if (!ot.tpcheckstatu || re) { /*防止短时间内重复检查模板20200805*/
                 ot.tpcheckstatu = true; /*正在检查模板*/
                 ot.loadshow();
                 var pagetype = ot.gt('{(PageType)}', '{(PageTypeEnd)}'); /*Get Page Type*/
@@ -556,7 +561,6 @@ if (!B) { /*PreventInitializingTwice*/
                     anichecker($.ecls($.loadset['listening'], '', false, true), function() {
                         ot.lazycheck();
                     });
-                    ot.loadhide();
                     render6 = tj = null; /*释放*/
                 } else if (pagetype == j['templatehtmls']['postlist']) {
                     var content = ot.gt('{(PostContent)}', '{(PostContentEnd)}'); /*Get Post Content*/
@@ -575,10 +579,10 @@ if (!B) { /*PreventInitializingTwice*/
                     ot.itempagefixer(); /*修复因忽略页面而造成的列表重复*/
                     $.ht(ot.deltemptags(render4), 'container');
                     $.addhead(ghead[1]); /*接头霸王来了*/
-                    ot.loadhide();
                     render4 = null; /*释放*/
                     var timer = setInterval(function() { /*CheckIndexPage*/
                         if (ot.gt('<!--[PageType]', '[PageTypeEnd]-->') !== j['templatehtmls']['postlist']) { /*跳离index页了*/
+                            console.log('jump out index');
                             PJAX.sel('container');
                             PJAX.start(); /*修复more按钮的bug - 20190727*/
                             ot.switchpage = 0;
@@ -639,7 +643,6 @@ if (!B) { /*PreventInitializingTwice*/
                     render4 = ot.r(render4, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
                     $.ht(ot.deltemptags(render4), 'container');
                     $.addhead(ghead[1]); /*接头霸王来了*/
-                    ot.loadhide();
                     render4 = null; /*释放*/
                 } else if (pagetype == j['templatehtmls']['tags']) {
                     var pagetitle = (ot.gt('{(MainTitle)}', '{(MainTitleEnd)}')).replace(/<\/?.+?>/g, ""),
@@ -695,11 +698,11 @@ if (!B) { /*PreventInitializingTwice*/
                     render4 = ot.r(render4, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
                     $.ht(ot.deltemptags(render4), 'container');
                     $.addhead(ghead[1]); /*接头霸王来了*/
-                    ot.loadhide();
                     render4 = null; /*释放*/
                 }
                 ot.tpcheckstatu = false; /*模板检查拼接完毕*/
                 ot.rendering = false; /*渲染完毕，空出队列20200805*/
+                ot.loadhide(); /*隐藏loading浮层20200808*/
             }
         },
         nowtag: '',
@@ -1052,10 +1055,9 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                             } else {
                                 if (cache['c'] !== m) { /*缓存需要更新了，把新数据写入本地*/
                                     q('w', ehref, m, timestamp(), '');
-                                    /*ts.clearevent(true); 
+                                    ts.clearevent(true);
                                     $.ht(m, e, false);
-									ts.start();*/
-                                    /*缓存更新不在当页进行动态更新20200804*/
+                                    ts.start();
                                 } else {
                                     q('e', ehref, '', '', 1); /*更新缓存读取次数*/
                                 }
@@ -1072,7 +1074,11 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             });
         },
         pjaxautojump: function() {
-            if (window.location.href.indexOf(mainhost) !== -1) {
+            if (PJAX.recenturl.split('#')[0] == window.location.href) { /*用于处理首页没有hash和有hash页码时回退跳转的问题20200808*/
+                window.history.replaceState(null, null, window.location.href + '#1'); /*从https://xxx/#2回退到https://xxx/时自动变成https://xxx/#1跳转到页码1(不改变历史)20200808*/
+                PJAX.jump(window.location.href + '#1');
+            }
+            if (window.location.href.indexOf(mainhost) !== -1) { /*回退时跳转20200808*/
                 PJAX.jump(window.location.href);
             }
         },

@@ -1,8 +1,7 @@
 /*Initialization - SomeBottle*/
 $bueue.de(true);
 
-function typer() {
-    /*重定义typer*/
+function typer() { /*重定义typer*/
     var repo = SC('r').value;
     if ($.ce(repo)) {
         window.githubrepo = SC('r').value;
@@ -26,23 +25,19 @@ function typer() {
     }
 }
 
-function initialcheck() {
-    /*检查是否初始化*/
+function initialcheck() { /*检查是否初始化*/
     loadshow();
     var j, mj, pi;
     new Promise(function(res, rej) {
-        blog.getfile(window.accesstoken, window.githubrepo, 'template.json', true, {
-            /*获得仓库模板内容*/
+        blog.getfile(window.accesstoken, window.githubrepo, 'template.json', true, { /*获得仓库模板内容*/
             success: function(k) {
                 j = Base64.decode(k['content']);
                 window.tjson = j;
                 mj = JSON.parse(j);
                 res(k);
             },
-            failed: function(m) {
-                /*未初始化*/
-                $.aj('./template/template.json', {}, {
-                    /*获得本地模板内容*/
+            failed: function(m) { /*未初始化*/
+                $.aj('./template/template.json', {}, { /*获得本地模板内容*/
                     success: function(k) {
                         window.tjson = JSON.parse(k); /*储存模板json*/
                         initialization();
@@ -55,8 +50,7 @@ function initialcheck() {
         });
     }).then(function(d) {
         return new Promise(function(res, rej) {
-            blog.getfile(window.accesstoken, window.githubrepo, mj['templatehtmls']['postitem'], true, {
-                /*获得postitem模板内容*/
+            blog.getfile(window.accesstoken, window.githubrepo, mj['templatehtmls']['postitem'], true, { /*获得postitem模板内容*/
                 success: function(k) {
                     pi = Base64.decode(k['content']);
                     window.htmls['postitem.html'] = pi;
@@ -70,11 +64,9 @@ function initialcheck() {
             });
         });
     }).then(function(d) {
-        return new Promise(function(res, rej) {
-            /*check main.json*/
+        return new Promise(function(res, rej) { /*check main.json*/
             blog.getfile(window.accesstoken, window.githubrepo, mj['mainjson'], true, {
-                success: function(m) {
-                    /*已经初始化*/
+                success: function(m) { /*已经初始化*/
                     window.mainjson = m;
                     loadhide();
                     PJAX.jump('editor.html'); /*Jump*/
@@ -90,8 +82,7 @@ function initialcheck() {
     notice('Checking...');
 }
 
-function initialization() {
-    /*初始化*/
+function initialization() { /*初始化*/
     if (confirm('即将帮您初始化博客，是否继续？\nReady for initialization, please confirm to continue.')) {
         notice('Initializing...');
         var tm = window.tjson['alltp'];
@@ -127,19 +118,19 @@ function initialization() {
         }
         $bueue.start(); /*队列启动*/
         var checkt = setInterval(function() {
-                if ($bueue.state == 3 && window.gstate <= 0) {
-                    notice('Finished');
-                    notice('三秒后将刷新页面');
-                    SC('t').style.opacity = 0;
-                    setTimeout(function() {
-                            location.reload();
-                        },
-                        3000);
-                    loadhide();
-                    clearInterval(checkt);
-                }
-            },
-            1000);
+            if ($bueue.state == 3 && window.gstate <= 0) {
+                notice('Finished');
+                notice('五秒后将刷新页面');
+                SC('t').style.opacity = 0;
+                setTimeout(function() {
+                    location.reload();
+                },
+                5000);
+                loadhide();
+                clearInterval(checkt);
+            }
+        },
+        1000);
     } else {
         alert('如果想好了，刷新页面初始化吧！');
     }
