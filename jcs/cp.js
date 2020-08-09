@@ -324,7 +324,7 @@ var B = { /*Replace Part*/
         for (var i in alld) askword += '序号:' + i + ' 保存时间:' + alld[i]['t'] + '\n';
         var t = parseInt(prompt('请输入要读取的草稿序号\n' + askword + '\n\n这会覆盖你目前的内容', '')),
             value = getter('otitle', t);
-        if (value) {
+        if (value&&t>=0) {
             SC('title').value = value['v'];
             SC('date').value = getter('odate', t)['v'];
             SC('tag').value = getter('otag', t)['v'];
