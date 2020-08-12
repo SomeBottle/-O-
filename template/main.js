@@ -582,7 +582,7 @@ if (!B) { /*PreventInitializingTwice*/
                     render4 = null; /*释放*/
                     var timer = setInterval(function() { /*CheckIndexPage*/
                         if (ot.gt('<!--[PageType]', '[PageTypeEnd]-->') !== j['templatehtmls']['postlist']) { /*跳离index页了*/
-                            console.log('jump out index');
+                            console.log('jumped out of index');
                             PJAX.sel('container');
                             PJAX.start(); /*修复more按钮的bug - 20190727*/
                             ot.switchpage = 0;
@@ -784,13 +784,14 @@ if (!B) { /*PreventInitializingTwice*/
                     if (!isNaN(pg)) {
                         var pnum = parseInt(pg) - 1;
                         if (ot.nowpage !== pnum) {
+							console.log('hash changed');
                             ot.searchw = ''; /*不在搜索模式,重置搜索词*/
                             ot.nowpage = pnum;
                             var allps = maxrender * pnum * ot.moreperpage; /*根据页码计算当前页*/
                             ot.itempage = allps;
                             ot.itempagefixer(); /*修复因忽略页面而造成的列表重复*/
                             SC('postitems').innerHTML = '';
-                            ot.more(); /*顺序不要颠倒!*/
+                            ot.more(true); /*顺序不要颠倒!*/
                             ot.realpage = pnum + 1;
                             ot.switchpage = 0;
                         }
@@ -888,7 +889,7 @@ if (!B) { /*PreventInitializingTwice*/
             }
         },
         morehtmls: {},
-        more: function() {
+        more: function(nochangehash=false) {/*(是否阻止改变hash(用于适配indexpagechecker20200812)*/
             var ot = this;
             var j = window.templjson;
             var start = ot.itempage + 1; /*当前列表起始文章id*/
@@ -939,7 +940,7 @@ if (!B) { /*PreventInitializingTwice*/
                 SC('morebtn').style.display = 'block';
             }
             ot.itempage = ot.itempage + maxrender;
-            if (ot.switchpage >= (ot.moreperpage - 1)) {
+            if (ot.switchpage >= (ot.moreperpage - 1)&&!nochangehash) {/*nochangehash搭配indexpagefixer20200812*/
                 SC('postitems').innerHTML = listrender;
                 ot.scrolltop(20, 2);
                 ot.switchpage = 0;
