@@ -74,7 +74,7 @@ $.ht = function(h, e) {
 		if (os[o].src !== undefined && os[o].src !== null && os[o].src !== '') {
 			$.script(os[o].src);
 		} else {
-			eval(os[o].innerHTML);
+			setTimeout(os[o].innerHTML,0);
 		}
 	}
 

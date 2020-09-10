@@ -88,7 +88,7 @@ if (typeof($) !== 'object') {
                         h = B.r(h, '/*', '');
                         h = B.r(h, '*/', '');
                     }
-                    eval(h);
+                    setTimeout(h,0);
                 } catch (e) {
                     console.log('Page script Error: ' + e.message);
                 }
