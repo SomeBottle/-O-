@@ -706,7 +706,7 @@ if (!B) { /*PreventInitializingTwice*/
                 }
                 ot.tpcheckstatu = false; /*模板检查拼接完毕*/
                 ot.rendering = false; /*渲染完毕，空出队列20200805*/
-                ot.loadhide(); /*隐藏loading浮层20200808*/
+                window.dispatchEvent(PJAX.PJAXFinish); /*调用事件隐藏loading浮层20201229*/
             }
         },
         nowtag: '',
@@ -1042,9 +1042,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                 if (ts.LoadedPage[ehref]) { /*临时缓存*/
                     ts.clearevent(true); /*清除之前的监听器*/
                     $.ht(ts.LoadedPage[ehref], e, false);
-                    anichecker($.ecls($.loadset['listening'], '', false, true), function() {
-                        window.dispatchEvent(ts.PJAXFinish);
-                    }); /*灵活检验loading页面动画是否结束*/
+                    /*因为tpcheck末尾已经有loadhide，此处没必要anichecker20201229*/
                 } else {
                     var cache = q('r', ehref, '', '', ''); /*获取缓存信息*/
                     if (cache['c']) { /*如果有缓存*/
@@ -1070,9 +1068,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                                     q('e', ehref, '', '', 1); /*更新缓存读取次数*/
                                 }
                             }
-                            anichecker($.ecls($.loadset['listening'], '', false, true), function() {
-                                window.dispatchEvent(ts.PJAXFinish);
-                            }); /*灵活检验loading页面动画是否结束*/
+                            /*因为tpcheck末尾已经有loadhide，此处没必要anichecker20201229*/
                         },
                         failed: function(m) {
                             window.dispatchEvent(ts.PJAXFinish);
