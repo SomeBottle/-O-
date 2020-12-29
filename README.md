@@ -103,7 +103,7 @@
      
    * **模板特殊占位**   
      
-     1. index.html **媒介页面(建议不要修改，不影响外观)**  
+     1. index.html **媒介页面(不要修改，不影响外观)**  
      ```html
      <!--description-->
      <meta name="description" content="{[description]}" />   Description 
@@ -131,6 +131,7 @@
      {[postitemtitle]}  文章列表每一项的标题  
      {[postitemintro]}  文章列表每一项的简介
      {[postitemdate]}  文章列表每一项的日期  
+     {[postitemtags]}  文章列表每一项的标签  
      <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
      {(PostItemEnd)}
      {(NoItem)}   加载more时没有更多文章的模板
