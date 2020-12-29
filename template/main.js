@@ -720,7 +720,7 @@ if (!B) { /*PreventInitializingTwice*/
                 /*get main tag html*/
                 taglisttemp = ot.gt('TagListTemplate', 'TagListTemplateEnd', tgs),
                 /*get item template*/
-                taglistitemtemp = ot.gt('TagListItemTemplate', '{agListItemTemplateEnd', tgs),
+                taglistitemtemp = ot.gt('TagListItemTemplate', 'TagListItemTemplateEnd', tgs),
                 /*get item template*/
                 tj = window.mainjson; /*get json*/
             var dti = tj['dateindex'];
