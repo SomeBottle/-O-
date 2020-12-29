@@ -41,8 +41,9 @@ function getdate() { /*获得今天日期*/
     return dt.getFullYear() + month.toString() + day.toString();
 }
 var B = { /*Replace Part*/
-    r: function(a, o, p, g = true) { /*(All,Original,ReplaceStr,IfReplaceAll)*/
+    r: function(a, o, p, tp = false, g = true) { /*(All,Original,ReplaceStr,IfTemplate(false,'[','('),IfReplaceAll)*/
         if (a) {
+            if (tp) return tp == '(' ? a.replace(new RegExp('\\{\\(' + o + '\\)\\}', (g ? 'g' : '') + 'i'), p) : a.replace(new RegExp('\\{\\[' + o + '\\]\\}', (g ? 'g' : '') + 'i'), p); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
             if (g) {
                 while (a.indexOf(o) !== -1) {
                     a = a.replace(o, p);
@@ -53,17 +54,20 @@ var B = { /*Replace Part*/
         }
         return a;
     },
-    gt: function(p1, p2, ct = false) { /*htmlget*/
+    gt: function(p1, p2, ct = false, ntp = false) { /*htmlget(between,and,content,NotTemplate=false)*/
         var e;
         if (!ct) {
             e = document.getElementsByTagName('html')[0].innerHTML;
         } else {
             e = ct;
         }
-        if (e.indexOf(p1) !== -1 && e.indexOf(p2) !== -1) {
-            var k = e.split(p1)[1];
-            var d = k.split(p2)[0];
+        try { /*ntp=false，也就是模板中匹配的时候，默认匹配{(xxx)}和{(xxx)}之间的内容*/
+            var k = ntp ? e.split(p1)[1] : e.split(new RegExp('\\{\\(' + p1 + '\\)\\}', 'i'))[1]; /*正则支持大小写忽略*/
+            var d = ntp ? k.split(p2)[0] : k.split(new RegExp('\\{\\(' + p2 + '\\)\\}', 'i'))[0];
+            return this.dehtml(d);
             return d;
+        } catch (e) {
+            return false;
         }
     }
 }
@@ -192,16 +196,16 @@ var B = { /*Replace Part*/
         var pageg2 = tpjs['generatehtmls']['archives']; /*获得配置的页面链接，默认archive.html*/
         var tj = JSON.parse(Base64.decode(window.mainjson.content.replace(/[\r\n]/g, ""))); /*获得json*/
         var m = window.htmls['index.html']; /*Tags*/
-        var rendert1 = B.r(m, '{[title]}', 'Tags');
-        var rendert2 = B.r(rendert1, '{[sitename]}', tj['name']);
-        var rendert3 = B.r(rendert2, '{[keywords]}', tj['name'] + ',tag');
-        var rendert4 = B.r(rendert3, '{[description]}', 'Tag Page');
-        var rendert5 = B.r(rendert4, '{[type]}', pageh1); /*Archives*/
-        var rendera1 = B.r(m, '{[title]}', 'Archives');
-        var rendera2 = B.r(rendera1, '{[sitename]}', tj['name']);
-        var rendera3 = B.r(rendera2, '{[keywords]}', tj['name'] + ',archive');
-        var rendera4 = B.r(rendera3, '{[description]}', 'Archive Page');
-        var rendera5 = B.r(rendera4, '{[type]}', pageh2);
+        var rendert1 = B.r(m, 'title', 'Tags', true);
+        var rendert2 = B.r(rendert1, 'sitename', tj['name'], true);
+        var rendert3 = B.r(rendert2, 'keywords', tj['name'] + ',tag', true);
+        var rendert4 = B.r(rendert3, 'description', 'Tag Page', true);
+        var rendert5 = B.r(rendert4, 'type', pageh1, true); /*Archives*/
+        var rendera1 = B.r(m, 'title', 'Archives', true);
+        var rendera2 = B.r(rendera1, 'sitename', tj['name'], true);
+        var rendera3 = B.r(rendera2, 'keywords', tj['name'] + ',archive', true);
+        var rendera4 = B.r(rendera3, 'description', 'Archive Page', true);
+        var rendera5 = B.r(rendera4, 'type', pageh2, true);
         if (confirm('确定要生成标签和归档页面？')) {
             loadshow();
             blog.cr(window.accesstoken, window.githubrepo, pageg1, 'Generate Tag Page', rendert5, {
@@ -228,7 +232,7 @@ var B = { /*Replace Part*/
     function covercutter(rc) { /*从内容中去除所有<ifcover>的部分*/
         var rst = rc;
         while (rst.indexOf('<ifcover>') !== -1) {
-            var coverhtml = B.gt('<ifcover>', '</ifcover>', rst);
+            var coverhtml = B.gt('<ifcover>', '</ifcover>', rst, true);
             rst = B.r(rst, '<ifcover>' + coverhtml + '</ifcover>', ''); /*没有封面图就删掉整段*/
         }
         return rst;
@@ -250,7 +254,7 @@ var B = { /*Replace Part*/
         var tj = js;
         var m = window.htmls['index.html'];
         var item = window.htmls['postitem.html'];
-        item = B.gt('{(PostItem)}', '{(PostItemEnd)}', item); /*有项目的模板*/
+        item = B.gt('PostItem', 'PostItemEnd', item); /*有项目的模板*/
         var postids = tj['dateindex'];
         var listrender = '';
         var maxrender = parseInt(tj['posts_per_page']); /*每页最大渲染数*/
@@ -260,12 +264,13 @@ var B = { /*Replace Part*/
                 var pid = i.replace('post', '');
                 var pt = tj['postindex'][pid];
                 if (!pt['link']) { /*排除页面在外*/
-                    var render1 = B.r(item, '{[postitemtitle]}', Base64.decode(pt.title));
-                    var render2 = B.r(render1, '{[postitemintro]}', Base64.decode(pt.intro) + '...');
-                    var render3 = B.r(render2, '{[postitemdate]}', transdate(pt.date));
-                    var render4 = B.r(render3, '{[postitemlink]}', 'post-' + pid + '.html');
+                    var render1 = B.r(item, 'postitemtitle', Base64.decode(pt.title), true);
+                    var render2 = B.r(render1, 'postitemintro', Base64.decode(pt.intro) + '...', true);
+                    var render3 = B.r(render2, 'postitemdate', transdate(pt.date), true);
+                    var render35 = B.r(render3, 'postitemtags', pt.tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
+                    var render4 = B.r(render35, 'postitemlink', 'post-' + pid + '.html', true);
                     if (pt['cover']) {
-                        render4 = B.r(render4, '{[postcover]}', pt['cover']); /*如果有封面图就渲染一下*/
+                        render4 = B.r(render4, 'postcover', pt['cover'], true); /*如果有封面图就渲染一下*/
                     } else {
                         render4 = covercutter(render4); /*没有封面图就删掉整段*/
                     }
@@ -278,12 +283,12 @@ var B = { /*Replace Part*/
                 break;
             }
         }
-        var renderi1 = B.r(m, '{[title]}', '');
-        var renderi2 = B.r(renderi1, '{[description]}', '');
-        var renderi3 = B.r(renderi2, '{[keywords]}', tj['name']); /*站点名字加入keywords*/
-        var renderi4 = B.r(renderi3, '{[type]}', pageh);
-        var renderi5 = B.r(renderi4, '{[sitename]}', tj['name']); /*设定title*/
-        var renderi6 = B.r(renderi5, '{[content]}', enhtml(rnspace(listrender))); /*注入灵魂*/
+        var renderi1 = B.r(m, 'title', '', true);
+        var renderi2 = B.r(renderi1, 'description', '', true);
+        var renderi3 = B.r(renderi2, 'keywords', tj['name'], true); /*站点名字加入keywords*/
+        var renderi4 = B.r(renderi3, 'type', pageh, true);
+        var renderi5 = B.r(renderi4, 'sitename', tj['name'], true); /*设定title*/
+        var renderi6 = B.r(renderi5, 'content', enhtml(rnspace(listrender)), true); /*注入灵魂*/
         return renderi6;
     }
 
@@ -324,7 +329,7 @@ var B = { /*Replace Part*/
         for (var i in alld) askword += '序号:' + i + ' 保存时间:' + alld[i]['t'] + '\n';
         var t = parseInt(prompt('请输入要读取的草稿序号\n' + askword + '\n\n这会覆盖你目前的内容', '')),
             value = getter('otitle', t);
-        if (value&&t>=0) {
+        if (value && t >= 0) {
             SC('title').value = value['v'];
             SC('date').value = getter('odate', t)['v'];
             SC('tag').value = getter('otag', t)['v'];
@@ -342,7 +347,7 @@ var B = { /*Replace Part*/
     }
 
     function coverdrawer() { /*提取当前content的封面图片*/
-        return B.gt('-[cover:', ']-', SC('content').value);
+        return B.gt('-[cover:', ']-', SC('content').value, true);
     }
 
     function edit() {
@@ -376,14 +381,14 @@ var B = { /*Replace Part*/
         if (confirm('真的要发布嘛？')) {
             var tj = JSON.parse(Base64.decode(window.mainjson.content.replace(/[\r\n]/g, ""))); /*获得json*/
             var m = window.htmls['index.html']; /*RenderArea*/
-            var render1 = B.r(m, '{[title]}', title);
-            var render2 = B.r(render1, '{[date]}', date);
-            var render3 = B.r(render2, '{[tags]}', tag);
-            var render4 = B.r(render3, '{[content]}', enhtml(rnspace(content)));
-            var render5 = B.r(render4, '{[description]}', intro.replace(/<\/?.+?>/g, "")); /*去除html标签作为description*/
-            var render6 = B.r(render5, '{[keywords]}', tag + ',' + tj['name']); /*站点名字加入keywords*/
-            var render7 = B.r(render6, '{[type]}', pageh);
-            var render8 = B.r(render7, '{[sitename]}', tj['name']); /*设定title*/
+            var render1 = B.r(m, 'title', title, true);
+            var render2 = B.r(render1, 'date', date, true);
+            var render3 = B.r(render2, 'tags', tag, true);
+            var render4 = B.r(render3, 'content', enhtml(rnspace(content)), true);
+            var render5 = B.r(render4, 'description', intro.replace(/<\/?.+?>/g, ""), true); /*去除html标签作为description*/
+            var render6 = B.r(render5, 'keywords', tag + ',' + tj['name'], true); /*站点名字加入keywords*/
+            var render7 = B.r(render6, 'type', pageh, true);
+            var render8 = B.r(render7, 'sitename', tj['name'], true); /*设定title*/
             /*RenderFinish*/
             if (tj[0] == 'initialized') { /*删除默认内容*/
                 delete tj[0];
@@ -405,7 +410,7 @@ var B = { /*Replace Part*/
             } else {
                 tj['postnum'] += 1;
             }
-            var render9 = B.r(render8, '{[pid]}', nownum); /*设定pid*/
+            var render9 = B.r(render8, 'pid', nownum, true); /*设定pid*/
             /*Render---------------------*/
             var pagelink = ''; /*指定编辑的页面的link(不带.html)*/
             if (ifpage) { /*如果是页面直接获取当前时间*/
@@ -478,10 +483,10 @@ var B = { /*Replace Part*/
                     delete tj['postindex'][nownum]['cover']; /*如果是none就删除文章封面*/
                     rp = '';
                 }
-                render9 = B.r(render9, '{[cover]}', pcover); /*设定封面(此处会有none值)*/
+                render9 = B.r(render9, 'cover', pcover, true); /*设定封面(此处会有none值)*/
                 /*Render---------------------*/
             } else {
-                render9 = B.r(render9, '{[cover]}', 'none'); /*没有封面也要替换掉占位符*/
+                render9 = B.r(render9, 'cover', 'none', true); /*没有封面也要替换掉占位符*/
             }
             if (ifpage) {
                 tj['postindex'][nownum]['link'] = pagelink; /*储存pagelink*/
@@ -695,7 +700,7 @@ var B = { /*Replace Part*/
                 var date = tj['postindex'][id]['date'];
             }
             var tags = tj['postindex'][id]['tags'];
-            var content = (B.gt('{(PostContent)}', '{(PostContentEnd)}', ht)).trim(); /*去除内容首尾的空格*/
+            var content = (B.gt('PostContent', 'PostContentEnd', ht)).trim(); /*去除内容首尾的空格*/
             SC('content').value = unrnspace(dehtml(content));
             SC('tag').value = tags;
             SC('title').value = title;

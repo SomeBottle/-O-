@@ -1,4 +1,4 @@
-/*FrontMainJS ver2.1.0 - SomeBottle*/
+/*FrontMainJS ver2.1.4 - SomeBottle*/
  /*q.js*/
 var md;
 if (typeof($) !== 'object') {
@@ -88,7 +88,7 @@ if (typeof($) !== 'object') {
                         h = B.r(h, '/*', '');
                         h = B.r(h, '*/', '');
                     }
-                    setTimeout(h,0);
+                    setTimeout(h, 0);
                 } catch (e) {
                     console.log('Page script Error: ' + e.message);
                 }
@@ -208,7 +208,8 @@ if (!B) { /*PreventInitializingTwice*/
     window.htmls = new Object();
     var B = { /*B Part*/
         moreperpage: 0,
-        r: function(a, o, p, g = true) { /*(All,Original,ReplaceStr,IfReplaceAll)*/
+        r: function(a, o, p, tp = false, g = true) { /*(All,Original,ReplaceStr,IfTemplate(false,'[','('),IfReplaceAll)*/
+            if (tp) return tp == '(' ? a.replace(new RegExp('\\{\\(' + o + '\\)\\}', (g ? 'g' : '') + 'i'), p) : a.replace(new RegExp('\\{\\[' + o + '\\]\\}', (g ? 'g' : '') + 'i'), p); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
             if (g) {
                 while (a.indexOf(o) !== -1) {
                     a = a.replace(o, p);
@@ -232,9 +233,12 @@ if (!B) { /*PreventInitializingTwice*/
             if (o.navlist.statu) {
                 var e = c.getElementsByClassName(cl.navclass),
                     path = o.navcurrent();
-                for (var i in e) {
-                    var p = o.navcurrent(e[i].href);
-                    if (path == p && e[i] instanceof Element) {
+                for (var i in e) { /*20201229更改算法*/
+                    var p = o.navcurrent(e[i].href),
+                        pathpos = path.lastIndexOf(p),
+                        pathlen = path.length,
+                        hreflen = p.length;
+                    if ((path == p || (pathpos + hreflen == pathlen && pathpos !== -1)) && e[i] instanceof Element) {
                         e[i].classList.add(cl.activeclass); /*设置为焦点*/
                     } else if (e[i] instanceof Element) {
                         (e[i].classList.contains(cl.activeclass)) ? (e[i].classList.remove(cl.activeclass)) : p = p; /*取消其他的焦点*/
@@ -308,16 +312,16 @@ if (!B) { /*PreventInitializingTwice*/
             var temp = h.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#39;/g, "\'").replace(/&quot;/g, "\"");
             return temp;
         },
-        gt: function(p1, p2, ct = false) { /*htmlget*/
+        gt: function(p1, p2, ct = false, ntp = false) { /*htmlget(between,and,content,NotTemplate=false)*/
             var e;
             if (!ct) {
                 e = SC('html').innerHTML;
             } else {
                 e = ct;
             }
-            try {
-                var k = e.split(p1)[1];
-                var d = k.split(p2)[0];
+            try { /*ntp=false，也就是模板中匹配的时候，默认匹配{(xxx)}和{(xxx)}之间的内容*/
+                var k = ntp ? e.split(p1)[1] : e.split(new RegExp('\\{\\(' + p1 + '\\)\\}', 'i'))[1]; /*正则支持大小写忽略*/
+                var d = ntp ? k.split(p2)[0] : k.split(new RegExp('\\{\\(' + p2 + '\\)\\}', 'i'))[0];
                 return this.dehtml(d);
             } catch (e) {
                 return false;
@@ -380,7 +384,7 @@ if (!B) { /*PreventInitializingTwice*/
             if (!ot.tpcheckstatu || re) { /*防止短时间内重复检查模板20200805*/
                 ot.tpcheckstatu = true; /*正在检查模板*/
                 ot.loadshow();
-                var pagetype = ot.gt('{(PageType)}', '{(PageTypeEnd)}'); /*Get Page Type*/
+                var pagetype = ot.gt('PageType', 'PageTypeEnd'); /*Get Page Type*/
                 if (!window.templjson) {
                     $.aj('template.json', '', {
                         success: function(m) {
@@ -496,7 +500,7 @@ if (!B) { /*PreventInitializingTwice*/
         cd: function(rc) { /*covercutter封面<ifcover>去除器*/
             var rst = rc;
             while (rst.indexOf('<ifcover>') !== -1) {
-                var coverhtml = B.gt('<ifcover>', '</ifcover>', rst);
+                var coverhtml = B.gt('<ifcover>', '</ifcover>', rst, true);
                 rst = B.r(rst, '<ifcover>' + coverhtml + '</ifcover>', ''); /*没有封面图就删掉整段*/
             }
             return rst;
@@ -510,19 +514,19 @@ if (!B) { /*PreventInitializingTwice*/
                 var cloth = window.htmls[j['templatehtmls']['cloth']];
                 var main = window.htmls[j['templatehtmls']['main']];
                 var comment = window.htmls[j['templatehtmls']['comment']];
-                var pagetype = ot.gt('{(PageType)}', '{(PageTypeEnd)}'); /*Get Page Type*/
+                var pagetype = ot.gt('PageType', 'PageTypeEnd'); /*Get Page Type*/
                 var tj = window.mainjson; /*get json*/
                 if (pagetype == j['templatehtmls']['post']) {
-                    var content = ot.gt('{(PostContent)}', '{(PostContentEnd)}'); /*Get Post Content*/
-                    var title = ot.gt('{(PostTitle)}', '{(PostTitleEnd)}'); /*Get Post Title*/
-                    var date = ot.gt('{(PostDate)}', '{(PostDateEnd)}'); /*Get Post Date*/
-                    var tags = ot.gt('{(PostTag)}', '{(PostTagEnd)}'); /*Get Post Content*/
-                    var pid = ot.gt('{(PostID)}', '{(PostIDEnd)}'); /*Get Post ID*/
-                    var cover = ot.gt('{(PostCover)}', '{(PostCoverEnd)}'); /*Get Post Cover*/
-                    var pagetitle = (ot.gt('{(MainTitle)}', '{(MainTitleEnd)}')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
+                    var content = ot.gt('PostContent', 'PostContentEnd'); /*Get Post Content*/
+                    var title = ot.gt('PostTitle', 'PostTitleEnd'); /*Get Post Title*/
+                    var date = ot.gt('PostDate', 'PostDateEnd'); /*Get Post Date*/
+                    var tags = ot.gt('PostTag', 'PostTagEnd'); /*Get Post Content*/
+                    var pid = ot.gt('PostID', 'PostIDEnd'); /*Get Post ID*/
+                    var cover = ot.gt('PostCover', 'PostCoverEnd'); /*Get Post Cover*/
+                    var pagetitle = (ot.gt('MainTitle', 'MainTitleEnd')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
                     var post = window.htmls[j['templatehtmls']['post']];
-                    var render11 = ot.r(post, '{[postcontent]}', ot.lazypre(md.makeHtml(ot.hc(ot.unrnspace(content.trim()))))); /*unescape and Analyse md*/
-                    var render12 = ot.r(render11, '{[posttitle]}', title);
+                    var render11 = ot.r(post, 'postcontent', ot.lazypre(md.makeHtml(ot.hc(ot.unrnspace(content.trim())))), true); /*unescape and Analyse md*/
+                    var render12 = ot.r(render11, 'posttitle', title, true);
                     var alltags = [];
                     if (isNaN(date)) {
                         tags = '页面';
@@ -534,20 +538,20 @@ if (!B) { /*PreventInitializingTwice*/
                         });
                         tags = tags.substr(0, tags.length - 1); /*去掉末尾逗号*/
                     }
-                    var render13 = ot.r(render12, '{[posttags]}', tags);
-                    var render14 = ot.r(render13, '{[postdate]}', $.dt(date));
-                    var render2 = ot.r(main, '{[contents]}', render14);
-                    var render3 = ot.r(cloth, '{[main]}', render2);
-                    var render4 = ot.r(render3, '{[title]}', pagetitle);
+                    var render13 = ot.r(render12, 'posttags', tags, true);
+                    var render14 = ot.r(render13, 'postdate', $.dt(date), true);
+                    var render2 = ot.r(main, 'contents', render14, true);
+                    var render3 = ot.r(cloth, 'main', render2, true);
+                    var render4 = ot.r(render3, 'title', pagetitle, true);
                     var ghead = $.rmhead(render4); /*把cloth内的头部去掉，咱分头行动*/
-                    var render5 = ot.r(ghead[0], '{[comments]}', comment); /*LoadCommentsForPost*/
-                    var render6 = ot.r(render5, '{[pid]}', pid); /*SetPid*/
-                    render6 = ot.r(render6, '{[pagetype]}', pagetype); /*SetPageType*/
-                    render6 = ot.r(render6, '{(PageType)}', '<!--[PageType]'); /*SetPageType*/
-                    render6 = ot.r(render6, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
+                    var render5 = ot.r(ghead[0], 'comments', comment, true); /*LoadCommentsForPost*/
+                    var render6 = ot.r(render5, 'pid', pid, true); /*SetPid*/
+                    render6 = ot.r(render6, 'pagetype', pagetype, true); /*SetPageType*/
+                    render6 = ot.r(render6, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
+                    render6 = ot.r(render6, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                     /*CoverProcess*/
                     if (cover && cover !== 'none' && cover !== '') {
-                        render6 = ot.r(render6, '{[postcover]}', cover); /*设定封面*/
+                        render6 = ot.r(render6, 'postcover', cover, true); /*设定封面*/
                     } else { /*没有封面，按标签一起删掉*/
                         render6 = ot.cd(render6);
                     }
@@ -563,25 +567,25 @@ if (!B) { /*PreventInitializingTwice*/
                     });
                     render6 = tj = null; /*释放*/
                 } else if (pagetype == j['templatehtmls']['postlist']) {
-                    var content = ot.gt('{(PostContent)}', '{(PostContentEnd)}'); /*Get Post Content*/
-                    var pagetitle = (ot.gt('{(MainTitle)}', '{(MainTitleEnd)}')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
+                    var content = ot.gt('PostContent', 'PostContentEnd'); /*Get Post Content*/
+                    var pagetitle = (ot.gt('MainTitle', 'MainTitleEnd')).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
                     var realtitle = pagetitle.replace('-', ''); /*Remove - */
                     var pt = window.htmls[j['templatehtmls']['postlist']];
-                    var render11 = ot.r(pt, '{[postitems]}', md.makeHtml(ot.unrnspace((content.trim())))); /*Analyse md*/
-                    var render2 = ot.r(main, '{[contents]}', render11);
-                    var render3 = ot.r(cloth, '{[main]}', render2);
-                    var render4 = ot.r(render3, '{[title]}', realtitle);
+                    var render11 = ot.r(pt, 'postitems', md.makeHtml(ot.unrnspace((content.trim()))), true); /*Analyse md*/
+                    var render2 = ot.r(main, 'contents', render11, true);
+                    var render3 = ot.r(cloth, 'main', render2, true);
+                    var render4 = ot.r(render3, 'title', realtitle, true);
                     var ghead = $.rmhead(render4); /*把cloth内的头部去掉*/
-                    var render4 = ot.r(ghead[0], '{[pagetype]}', pagetype); /*SetPageType*/
-                    render4 = ot.r(render4, '{(PageType)}', '<!--[PageType]'); /*SetPageType*/
-                    render4 = ot.r(render4, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
+                    var render4 = ot.r(ghead[0], 'pagetype', pagetype, true); /*SetPageType*/
+                    render4 = ot.r(render4, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
+                    render4 = ot.r(render4, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                     ot.itempage = parseInt(tj['posts_per_page']);
                     ot.itempagefixer(); /*修复因忽略页面而造成的列表重复*/
                     $.ht(ot.deltemptags(render4), 'container');
                     $.addhead(ghead[1]); /*接头霸王来了*/
                     render4 = null; /*释放*/
                     var timer = setInterval(function() { /*CheckIndexPage*/
-                        if (ot.gt('<!--[PageType]', '[PageTypeEnd]-->') !== j['templatehtmls']['postlist']) { /*跳离index页了*/
+                        if (ot.gt('<!--[PageType]', '[PageTypeEnd]-->', false, true) !== j['templatehtmls']['postlist']) { /*跳离index页了*/
                             console.log('jumped out of index');
                             PJAX.sel('container');
                             PJAX.start(); /*修复more按钮的bug - 20190727*/
@@ -593,15 +597,15 @@ if (!B) { /*PreventInitializingTwice*/
                     },
                     100);
                 } else if (pagetype == j['templatehtmls']['archives']) {
-                    var pagetitle = (ot.gt('{(MainTitle)}', '{(MainTitleEnd)}')).replace(/<\/?.+?>/g, ""),
+                    var pagetitle = (ot.gt('MainTitle', 'MainTitleEnd')).replace(/<\/?.+?>/g, ""),
                         /*Get Page Title(No html characters)*/
                         ar = window.htmls[j['templatehtmls']['archives']],
                         /*get entire html*/
-                        archivemain = ot.gt('{(Archives)}', '{(ArchivesEnd)}', ar),
+                        archivemain = ot.gt('Archives', 'ArchivesEnd', ar),
                         /*Get archive main html*/
-                        archivetemp = ot.gt('{(ArchiveTemplate)}', '{(ArchiveTemplateEnd)}', ar),
+                        archivetemp = ot.gt('ArchiveTemplate', 'ArchiveTemplateEnd', ar),
                         /*get section template*/
-                        archiveitemtemp = ot.gt('{(ArchiveItemTemplate)}', '{(ArchiveItemTemplateEnd)}', ar),
+                        archiveitemtemp = ot.gt('ArchiveItemTemplate', 'ArchiveItemTemplateEnd', ar),
                         /*get item template*/
                         /*Generate Archives*/
                         din = tj['dateindex'],
@@ -614,8 +618,8 @@ if (!B) { /*PreventInitializingTwice*/
                         var t = (din[td].toString()).substring(0, 4); /*get years*/
                         if (t !== year) {
                             year = t;
-                            if (renderarit !== '') renderar = ot.r(renderar, '{[archiveitems]}', renderarit), renderarit = ''; /*apply items to section*/
-                            renderar += ot.r(archivetemp, '{[archiveyear]}', t); /*render year section*/
+                            if (renderarit !== '') renderar = ot.r(renderar, 'archiveitems', renderarit, true), renderarit = ''; /*apply items to section*/
+                            renderar += ot.r(archivetemp, 'archiveyear', t, true); /*render year section*/
                         }
                         var pid = td.replace('post', ''),
                             title = Base64.decode(tj['postindex'][pid]['title']),
@@ -626,31 +630,31 @@ if (!B) { /*PreventInitializingTwice*/
                         } else {
                             itemlink = tj['postindex'][pid]['link'];
                         }
-                        var itemrender = ot.r(archiveitemtemp, '{[archiveitemlink]}', itemlink),
-                            itemrender = ot.r(itemrender, '{[archiveitemtitle]}', title),
-                            itemrender = ot.r(itemrender, '{[archiveitemdate]}', $.dt(date));
+                        var itemrender = ot.r(archiveitemtemp, 'archiveitemlink', itemlink, true),
+                            itemrender = ot.r(itemrender, 'archiveitemtitle', title, true),
+                            itemrender = ot.r(itemrender, 'archiveitemdate', $.dt(date), true);
                         renderarit += itemrender;
                     }
-                    if (renderarit !== '') renderar = ot.r(renderar, '{[archiveitems]}', renderarit); /*apply items to section#2*/
+                    if (renderarit !== '') renderar = ot.r(renderar, 'archiveitems', renderarit, true); /*apply items to section#2*/
                     renderar += '</ul>'; /*Generate Finish*/
-                    var render11 = ot.r(archivemain, '{[archives]}', renderar); /*渲染模板部分*/
-                    var render2 = ot.r(main, '{[contents]}', render11);
-                    var render3 = ot.r(cloth, '{[main]}', render2);
-                    var render4 = ot.r(render3, '{[title]}', pagetitle);
+                    var render11 = ot.r(archivemain, 'archives', renderar, true); /*渲染模板部分*/
+                    var render2 = ot.r(main, 'contents', render11, true);
+                    var render3 = ot.r(cloth, 'main', render2, true);
+                    var render4 = ot.r(render3, 'title', pagetitle, true);
                     var ghead = $.rmhead(render4); /*把cloth内的头部去掉*/
-                    var render4 = ot.r(ghead[0], '{[pagetype]}', pagetype); /*SetPageType*/
-                    render4 = ot.r(render4, '{(PageType)}', '<!--[PageType]'); /*SetPageType*/
-                    render4 = ot.r(render4, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
+                    var render4 = ot.r(ghead[0], 'pagetype', pagetype, true); /*SetPageType*/
+                    render4 = ot.r(render4, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
+                    render4 = ot.r(render4, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                     $.ht(ot.deltemptags(render4), 'container');
                     $.addhead(ghead[1]); /*接头霸王来了*/
                     render4 = null; /*释放*/
                 } else if (pagetype == j['templatehtmls']['tags']) {
-                    var pagetitle = (ot.gt('{(MainTitle)}', '{(MainTitleEnd)}')).replace(/<\/?.+?>/g, ""),
+                    var pagetitle = (ot.gt('MainTitle', 'MainTitleEnd')).replace(/<\/?.+?>/g, ""),
                         /*Get Page Title(No html characters)*/
                         tgs = window.htmls[j['templatehtmls']['tags']],
-                        tagmain = ot.gt('{(Tags)}', '{(TagsEnd)}', tgs),
+                        tagmain = ot.gt('Tags', 'TagsEnd', tgs),
                         /*Get tag main html*/
-                        tagitemtemp = ot.gt('{(TagItemTemplate)}', '{(TagItemTemplateEnd)}', tgs),
+                        tagitemtemp = ot.gt('TagItemTemplate', 'TagItemTemplateEnd', tgs),
                         /*get item template*/
                         href = $.tr(window.location.href),
                         /*Generate Tags*/
@@ -666,8 +670,8 @@ if (!B) { /*PreventInitializingTwice*/
                         });
                     }
                     tagarr.forEach(function(item, index) {
-                        var g = ot.r(tagitemtemp, '{[tagitemtitle]}', item); /*replace and render*/
-                        g = ot.r(g, '{[tagitemlink]}', '#' + encodeURIComponent(item));
+                        var g = ot.r(tagitemtemp, 'tagitemtitle', item, true); /*replace and render*/
+                        g = ot.r(g, 'tagitemlink', '#' + encodeURIComponent(item), true);
                         rendertg += g;
                     });
                     ot.alltaghtml = rendertg;
@@ -688,14 +692,14 @@ if (!B) { /*PreventInitializingTwice*/
                         ot.tagpagechecker();
                     },
                     100);
-                    var render11 = ot.r(tagmain, '{[tags]}', rendertg);
-                    var render2 = ot.r(main, '{[contents]}', render11);
-                    var render3 = ot.r(cloth, '{[main]}', render2);
-                    var render4 = ot.r(render3, '{[title]}', pagetitle);
+                    var render11 = ot.r(tagmain, 'tags', rendertg, true);
+                    var render2 = ot.r(main, 'contents', render11, true);
+                    var render3 = ot.r(cloth, 'main', render2, true);
+                    var render4 = ot.r(render3, 'title', pagetitle, true);
                     var ghead = $.rmhead(render4); /*把cloth内的头部去掉*/
-                    var render4 = ot.r(ghead[0], '{[pagetype]}', pagetype); /*SetPageType*/
-                    render4 = ot.r(render4, '{(PageType)}', '<!--[PageType]'); /*SetPageType*/
-                    render4 = ot.r(render4, '{(PageTypeEnd)}', '[PageTypeEnd]-->'); /*SetPageType*/
+                    var render4 = ot.r(ghead[0], 'pagetype', pagetype, true); /*SetPageType*/
+                    render4 = ot.r(render4, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
+                    render4 = ot.r(render4, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                     $.ht(ot.deltemptags(render4), 'container');
                     $.addhead(ghead[1]); /*接头霸王来了*/
                     render4 = null; /*释放*/
@@ -714,9 +718,9 @@ if (!B) { /*PreventInitializingTwice*/
                 j = window.templjson,
                 tgs = window.htmls[j['templatehtmls']['tags']],
                 /*get main tag html*/
-                taglisttemp = ot.gt('{(TagListTemplate)}', '{(TagListTemplateEnd)}', tgs),
+                taglisttemp = ot.gt('TagListTemplate', 'TagListTemplateEnd', tgs),
                 /*get item template*/
-                taglistitemtemp = ot.gt('{(TagListItemTemplate)}', '{(TagListItemTemplateEnd)}', tgs),
+                taglistitemtemp = ot.gt('TagListItemTemplate', '{agListItemTemplateEnd', tgs),
                 /*get item template*/
                 tj = window.mainjson; /*get json*/
             var dti = tj['dateindex'];
@@ -737,13 +741,13 @@ if (!B) { /*PreventInitializingTwice*/
                 if (post['link']) {
                     lk = post['link'] + '.html';
                 }
-                var g = ot.r(taglistitemtemp, '{[taglistitemlink]}', lk);
-                g = ot.r(g, '{[taglistitemtitle]}', Base64.decode(post['title']));
-                g = ot.r(g, '{[taglistitemdate]}', $.dt(date));
+                var g = ot.r(taglistitemtemp, 'taglistitemlink', lk, true);
+                g = ot.r(g, 'taglistitemtitle', Base64.decode(post['title']), true);
+                g = ot.r(g, 'taglistitemdate', $.dt(date), true);
                 rendertgs += g;
             });
-            rendertgs = ot.r(taglisttemp, '{[taglist]}', rendertgs);
-            rendertgs = ot.r(rendertgs, '{[tagcurrent]}', tg);
+            rendertgs = ot.r(taglisttemp, 'taglist', rendertgs, true);
+            rendertgs = ot.r(rendertgs, 'tagcurrent', tg, true);
             SC('tags').innerHTML = rendertgs;
             rendertgs = null; /*释放*/
         },
@@ -784,7 +788,7 @@ if (!B) { /*PreventInitializingTwice*/
                     if (!isNaN(pg)) {
                         var pnum = parseInt(pg) - 1;
                         if (ot.nowpage !== pnum) {
-							console.log('hash changed');
+                            console.log('hash changed');
                             ot.searchw = ''; /*不在搜索模式,重置搜索词*/
                             ot.nowpage = pnum;
                             var allps = maxrender * pnum * ot.moreperpage; /*根据页码计算当前页*/
@@ -799,9 +803,9 @@ if (!B) { /*PreventInitializingTwice*/
                 } else { /*Search mode*/
                     var rendertp = '';
                     var item = window.htmls[j['templatehtmls']['postitem']],
-                        ptitem = ot.gt('{(PostItem)}', '{(PostItemEnd)}', item),
+                        ptitem = ot.gt('PostItem', 'PostItemEnd', item),
                         /*有项目的模板*/
-                        noitem = ot.gt('{(NoItem)}', '{(NoItemEnd)}', item); /*无项目的模板*/
+                        noitem = ot.gt('NoItem', 'NoItemEnd', item); /*无项目的模板*/
                     var v = href.split('#!')[1];
                     if (v !== ot.searchw) {
                         ot.searchw = v;
@@ -810,20 +814,22 @@ if (!B) { /*PreventInitializingTwice*/
                             var tt = (Base64.decode(pt[i]['title'])).toLowerCase();
                             var cc = (Base64.decode(pt[i]['intro'])).toLowerCase();
                             var dd = (pt[i]['date']).toLowerCase();
-                            var tg = (pt[i]['tags']).toLowerCase();
+                            var tags = pt[i]['tags'],
+                                tg = tags.toLowerCase();
                             v = v.toLowerCase(); /*大小写忽略*/
                             if (tt.indexOf(v) !== -1 || cc.indexOf(v) !== -1 || dd.indexOf(v) !== -1 || tg.indexOf(v) !== -1) {
-                                var render1 = B.r(ptitem, '{[postitemtitle]}', tt);
-                                var render2 = B.r(render1, '{[postitemintro]}', cc + '...');
-                                var render3 = B.r(render2, '{[postitemdate]}', $.dt(dd));
+                                var render1 = B.r(ptitem, 'postitemtitle', tt, true);
+                                var render2 = B.r(render1, 'postitemintro', cc + '...', true);
+                                var render3 = B.r(render2, 'postitemdate', $.dt(dd), true);
+                                var render35 = B.r(render3, 'postitemtags', tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
                                 var render4;
                                 if (!pt[i]['link']) {
-                                    render4 = B.r(render3, '{[postitemlink]}', 'post-' + i + '.html'); /*把页面也算入*/
+                                    render4 = B.r(render35, 'postitemlink', 'post-' + i + '.html', true); /*把页面也算入*/
                                 } else {
-                                    render4 = B.r(render3, '{[postitemlink]}', pt[i]['link'] + '.html');
+                                    render4 = B.r(render35, 'postitemlink', pt[i]['link'] + '.html', true);
                                 }
                                 if (pt[i]['cover']) { /*如果有封面*/
-                                    render4 = B.r(render4, '{[postcover]}', pt[i]['cover']); /*把页面也算入*/
+                                    render4 = B.r(render4, 'postcover', pt[i]['cover'], true); /*把页面也算入*/
                                 } else {
                                     render4 = ot.cd(render4); /*没有封面就删掉整段<ifcover>*/
                                 }
@@ -889,7 +895,7 @@ if (!B) { /*PreventInitializingTwice*/
             }
         },
         morehtmls: {},
-        more: function(nochangehash=false) {/*(是否阻止改变hash(用于适配indexpagechecker20200812)*/
+        more: function(nochangehash = false) { /*(是否阻止改变hash(用于适配indexpagechecker20200812)*/
             var ot = this;
             var j = window.templjson;
             var start = ot.itempage + 1; /*当前列表起始文章id*/
@@ -898,9 +904,9 @@ if (!B) { /*PreventInitializingTwice*/
             var listrender = '';
             var tj = window.mainjson; /*get json*/
             var item = window.htmls[j['templatehtmls']['postitem']],
-                ptitem = ot.gt('{(PostItem)}', '{(PostItemEnd)}', item),
+                ptitem = ot.gt('PostItem', 'PostItemEnd', item),
                 /*有项目的模板*/
-                noitem = ot.gt('{(NoItem)}', '{(NoItemEnd)}', item); /*无项目的模板*/
+                noitem = ot.gt('NoItem', 'NoItemEnd', item); /*无项目的模板*/
             var maxrender = parseInt(tj['posts_per_page']);
             var end = start + maxrender;
             var postids = tj['dateindex'];
@@ -911,12 +917,13 @@ if (!B) { /*PreventInitializingTwice*/
                         var pid = i.replace('post', '');
                         var pt = tj['postindex'][pid];
                         if (!pt['link']) { /*排除页面在外*/
-                            var render1 = B.r(ptitem, '{[postitemtitle]}', Base64.decode(pt.title));
-                            var render2 = B.r(render1, '{[postitemintro]}', Base64.decode(pt.intro) + '...');
-                            var render3 = B.r(render2, '{[postitemdate]}', $.dt(pt.date));
-                            var render4 = B.r(render3, '{[postitemlink]}', 'post-' + pid + '.html');
+                            var render1 = B.r(ptitem, 'postitemtitle', Base64.decode(pt.title), true);
+                            var render2 = B.r(render1, 'postitemintro', Base64.decode(pt.intro) + '...', true);
+                            var render3 = B.r(render2, 'postitemdate', $.dt(pt.date), true);
+                            var render35 = B.r(render3, 'postitemtags', pt.tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
+                            var render4 = B.r(render35, 'postitemlink', 'post-' + pid + '.html', true);
                             if (pt['cover']) { /*如果有封面*/
-                                render4 = B.r(render4, '{[postcover]}', pt['cover']); /*把页面也算入*/
+                                render4 = B.r(render4, 'postcover', pt['cover'], true); /*把页面也算入*/
                             } else {
                                 render4 = ot.cd(render4); /*没有封面就删掉所有<ifcover>*/
                             }
@@ -940,7 +947,7 @@ if (!B) { /*PreventInitializingTwice*/
                 SC('morebtn').style.display = 'block';
             }
             ot.itempage = ot.itempage + maxrender;
-            if (ot.switchpage >= (ot.moreperpage - 1)&&!nochangehash) {/*nochangehash搭配indexpagefixer20200812*/
+            if (ot.switchpage >= (ot.moreperpage - 1) && !nochangehash) { /*nochangehash搭配indexpagefixer20200812*/
                 SC('postitems').innerHTML = listrender;
                 ot.scrolltop(20, 2);
                 ot.switchpage = 0;
