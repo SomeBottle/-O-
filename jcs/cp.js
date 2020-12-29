@@ -1,4 +1,4 @@
-/*ControlPosts - SomeBottle*/
+/*ControlPosts2.1.4 - SomeBottle*/
 var md = new showdown.Converter();
 var editpost = 'none';
 var tpjs = JSON.parse(window.tjson); /*编辑的文章*/
@@ -64,7 +64,6 @@ var B = { /*Replace Part*/
         try { /*ntp=false，也就是模板中匹配的时候，默认匹配{(xxx)}和{(xxx)}之间的内容*/
             var k = ntp ? e.split(p1)[1] : e.split(new RegExp('\\{\\(' + p1 + '\\)\\}', 'i'))[1]; /*正则支持大小写忽略*/
             var d = ntp ? k.split(p2)[0] : k.split(new RegExp('\\{\\(' + p2 + '\\)\\}', 'i'))[0];
-            return this.dehtml(d);
             return d;
         } catch (e) {
             return false;
