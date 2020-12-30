@@ -219,7 +219,7 @@
    
    * CSS3Animation动画检查器  
    ```javascript
-   anichecker(e, func); //e为元素id , func为transition执行完后执行的函数.  
+   anichecker(e, func); //e为元素id , func为animation结束后回调的函数.  
    ```
    
    * PJAX自动操作  
