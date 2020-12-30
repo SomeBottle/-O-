@@ -1,4 +1,4 @@
-/*FrontMainJS ver2.1.4 - SomeBottle*/
+/*FrontMainJS ver2.1.6 - SomeBottle*/
  /*q.js*/
 var md;
 if (typeof($) !== 'object') {
@@ -628,7 +628,7 @@ if (!B) { /*PreventInitializingTwice*/
                         if (!tj['postindex'][pid]['link']) { /*render items*/
                             itemlink = 'post-' + pid + '.html';
                         } else {
-                            itemlink = tj['postindex'][pid]['link'];
+                            itemlink = tj['postindex'][pid]['link'] + '.html';
                         }
                         var itemrender = ot.r(archiveitemtemp, 'archiveitemlink', itemlink, true),
                             itemrender = ot.r(itemrender, 'archiveitemtitle', title, true),
