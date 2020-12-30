@@ -217,9 +217,9 @@
    B.loadhide(); //hide
    ```
    
-   * CSS3Transition过渡检查器  
+   * CSS3Animation动画检查器  
    ```javascript
-   transitionchecker(e, func); //e为元素id , func为transition执行完后执行的函数.  
+   anichecker(e, func); //e为元素id , func为transition执行完后执行的函数.  
    ```
    
    * PJAX自动操作  
