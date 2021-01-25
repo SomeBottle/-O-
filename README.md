@@ -121,7 +121,6 @@
      {(PostCover)}{[cover]}{(PostCoverEnd)}  (此处可能为none)文章封面，具体看上方封面设置
      {(PageType)}{[type]}{(PageTypeEnd)}  用于指定页面类型  
      <script src="./main.js?233"></script>
-     <script>B.tpcheck();</script>  引入mainjs，唤醒模板渲染器  
      ```
      
      2. postitem.html **文章列表单项**
@@ -141,9 +140,19 @@
      
      3. postlist.html **文章列表**   
      ```html
+     {(PostListTemplate)}  用于划定PostList模板的范围
      {[postitems]}  用于载入文章列表  
-     {(PageType)}{[pagetype]}{(PageTypeEnd)}  用于指定pagetype  
-     <script>PJAX.autoprevent();PJAX.sel('container');PJAX.start();</script>  唤醒PJAX  
+     {[morebtn]}  加载更多按钮的替换符
+     {[backbtn]}  返回上一页按钮的替换符（可以不写）
+     {(PageType)}{[pagetype]}{(PageTypeEnd)}  用于指定pagetype   
+     {(PostListTemplateEnd)}
+     
+     {(MoreBtn)}
+     加载更多按钮的模板
+     {(MoreBtnEnd)}
+     {(BackBtn)}
+     返回上一页按钮的模板
+     {(BackBtnEnd)}
      ```
      
      4. post.html **文章/页面单页**  **-->具体看wiki**
@@ -169,8 +178,7 @@
      <clothhead>
      模板头部内容，用于替代页面中的<head>  
      </clothhead>
-     {[main]}  用于渲染main.html  
-     {[title]}  装载标题  
+     {[main]}  用于渲染main.html
      ```
 
      7. archives.html **归档页**  
