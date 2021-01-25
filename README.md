@@ -230,6 +230,12 @@
    B.loadhide(); //hide
    ```
    
+   * 加载更多按钮和返回上一页按钮
+   ```javascript
+   B.more(); //在文章列表加载更多
+   B.back(); //返回上一页  
+   ```
+   
    * CSS3Animation动画检查器  
    ```javascript
    anichecker(e, func); //e为元素id , func为animation结束后回调的函数.  
