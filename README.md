@@ -214,6 +214,11 @@
    $.script(url);
    ```
    
+   * 改变head中的\<title\>标签  
+   ```javascript
+   $.title(yourtitle);
+   ```
+   
    * 抓取元素(id)  
    ```javascript
    SC(id); //return element
