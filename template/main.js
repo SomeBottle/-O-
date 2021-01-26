@@ -1,4 +1,4 @@
-/*FrontMainJS ver3.0.0 - SomeBottle*/
+/*FrontMainJS ver3.1.0 - SomeBottle*/
  /*q.js*/
 var md;
 if (typeof($) !== 'object') {
@@ -321,7 +321,7 @@ if (!B) { /*PreventInitializingTwice*/
             sc = null;
         },
         dehtml: function(h) { /*decodehtml*/
-            var temp = h.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#39;/g, "\'").replace(/&quot;/g, "\"");
+            var temp = h.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#039;/g, "\'").replace(/&#39;/g, "\'").replace(/&quot;/g, "\"");
             return temp;
         },
         gt: function(p1, p2, ct = false, ntp = false) { /*htmlget(between,and,content,NotTemplate=false)*/
@@ -1135,7 +1135,8 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             ts.clearevent(); /*先清除之前的监听器*/
             var p = document.getElementsByTagName("a");
             for (var i in p) {
-                if (typeof(p[i].addEventListener) == 'function') { /*防止不是函数的凑数*/
+                var onc = p[i] instanceof Element ? p[i].getAttribute('onclick') : null; /*检查a标签是否有onclick属性20210126*/
+                if (typeof(p[i].addEventListener) == 'function' && !onc) { /*防止不是元素的凑数，a标签带onclick属性就不监听了20210126*/
                     p[i].setAttribute('pjax', ''); /*设置标识*/
                     p[i].addEventListener('click', ts.clickevent, false); /*监听A标签*/
                 }
