@@ -247,6 +247,15 @@
    PJAX.autoprevent(); //自动排查当前页是否有外站地址并放入忽略名单  
    PJAX.start(); //开始监听所有a标签和popstate，开启PJAX  
    PJAX.pause(); //暂停PJAX对于popstate的监听,可以用start来重激活  
+   PJAX.jump(url); //动态载入页面，但不会改变地址栏  
+   ```
+   
+   * 利用PJAX做搜索跳转的小技巧  
+   ```javascript
+   //比如你要搜索的内容是searchtxt  
+   var searchtxt='233';
+   window.history.pushState(null,null,'/#!'+searchtxt); //在文章列表访问 /#!搜索内容 可调用自带的搜索功能  
+   PJAX.jump('/#!'+searchtxt); //因为PJAX.jump不会改变地址栏，所以要用pushState先加工一道  
    ```
    
    * 获得当前时间戳  
