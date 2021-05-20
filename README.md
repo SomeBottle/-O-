@@ -25,7 +25,8 @@
 ## 可用主题🧻  
    1. -O-程序自带
    2. [Anatole](https://github.com/SomeBottle/-O-Anatole)  
-   3. 期待各位的移植和创造~  
+   3. [Simple](https://github.com/SomeBottle/-O-Simple)  
+   4. 期待各位的移植和创造~  
    
 ## 部署📖  
    
