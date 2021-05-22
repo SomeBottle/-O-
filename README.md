@@ -210,11 +210,6 @@
    B.scrolltop(maxspeed,minspeed); //(最大速度,最小速度)单位：px/10ms
    ```
    
-   * 向页面引入js  
-   ```javascript
-   $.script(url);
-   ```
-   
    * 改变head中的\<title\>标签  
    ```javascript
    $.title(yourtitle);
