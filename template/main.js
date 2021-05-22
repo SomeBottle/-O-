@@ -1,4 +1,4 @@
-/*FrontMainJS ver3.1.0 - SomeBottle*/
+/*FrontMainJS ver3.2.0 - SomeBottle*/
 /*q.js*/
 var md;
 if (typeof ($) !== 'object') {
@@ -6,6 +6,7 @@ if (typeof ($) !== 'object') {
     $.ls = new Array();
     $.lss = '';
     $.loadset = new Object(); /*加载页配置*/
+    $.loadingjs = 0;/*正在用$.script载入的外部js数量，这个数量不归零，文章页面中script标签内的js不会执行*/
     $.aj = function (p, d, sf, m, proxy, as) { /*(path,data,success or fail,method,proxyurl,async)*/
         if (p !== 'false' && p) { /*奇妙的false问题*/
             var xhr = new XMLHttpRequest();
@@ -62,16 +63,29 @@ if (typeof ($) !== 'object') {
             }
         }
         if (!exist && $.scripturl.indexOf(url) == -1) {
+            $.loadingjs += 1;/*有外部js正在载入*/
             $.ls[$.ls.length] = url;
             script.type = "text/javascript";
             script.src = url;
             $.scripturl.push(url);
             document.body.appendChild(script);
+            var scriptloaded = function sl() {
+                $.loadingjs -= 1;/*这个外部js载入完毕*/
+                this.removeEventListener("load", scriptloaded, false);
+            }.bind(script);
+            script.addEventListener("load", scriptloaded, false);
         }
         script = null;
     }
+    $.scriptcircle = function (content, retry = 0) {/*20210522执行脚本的延迟函数，在$.script导入的js没有完全载入之前页面中的js会在此处滞留。所有js载入成功后会执行页面中的js*/
+        if ($.loadingjs > 0) {
+            setTimeout(function () { $.scriptcircle(content, retry + 1) }, 100);/*循环延迟*/
+        } else {
+            for (var i in content) setTimeout("try{" + content[i] + "}catch(e){console.log('Page script Error: ' + e.message);}", 0);
+        }
+    }
     $.ht = function (h, e, scinclude = true) { /*元素内容设置器(html,element,run script or not when ht)*/
-        var ht = SC(e);
+        var ht = SC(e), pagescripts = [];
         if (!ht) {
             console.log('Unable to find the Element:' + e);
             return false;
@@ -82,18 +96,15 @@ if (typeof ($) !== 'object') {
             if (os[o].src !== undefined && os[o].src !== null && os[o].src !== '') {
                 $.script(os[o].src);
             } else {
-                try { /*Oh...No Errors!*/
-                    var h = os[o].innerHTML;
-                    if (scinclude) { /*是否去除注释执行*/
-                        h = B.r(h, '/*', '');
-                        h = B.r(h, '*/', '');
-                    }
-                    setTimeout(h, 0);
-                } catch (e) {
-                    console.log('Page script Error: ' + e.message);
+                var h = os[o].innerHTML;
+                if (scinclude) { /*是否去除注释执行*/
+                    h = B.r(h, '/*', '');
+                    h = B.r(h, '*/', '');
                 }
+                pagescripts.push(h);/*综合一下页面中的js*/
             }
         }
+        $.scriptcircle(pagescripts);
         ht = os = null; /*释放*/
     }
     $.tr = function (url) { /*PreventURLProblem(Fuck QQ Querying URI*/
