@@ -1,0 +1,55 @@
+<style>
+.loading{
+	position:fixed;
+	z-index:200;
+	width:100%;
+	height:100%;
+	margin:0 auto;
+	background-color:#FFFFFF;
+}
+#loadingpic{
+	position:fixed;
+	margin:0 auto;
+	left:50%;
+	top:50%;
+	transform:translate(-50%,-50%);
+}
+@keyframes loadin{
+   0% {
+     opacity:0;
+   }
+   100%{
+     z-index:200;
+     opacity:1;
+   }
+}
+@keyframes loadout{
+   0% {
+     opacity:1;
+   }
+   100%{
+     z-index:-1;
+     opacity:0;
+   }
+}
+.loadshow{
+    animation:loadin 0.5s ease forwards;
+}
+.loadhide{
+    animation:loadout 0.5s ease forwards;
+}
+</style>
+<div class='loading' id='loading'><img src='./loadingcloth.gif' id='loadingpic'></img></div>
+<loadset style='display:none'>
+{
+	"animations": {
+		"in": {
+			"id:loading": "loadshow"
+		},
+		"out": {
+			"id:loading": "loadhide"
+		}
+	},
+	"listening":"id:loading"
+}
+</loadset>

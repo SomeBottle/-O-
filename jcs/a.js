@@ -5,6 +5,27 @@ function rlen(t) {
     return t.length;
 }
 
+function anichecker(e, func) { /*css3变换检查器(元素,执行完毕执行的函数)*/
+    var ts = '';
+    var tss = {
+        'animation': 'animationend',
+        'OAnimation': 'oAnimationEnd',
+        'MozAnimation': 'animationend',
+        'WebkitAnimation': 'webkitAnimationEnd'
+    }; /*兼容多浏览器*/
+    for (var i in tss) {
+        if (e.style[i] !== undefined) {
+            ts = tss[i];
+        }
+    }
+
+    function doit() {
+        func();
+        e.removeEventListener(ts, doit);
+    }
+    e.addEventListener(ts, doit);
+}
+
 function notice(s, pop = false) { /*(消息，是否弹窗警示)*/
     window.noticen = parseInt(window.noticen) + 1;
     var nownt = window.noticen;
@@ -20,16 +41,12 @@ function notice(s, pop = false) { /*(消息，是否弹窗警示)*/
     document.getElementById('n' + nownt).style.top = 40 + 5 * (parseInt(window.noticen) - 1) + '%';
     var e = document.getElementById('n' + nownt);
     if (pop) alert(s); /*弹窗警示*/
-    setTimeout(function() {
-        e.style.opacity = '1';
-    }, 200);
-    setTimeout(function() {
-        e.style.opacity = '0';
-    }, 1700);
-    setTimeout(function() {
+    e.style.opacity = '0';
+    e.style.animation = "playnotice 3s linear 1";
+    anichecker(e, () => {
         div.removeChild(h3);
         window.noticen = parseInt(window.noticen) - 1;
-    }, 2200);
+    });
 }
 
 function errshow() {

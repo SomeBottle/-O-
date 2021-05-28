@@ -15,9 +15,9 @@
 ## 特点💊  
    * 模板可配置  
    * 支持页码，标签页，归档页  
-   * 自带简单搜索功能  
+   * 自带简单搜索功能，支持```介入搜索```    
    * 原生PJAX  
-   * 只需要Github Pages #)3 ) 
+   * 甚至只需要Github Pages #)3 ) 
    * 硬核图片Lazyload  
    * 平滑回滚至头部 2ax=V²  
    * 封面图支持~  
@@ -53,7 +53,7 @@
    
    * **不要不要不要修改模板的index.html**，本身这个模板也只是一个媒介，并不会被直接上传到博客仓库，在前台并不展现外观，另外若修改index.html需要修改后台部分的（所以还是不要瞎折腾啦=A=）  
    
-   * **不要向cloth.html的\<clothhead>里面**引入js文件，不然**并不会**执行/引入，反之你可以在\<clothhead>以外部分引入\<script>.  
+   * **不要向cloth.otp.html的\<clothhead>里面**引入js文件，不然**并不会**执行/引入，反之你可以在\<clothhead>以外部分引入\<script>.  
    
 ## 关于搜索🔍  
    * 在文章列表页通过hash访问 #!搜索内容 可以进行搜索，需要注意的是，由于索引文件的限制，只支持根据文章部分内容和标题，标签，日期这类的搜索.  
@@ -93,10 +93,10 @@
      | include | 所有的模板文件 |  
      | usemain | 使用main.json的几个模板，当你访问使用这几个模板的页面时加载过程会等待main.json载入完毕 |  
      | templatehtmls | 指定各类模板对应的文件，如果部署后修改了这里，上面几个项目中的模板文件名也要进行修改 |  
-     | generatehtmls | 主要是tags和archives模板对应的文件 |  
+     | generatehtmls | 主要是tags和archives模板对应的页面文件 |  
      
      模板文件名在部署到仓库后可以进行相应的修改，同时对于**博客所在仓库**中template.json也要有所修改.  
-     *PS：loading.html在template.json是无法配置的，请不要修改文件名.*  
+     *PS：```loading.otp.html```在template.json是无法配置的，请不要修改文件名.*  
      
    * **模板渲染简单gif**.  
    
@@ -110,7 +110,7 @@
      <meta name="description" content="{[description]}" />   Description 
      <!--Keywords-->
      <meta name="keywords" content="{[keywords]}" />   Keywords
-     <!--[LoadingArea]-->  用于放置Loading页面，不要删除！   
+     <loadingarea></loadingarea>  用于放置Loading页面，不要删除！   
      {(MainTitle)}<title>{[title]}-{[sitename]}</title>{(MainTitleEnd)}  注释用于识别标题所在位置，{[title]}为当前标题,{[sitename]}为站点名(在main.json配置)  
      {(PostTitle)}{[title]}{(PostTitleEnd)}  文章标题，一般和上面的{[title]}一致  
      {(PostDate)}{[date]}{(PostDateEnd)}  文章日期  
@@ -124,7 +124,7 @@
      <script src="./main.js?233"></script>
      ```
      
-     2. postitem.html **文章列表单项**
+     2. postitem.otp.html **文章列表单项**
      ```html
      {(PostItem)}  主要postitem模板
      {[postitemlink]}  文章列表每一项的链接
@@ -139,7 +139,7 @@
      {(NoItemEnd)}
      ```
      
-     3. postlist.html **文章列表**   
+     3. postlist.otp.html **文章列表**   
      ```html
      {(PostListTemplate)}  用于划定PostList模板的范围
      {[postitems]}  用于载入文章列表  
@@ -156,7 +156,7 @@
      {(BackBtnEnd)}
      ```
      
-     4. post.html **文章/页面单页**  **-->具体看wiki**
+     4. post.otp.html **文章/页面单页**  **-->具体看wiki**
      ```html
 	 {(Post)}
      {[posttitle]}  文章标题  
@@ -164,38 +164,42 @@
      {[postcontent]}  文章内容  
      {[posttags]}  文章标签(html)  
      {(:PostEnd)}  (需要保留) 指定文章结束的地方.  
-     {[comments]}  用于渲染评论(接comment.html)  
+     {[comments]}  用于渲染评论(接comment.otp.html)  
      <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
      ```
 
-     5. main.html **酥脆外皮**  **-->具体看wiki**  
+     5. main.otp.html **酥脆外皮**  **-->具体看wiki**  
      ```html
      {[contents]}  用于渲染页面内容  
      {(Footer:)}  (需要保留) 指定页脚开始的地方  
      ```
 
-     6. cloth.html **外衣**  
+     6. cloth.otp.html **外衣**  
      ```html
      <clothhead>
      模板头部内容，用于替代页面中的<head>  
      </clothhead>
-     {[main]}  用于渲染main.html
+     {[main]}  用于渲染main.otp.html
      ```
 
-     7. archives.html **归档页**  
+     7. archives.otp.html **归档页**  
      
         **具体介绍看wiki**
 
-     8. tags.html **标签页**  
+     8. tags.otp.html **标签页**  
      
         **具体介绍看wiki**
 
-     9. comment.html **评论框页**  
+     9. comment.otp.html **评论框页**  
         ```html
         {[pid]}  文章唯一id  
         ``` 
      
-     10. loading.html **加载浮页具体配置看wiki**  
+     10. loading.otp.html **加载浮页具体配置看wiki**  
+
+     11. search.js  
+         
+         借助```search.js```我们可以引用外部搜索，默认模板中的search.js引用了github的搜索api，可以编辑以进行配置。  
 
      
 ## 函数供应💬  
@@ -229,7 +233,8 @@
    * 加载更多按钮和返回上一页按钮
    ```javascript
    B.more(); //在文章列表加载更多
-   B.back(); //返回上一页  
+   B.turnback(); //在文章列表返回上一面  
+   B.back(); //返回历史上一页  
    ```
    
    * CSS3Animation动画检查器  
@@ -267,6 +272,7 @@
 ## 引用项目⚙️  
    * [Showdown](https://github.com/showdownjs/showdown)  
    * [JS-Base64](https://github.com/dankogai/js-base64)  
+   * [Crypto-JS](https://github.com/brix/crypto-js)  
    * [Bueue.js](https://github.com/SomeBottle/Bueue.js)  
    
 ## 感谢❤  

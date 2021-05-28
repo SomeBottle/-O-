@@ -1,21 +1,63 @@
 {
-	"alltp": ["library.js", "comment.html", "template.json", "archives.html", "cloth.html", "main.html", "main.js", "post.html", "postitem.html", "postlist.html", "style.css", "tags.html", "main.json", "loading.html"],
-	"necessary": ["cloth.html", "main.html", "comment.html"],
-	"include": ["index.html", "tag.html", "archive.html", "comment.html", "template.json", "archives.html", "cloth.html", "main.html", "main.js", "main.json", "post.html", "postitem.html", "postlist.html", "style.css", "tags.html", "loading.html"],
-	"usemain": ["postlist.html", "archives.html", "tags.html"],
+	"alltp": [
+		"library.js",
+		"comment.otp.html",
+		"template.json",
+		"archives.otp.html",
+		"cloth.otp.html",
+		"main.otp.html",
+		"main.js",
+		"post.otp.html",
+		"postitem.otp.html",
+		"postlist.otp.html",
+		"style.css",
+		"tags.otp.html",
+		"main.json",
+		"loading.otp.html",
+		"search.js"
+	],
+	"necessary": [
+		"cloth.otp.html",
+		"main.otp.html",
+		"comment.otp.html"
+	],
+	"include": [
+		"index.otp.html",
+		"tag.otp.html",
+		"archive.otp.html",
+		"comment.otp.html",
+		"template.json",
+		"archives.otp.html",
+		"cloth.otp.html",
+		"main.otp.html",
+		"main.js",
+		"search.js",
+		"main.json",
+		"post.otp.html",
+		"postitem.otp.html",
+		"postlist.otp.html",
+		"style.css",
+		"tags.otp.html",
+		"loading.otp.html"
+	],
+	"usemain": [
+		"postlist.otp.html",
+		"archives.otp.html",
+		"tags.otp.html"
+	],
 	"templatehtmls": {
-		"postitem": "postitem.html",
-		"postlist": "postlist.html",
-		"post": "post.html",
-		"tags": "tags.html",
-		"main": "main.html",
-		"comment": "comment.html",
-		"cloth": "cloth.html",
-		"archives": "archives.html"
+		"postitem": "postitem.otp.html",
+		"postlist": "postlist.otp.html",
+		"post": "post.otp.html",
+		"tags": "tags.otp.html",
+		"main": "main.otp.html",
+		"comment": "comment.otp.html",
+		"cloth": "cloth.otp.html",
+		"archives": "archives.otp.html"
 	},
 	"generatehtmls": {
-		"tags": "tag.html",
-		"archives": "archive.html"
+		"tags": "tags.html",
+		"archives": "archives.html"
 	},
 	"mainjson": "main.json"
 }

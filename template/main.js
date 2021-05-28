@@ -1,4 +1,4 @@
-/*FrontMainJS ver3.2.0 - SomeBottle*/
+/*FrontMainJS ver4.0.0 - SomeBottle*/
 /*q.js*/
 var md;
 if (typeof ($) !== 'object') {
@@ -211,14 +211,14 @@ if (!B) { /*PreventInitializingTwice*/
         var e = SC('html').innerHTML,
             ldlocalused = true;
         $.ldparse(localStorage['obottle-ldpage']); /*解析加载页*/
-        SC('html').innerHTML = e.replace('<!--[LoadingArea]-->', localStorage['obottle-ldpage']);
+        SC('html').innerHTML = e.replace('<loadingarea></loadingarea>', localStorage['obottle-ldpage']);
     } else {
         var ldlocalused = false;
     }
-    $.aj('./loading.html', '', {
+    $.aj('./loading.otp.html', '', {
         success: function (m, p) {
             if (!ldlocalused) { /*如果本地已经有了就不热更新了20200808*/
-                B.hr('<!--[LoadingArea]-->', m);
+                B.hr('<loadingarea></loadingarea>', m);
                 $.ldparse(m); /*解析加载页*/
             }
             localStorage['obottle-ldpage'] = m;
@@ -228,6 +228,7 @@ if (!B) { /*PreventInitializingTwice*/
         }
     }, 'get', '', true);
     $.script('./library.js'); /*Include Library Once*/
+    $.script('./search.js'); /*Include Search.js Once*/
     window.htmls = new Object();
     var B = { /*B Part*/
         moreperpage: 0,
@@ -311,12 +312,6 @@ if (!B) { /*PreventInitializingTwice*/
         hr: function (o, p) { /*htmlreplace*/
             var e = SC('html').innerHTML;
             SC('html').innerHTML = this.r(e, o, p);
-        },
-        unrnspace: function (h) { /*文章空格换行替换还原*/
-            h = h.replace(/{{s}}/g, " ");
-            h = h.replace(/{{rn}}/g, "\r\n");
-            h = h.replace(/{{n}}/g, "\n");
-            return h;
         },
         deltemptags: function (h) { /*删除模板多余的标识符，像{(xxx)}一类*/
             return h.replace(/\{\((.*?)\)\}/g, '');
@@ -434,17 +429,12 @@ if (!B) { /*PreventInitializingTwice*/
                     setTimeout(function () {
                         return o.tpcheck(true, ct);
                     },
-                        50);
-                } else if (typeof showdown !== 'object') { /*Markdown is not ready!*/
+                        25);
+                } else if (typeof showdown !== 'object' || typeof Base64 !== 'object' || !localStorage['obottle-ldpage']) { /*Markdown or Base64 or loadingpage is not ready!*/
                     setTimeout(function () {
                         return o.tpcheck(true, ct);
                     },
-                        50);
-                } else if (!localStorage['obottle-ldpage']) { /*loadingpage is not ready!*/
-                    setTimeout(function () {
-                        return o.tpcheck(true, ct);
-                    },
-                        50);
+                        25);
                 } else {
                     ot.preventscript(); /*剔除已加载scripts*/
                     var j = window.templjson;
@@ -548,6 +538,11 @@ if (!B) { /*PreventInitializingTwice*/
         back: function () { /*返回上一页*/
             window.history.go(-1);
         },
+        turnback: function () {/*根据hash返回文章列表上一页*/
+            let current = this.realpage;
+            window.location.href = window.location.protocol + '//' +
+                window.location.host + window.location.pathname + '#' + (current > 1 ? (current - 1) : 1);
+        },
         renderer: function (fcontent = false) { /*(fcontent=是否指定内容)*/
             var ot = this;
             if (!ot.rendering) {
@@ -566,7 +561,7 @@ if (!B) { /*PreventInitializingTwice*/
                     var cover = ot.gt('PostCover', 'PostCoverEnd', fcontent); /*Get Post Cover*/
                     var pagetitle = (ot.gt('MainTitle', 'MainTitleEnd', fcontent)).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
                     var post = window.htmls[j['templatehtmls']['post']];
-                    var render11 = ot.r(post, 'postcontent', ot.lazypre(md.makeHtml(ot.hc(ot.unrnspace(content.trim())))), true); /*unescape and Analyse md*/
+                    var render11 = ot.r(post, 'postcontent', ot.lazypre(md.makeHtml(ot.hc(content.trim()))), true); /*unescape and Analyse md*/
                     var render12 = ot.r(render11, 'posttitle', title, true);
                     var alltags = [];
                     if (isNaN(date)) {
@@ -607,23 +602,24 @@ if (!B) { /*PreventInitializingTwice*/
                 } else if (pagetype == j['templatehtmls']['postlist']) {
                     var content = ot.gt('PostContent', 'PostContentEnd', fcontent); /*Get Post Content*/
                     var pagetitle = (ot.gt('MainTitle', 'MainTitleEnd', fcontent)).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
-                    var realtitle = pagetitle.replace('-', ''); /*Remove - */
                     var pt = window.htmls[j['templatehtmls']['postlist']];
                     var ptt = ot.gt('PostListTemplate', 'PostListTemplateEnd', pt),
                         morebtn = ot.gt('MoreBtn', 'MoreBtnEnd', pt),
                         backbtn = ot.gt('BackBtn', 'BackBtnEnd', pt);
                     ptt = ot.r(ptt, 'morebtn', '<span id=\'morebtn\'>' + morebtn + '</span>', true);
                     ptt = ot.r(ptt, 'backbtn', '<span id=\'backbtn\'>' + backbtn + '</span>', true);
-                    var render11 = ot.r(ptt, 'postitems', '<div id=\'postitems\'>' + md.makeHtml(ot.unrnspace((content.trim()))) + '</div>', true); /*Analyse md*/
+                    var render11 = ot.r(ptt, 'postitems', '<div id=\'postitems\'>' + md.makeHtml((content.trim())) + '</div>', true); /*Analyse md*/
                     var render12 = ot.r(render11, 'pagetype', pagetype, true); /*SetPageType*/
                     render12 = ot.r(render12, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
                     render12 = ot.r(render12, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                     ot.itempage = parseInt(tj['posts_per_page']);
                     ot.itempagefixer(); /*修复因忽略页面而造成的列表重复*/
                     ot.checkfirstrender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
-                    $.title(realtitle); /*设置标题*/
+                    $.title(pagetitle); /*设置标题*/
                     $.ht(ot.deltemptags(render12), 'contentcontainer');
                     render12 = null; /*释放*/
+                    ot.backchecker();/*检查是否显示后退按钮*/
+                    ot.indexpagechecker();
                     var timer = setInterval(function () { /*CheckIndexPage*/
                         if (ot.gt('<!--[PageType]', '[PageTypeEnd]-->', false, true) !== j['templatehtmls']['postlist']) { /*跳离index页了*/
                             console.log('jumped out of index');
@@ -634,8 +630,7 @@ if (!B) { /*PreventInitializingTwice*/
                             return false;
                         }
                         ot.indexpagechecker();
-                    },
-                        100);
+                    }, 100);
                 } else if (pagetype == j['templatehtmls']['archives']) {
                     var pagetitle = (ot.gt('MainTitle', 'MainTitleEnd', fcontent)).replace(/<\/?.+?>/g, ""),
                         /*Get Page Title(No html characters)*/
@@ -747,20 +742,14 @@ if (!B) { /*PreventInitializingTwice*/
                 PJAX.start();
                 ot.navcheck(); /*进行导航栏检查*/
                 window.dispatchEvent(PJAX.PJAXFinish); /*调用事件隐藏loading浮层20201229*/
-                ot.backchecker();/*检查是否显示后退按钮*/
             }
         },
         backchecker: function () {/*检查后退按钮是否显示*/
-            var ot = this;
-            setTimeout(function () {
-                if (SC('backbtn')) {
-                    if (ot.realpage == 1) {
-                        SC('backbtn').style.display = 'none';
-                    } else {
-                        SC('backbtn').style.display = 'initial';
-                    }
-                }
-            }, 100);
+            if (this.realpage == 1) {
+                SC('backbtn').style.display = 'none';
+            } else {
+                SC('backbtn').style.display = 'initial';
+            }
         },
         nowtag: '',
         alltaghtml: '',
@@ -854,7 +843,6 @@ if (!B) { /*PreventInitializingTwice*/
                         }
                     }
                 } else { /*Search mode*/
-                    var rendertp = '';
                     var item = window.htmls[j['templatehtmls']['postitem']],
                         ptitem = ot.gt('PostItem', 'PostItemEnd', item),
                         /*有项目的模板*/
@@ -863,47 +851,59 @@ if (!B) { /*PreventInitializingTwice*/
                     if (v !== ot.searchw) {
                         ot.searchw = v;
                         var pt = tj['postindex'];
+                        function renderlist(postindexes, id, title = false, intro = false, date = false, tgs = false) {
+                            var rendertp = '';
+                            let pt = postindexes, i = id, tt = title || (Base64.decode(pt[i]['title'])), cc = intro || (Base64.decode(pt[i]['intro'])), dd = date || (pt[i]['date']), tags = tgs || pt[i]['tags'];
+                            var render1 = B.r(ptitem, 'postitemtitle', tt, true);
+                            var render2 = B.r(render1, 'postitemintro', cc + '...', true);
+                            var render3 = B.r(render2, 'postitemdate', $.dt(dd), true);
+                            var render35 = B.r(render3, 'postitemtags', tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
+                            var render4;
+                            if (!pt[i]['link']) {
+                                render4 = B.r(render35, 'postitemlink', 'post-' + i + '.html', true); /*把页面也算入*/
+                            } else {
+                                render4 = B.r(render35, 'postitemlink', pt[i]['link'] + '.html', true);
+                            }
+                            if (pt[i]['cover']) { /*如果有封面*/
+                                render4 = B.r(render4, 'postcover', pt[i]['cover'], true); /*把页面也算入*/
+                            } else {
+                                render4 = ot.cd(render4); /*没有封面就删掉整段<ifcover>*/
+                            }
+                            rendertp += render4; /*渲染到列表模板*/
+                            render4 = null; /*释放*/
+                            return rendertp;
+                        }
                         for (var i in pt) {
                             var tt = (Base64.decode(pt[i]['title'])).toLowerCase();
                             var cc = (Base64.decode(pt[i]['intro'])).toLowerCase();
                             var dd = (pt[i]['date']).toLowerCase();
                             var tags = pt[i]['tags'],
-                                tg = tags.toLowerCase();
+                                tg = tags.toLowerCase(), rendertp = '';
                             v = v.toLowerCase(); /*大小写忽略*/
                             if (tt.indexOf(v) !== -1 || cc.indexOf(v) !== -1 || dd.indexOf(v) !== -1 || tg.indexOf(v) !== -1) {
-                                var render1 = B.r(ptitem, 'postitemtitle', tt, true);
-                                var render2 = B.r(render1, 'postitemintro', cc + '...', true);
-                                var render3 = B.r(render2, 'postitemdate', $.dt(dd), true);
-                                var render35 = B.r(render3, 'postitemtags', tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
-                                var render4;
-                                if (!pt[i]['link']) {
-                                    render4 = B.r(render35, 'postitemlink', 'post-' + i + '.html', true); /*把页面也算入*/
-                                } else {
-                                    render4 = B.r(render35, 'postitemlink', pt[i]['link'] + '.html', true);
-                                }
-                                if (pt[i]['cover']) { /*如果有封面*/
-                                    render4 = B.r(render4, 'postcover', pt[i]['cover'], true); /*把页面也算入*/
-                                } else {
-                                    render4 = ot.cd(render4); /*没有封面就删掉整段<ifcover>*/
-                                }
-                                rendertp += render4; /*渲染到列表模板*/
-                                render4 = null; /*释放*/
+                                rendertp += renderlist(pt, i, tt, cc, dd, tags);
                             }
                         }
                         if (rendertp == '') {
                             rendertp = noitem;
                         }
-
                         function process() { /*局部函数*/
                             if (SC('postitems') && SC('morebtn')) {
                                 window.scrollTo(0, 0);
                                 SC('postitems').innerHTML = rendertp;
+                                if (typeof ot.searchinj == "function") ot.searchinj(pt, v, (ids) => {
+                                    let rendertp = '';
+                                    for (var i in ids) rendertp += renderlist(pt, i);
+                                    if (rendertp == '') return false;
+                                    SC('postitems').innerHTML = rendertp;
+                                    PJAX.start();
+                                });/*外部搜索search.js介入*/
                                 SC('morebtn').style.display = 'none';
                                 PJAX.start(); /*refresh pjax links*/
                             } else {
                                 setTimeout(function () {
                                     return process();
-                                }, 200); /*如果没有需要的元素存在滞留一下*/
+                                }, 10); /*如果没有需要的元素存在滞留一下*/
                             }
                         }
                         if (!ot.tpcheckstatu && !ot.loadstatu) { /*如果页面加载完,模板拼接完毕就可以打印搜索结果了*/
