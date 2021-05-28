@@ -111,7 +111,7 @@
      <!--Keywords-->
      <meta name="keywords" content="{[keywords]}" />   Keywords
      <loadingarea></loadingarea>  用于放置Loading页面，不要删除！   
-     {(MainTitle)}<title>{[title]}-{[sitename]}</title>{(MainTitleEnd)}  注释用于识别标题所在位置，{[title]}为当前标题,{[sitename]}为站点名(在main.json配置)  
+     {(MainTitle)}<title>{[title]}{[titlemiddle]}{[sitename]}</title>{(MainTitleEnd)}  注释用于识别标题所在位置，{[title]}为当前标题,{[sitename]}为站点名(在main.json配置)，{[titlemiddle]}是一个小短横```-```，访问首页的时候不会显示    
      {(PostTitle)}{[title]}{(PostTitleEnd)}  文章标题，一般和上面的{[title]}一致  
      {(PostDate)}{[date]}{(PostDateEnd)}  文章日期  
      {(PostContent)}
