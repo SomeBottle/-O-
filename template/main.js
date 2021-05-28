@@ -840,6 +840,7 @@ if (!B) { /*PreventInitializingTwice*/
                             ot.more(true); /*顺序不要颠倒!*/
                             ot.realpage = pnum + 1;
                             ot.switchpage = 0;
+                            ot.backchecker();/*检查是否显示后退按钮*/
                         }
                     }
                 } else { /*Search mode*/
@@ -873,32 +874,35 @@ if (!B) { /*PreventInitializingTwice*/
                             render4 = null; /*释放*/
                             return rendertp;
                         }
+                        var rendertp = '', pushedids = {};/*用pushed ids排除原生搜索打印的内容*/
                         for (var i in pt) {
                             var tt = (Base64.decode(pt[i]['title'])).toLowerCase();
                             var cc = (Base64.decode(pt[i]['intro'])).toLowerCase();
                             var dd = (pt[i]['date']).toLowerCase();
                             var tags = pt[i]['tags'],
-                                tg = tags.toLowerCase(), rendertp = '';
+                                tg = tags.toLowerCase();
                             v = v.toLowerCase(); /*大小写忽略*/
                             if (tt.indexOf(v) !== -1 || cc.indexOf(v) !== -1 || dd.indexOf(v) !== -1 || tg.indexOf(v) !== -1) {
                                 rendertp += renderlist(pt, i, tt, cc, dd, tags);
+                                pushedids[i] = true;
                             }
                         }
                         if (rendertp == '') {
                             rendertp = noitem;
                         }
                         function process() { /*局部函数*/
-                            if (SC('postitems') && SC('morebtn')) {
+                            if (SC('postitems') && SC('morebtn') && SC('backbtn')) {
                                 window.scrollTo(0, 0);
                                 SC('postitems').innerHTML = rendertp;
                                 if (typeof ot.searchinj == "function") ot.searchinj(pt, v, (ids) => {
-                                    let rendertp = '';
-                                    for (var i in ids) rendertp += renderlist(pt, i);
-                                    if (rendertp == '') return false;
-                                    SC('postitems').innerHTML = rendertp;
+                                    let injrendertp = '';
+                                    for (var i in ids) injrendertp += isNaN(ids[i]) ? '' : ((pushedids[ids[i]]) ? '' : renderlist(pt, ids[i]));
+                                    if (injrendertp == '') return false;
+                                    SC('postitems').innerHTML = rendertp + injrendertp;/*使用外部搜索的时候保留原生搜索部分，在后面附加*/
                                     PJAX.start();
                                 });/*外部搜索search.js介入*/
                                 SC('morebtn').style.display = 'none';
+                                SC('backbtn').style.display = 'none';
                                 PJAX.start(); /*refresh pjax links*/
                             } else {
                                 setTimeout(function () {

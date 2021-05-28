@@ -8,7 +8,7 @@ B.searchinj = (postindexes, searchword, callback) => {
             success: (j) => {
                 let rs = JSON.parse(j), items = rs['items'], resultarr = [];
                 for (var o in items) resultarr.push(parseInt(items[o]["name"].replace("post-", "").replace(".html", "")));
-                callback(resultarr);
+                callback(resultarr);/*回调的是搜索出的文章ID组成的数组*/
             }, failed: (j) => {
                 console.log('API Search failed');
             }
