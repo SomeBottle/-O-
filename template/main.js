@@ -50,12 +50,13 @@ if (typeof ($) !== 'object') {
             return document.getElementById(e);
         }
     }
-    $.script = function (url) { /*外部js加载器，页面已经加载的不会重复加载*/
+    $.script = function (url, element = false) { /*外部js加载器，页面已经加载的不会重复加载*/
         if (!$.scripturl) {
             $.scripturl = [];
         }
         var script = document.createElement("script");
         var exist = false;
+        var originalAttrs = element ? $.attrs(element) : {};/*20210722原本标签所带的属性要补上*/
         for (var up in $.ls) {
             if ($.ls[up] == url) {
                 exist = true;
@@ -67,6 +68,9 @@ if (typeof ($) !== 'object') {
             $.ls[$.ls.length] = url;
             script.type = "text/javascript";
             script.src = url;
+            for (var i in originalAttrs) {
+                script.setAttribute(i, originalAttrs[i]);/*把原script的属性给补上*/
+            }
             $.scripturl.push(url);
             document.body.appendChild(script);
             var scriptloaded = function sl() {
@@ -84,6 +88,16 @@ if (typeof ($) !== 'object') {
             for (var i in content) setTimeout("try{" + content[i] + "}catch(e){console.log('Page script Error: ' + e.message);}", 0);
         }
     }
+    $.attrs = function (element) {/*20210722获得元素所有属性并返回数组，用于修复script掉属性的问题*/
+        var attarr = {};
+        if (element.hasAttributes()) {
+            var allattrs = element.attributes;
+            for (var i in allattrs) {
+                if (allattrs[i].name && allattrs[i].value) attarr[allattrs[i].name] = allattrs[i].value;
+            }
+        }
+        return attarr;
+    }
     $.ht = function (h, e, scinclude = true) { /*元素内容设置器(html,element,run script or not when ht)*/
         var ht = SC(e), pagescripts = [];
         if (!ht) {
@@ -94,7 +108,7 @@ if (typeof ($) !== 'object') {
         os = ht.getElementsByTagName('script');
         for (var o = 0; o < os.length; o++) {
             if (os[o].src !== undefined && os[o].src !== null && os[o].src !== '') {
-                $.script(os[o].src);
+                $.script(os[o].src, os[o]);
             } else {
                 var h = os[o].innerHTML;
                 if (scinclude) { /*是否去除注释执行*/
