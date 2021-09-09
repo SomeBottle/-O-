@@ -1,4 +1,5 @@
 /*Scripts for Animation - SomeBottle*/
+"use strict";
 window.noticen = 0;
 
 function rlen(t) {

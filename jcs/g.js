@@ -1,4 +1,5 @@
 /*Scripts for Github Actions - SomeBottle*/
+"use strict";
 window.ua = '';
 window.authstatu = false;
 window.gstate = 0;
@@ -14,7 +15,7 @@ function gh() {
         this.getbasetree(token, repo, hascommitsha).then((data) => {
             return new Promise(function (res, rej) {
                 window.gstate += 1;
-                $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/trees/' + data.basetreesha + '?' + timestamp(), {}, {
+                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/trees/' + data.basetreesha + '?' + timestamp(), {}, {
                     success: function (msg) {
                         let t = JSON.parse(msg).tree;
                         cb.success(t);
@@ -44,7 +45,7 @@ function gh() {
         /*获得文件信息*/
         return new Promise(function (res, rej) {
             window.gstate += 1;
-            $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/blobs/' + sha + '?' + timestamp(), {}, {
+            $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/blobs/' + sha + '?' + timestamp(), {}, {
                 success: function (msg) {
                     let t = JSON.parse(msg);
                     cb.success(t);
@@ -66,7 +67,7 @@ function gh() {
         return new Promise(function (res, rej) {
             let pushdata = {};
             if (!hascommitsha) {
-                $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/ref/heads/main', "", {/*获得ref*/
+                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/ref/heads/main', "", {/*获得ref*/
                     success: function (m) {
                         pushdata.lastcommitsha = JSON.parse(m).object.sha;/*储存上次的commitsha*/
                         res(pushdata);
@@ -82,7 +83,7 @@ function gh() {
             }
         }).then((data) => {
             return new Promise(function (res, rej) {
-                $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/commits/' + data.lastcommitsha, "", {
+                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/commits/' + data.lastcommitsha, "", {
                     success: function (m) {
                         data.basetreesha = JSON.parse(m).tree.sha;
                         res(data);
@@ -99,7 +100,7 @@ function gh() {
         window.gstate += 1;
         this.getbasetree(token, repo).then((data) => {
             return new Promise(function (res, rej) {/*更新树*/
-                $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/trees', {
+                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/trees', {
                     "base_tree": data.basetreesha, // commit tree 的 sha
                     "tree": treeconstruct
                 }, {
@@ -116,7 +117,7 @@ function gh() {
             })
         }).then((data) => {
             return new Promise(function (res, rej) {/*创建提交*/
-                $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/commits', {
+                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/commits', {
                     "message": commitmsg,
                     "parents": [data.lastcommitsha],// 上次 commit 的sha
                     "tree": data.treesha
@@ -133,7 +134,7 @@ function gh() {
                 }, "post", 'token ' + token, true);
             })
         }).then((data) => {/*调整指针指向最新commit*/
-            $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/refs/heads/main', {
+            $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/refs/heads/main', {
                 "sha": data.commitsha,
                 "force": true
             }, {
@@ -154,7 +155,7 @@ function gh() {
         /*获得文件信息*/
         return new Promise(function (res, rej) {
             window.gstate += 1;
-            $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/contents/' + file + '?' + timestamp(), {}, {
+            $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/contents/' + file + '?' + timestamp(), {}, {
                 success: function (msg) {
                     console.log('[GetFile]Successfully get ' + file);
                     let t = JSON.parse(msg);
@@ -174,7 +175,7 @@ function gh() {
     }
     this.getusr = function (token, asyn, cb) {
         loadshow();
-        $.aj('https://api.github.com/user', {}, {
+        $.ft('https://api.github.com/user', {}, {
             success: function (m) {
                 loadhide();
                 let j = JSON.parse(m);
@@ -192,7 +193,7 @@ function gh() {
     this.getrepo = function (token, repo, asyn, callback) {
         /*获得repo信息*/
         window.gstate += 1;
-        $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '?' + timestamp(), {}, {
+        $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '?' + timestamp(), {}, {
             success: function (msg) {
                 let t = JSON.parse(msg);
                 if (t.message == 'Not Found') {
@@ -212,7 +213,7 @@ function gh() {
     this.cr = async function (token, repo, content, callback) {
         /*创建blob*/
         window.gstate += 1;
-        $.aj('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/blobs' + '?' + timestamp(), {
+        $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/blobs' + '?' + timestamp(), {
             content: Base64.encode(content),
             encoding: "base64"
         }, {

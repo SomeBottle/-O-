@@ -1,4 +1,5 @@
 /*Initialization - SomeBottle*/
+"use strict";
 $bueue.de(true);
 
 function typer() { /*重定义typer*/
@@ -39,7 +40,7 @@ function initialcheck() { /*检查是否初始化*/
             },
             failed: function (m) { /*未初始化*/
                 console.log('No template.json in the remote repo.');
-                $.aj('./template/template.json', {}, { /*获得本地模板内容*/
+                $.ft('./template/template.json', {}, { /*获得本地模板内容*/
                     success: function (k) {
                         window.tjson = JSON.parse(k); /*储存模板json*/
                         initialization();
@@ -47,7 +48,7 @@ function initialcheck() { /*检查是否初始化*/
                     failed: function (k) {
                         notice('Initialization Failed.');
                     }
-                }, 'get', '', true);
+                }, 'get', '');
             }
         });
     }).then(function (d) {
@@ -104,7 +105,7 @@ function initialization() { /*初始化*/
             console.log('file:' + tm[it]);
             (function (tmt) {
                 $bueue.c(function () {
-                    $.aj('./template/' + tmt, {}, {
+                    $.ft('./template/' + tmt, {}, {
                         success: function (m) {
                             notice(tmt);
                             blog.cr(window.accesstoken, window.githubrepo, m, {
@@ -118,7 +119,7 @@ function initialization() { /*初始化*/
                                     $bueue.next();
                                 },
                                 failed: function (m) {
-                                    notice('初始化出错',true);
+                                    notice('初始化出错', true);
                                     notice('请删除template.json.');
                                     notice('重新初始化.');
                                     errshow();
@@ -126,12 +127,12 @@ function initialization() { /*初始化*/
                             });
                         },
                         failed: function (m) {
-                            notice('初始化出错',true);
+                            notice('初始化出错', true);
                             notice('请删除template.json.');
                             notice('重新初始化.');
                             errshow();
                         }
-                    }, 'get', '', true);
+                    }, 'get', '');
                 });
             })(tm[it]); /*闭包传参，终于解决了！>A<*/
             /*添加队列*/
@@ -151,7 +152,7 @@ function initialization() { /*初始化*/
                         loadhide();
                         clearInterval(checkt);
                     }, failed: (m) => {
-                        notice("Commit提交失败",true);
+                        notice("Commit提交失败", true);
                         errshow();
                     }
                 });/*push commit*/

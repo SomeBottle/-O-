@@ -19,7 +19,7 @@
    * 原生PJAX  
    * 甚至只需要Github Pages #)3 ) 
    * 硬核图片Lazyload  
-   * 平滑回滚至头部 2ax=V²  
+   * 平滑回滚至头部 2ax=V²（完全可以用原生的scroll啊喂！）  
    * 封面图支持~  
    
 ## 可用主题🧻  
@@ -199,9 +199,16 @@
    ```
    [**具体看wiki**](https://github.com/SomeBottle/-O-/wiki/%E5%87%BD%E6%95%B0%7C%E5%AF%BC%E8%88%AA%E6%A0%8F%E6%9C%89%E5%85%B3)  
    
-   * 平滑滚动至顶部  
+   * 平滑滚动至顶部，直接滚到底部  
    ```javascript
    B.scrolltop(maxspeed,minspeed); //(最大速度,最小速度)单位：px/10ms
+   B.scrollbottom();  //直接滚到底部，用于快速看到底部的内容
+   ```
+
+   * 暂停当前会话中的lazyload（懒加载）  
+   ```javascript
+   B.lazy(bool);  //true则开启懒加载，false则关闭。当懒加载关闭后往下滚动页面图片不会再载入，流量用户狂喜。
+   /*注意：在未刷新页面的情况下这一选项是持续有效的，刷新页面重建会话后会恢复到默认值，也就是true*/
    ```
    
    * 改变head中的\<title\>标签  

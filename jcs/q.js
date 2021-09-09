@@ -1,4 +1,5 @@
 /*Scripts For Request - SomeBottle*/
+"use strict";
 var $ = new Object();
 $.ls = new Array();
 $.lss = '';
@@ -68,7 +69,7 @@ $.rm = function (e) {
 $.ht = function (h, e) {
 	var ht = SC(e);
 	ht.innerHTML = h;
-	os = ht.getElementsByTagName('script');
+	let os = ht.getElementsByTagName('script');
 	var scr = '';
 	for (var o = 0; o < os.length; o++) {
 		if (os[o].src !== undefined && os[o].src !== null && os[o].src !== '') {
@@ -100,45 +101,23 @@ $.param = function (pr, bs64 = false) {/*params(object)*/
 		return param;
 	}
 }
-$.aj = function (p, d, sf, m, hd, as, asjson = true) { /*(path,data,success or fail,method,authheader,async,sendasjson)*/
-	var xhr = new XMLHttpRequest();
-	var hm = '';
-	for (var ap in d) {
-		hm = hm + ap + '=' + d[ap] + '&';
-	}
-	hm = hm.substring(0, hm.length - 1);
-	if (m == 'get') {
-		xhr.open('get', p, as);
-	} else if (m == 'patch') {
-		xhr.open('PATCH', p, as);
-		hm = JSON.stringify(d);
-	} else {
-		xhr.open('post', p, as);
-		hm = asjson ? JSON.stringify(d) : hm;
-	}
-	if ($.ce(hd)) {
-		xhr.setRequestHeader('Authorization', hd);
-	}
-	if (m !== 'multipart/form-data') {
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-		xhr.send(hm);
-	} else {
-		xhr.send(d);
-	}
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState == 4 && [200, 201].indexOf(xhr.status) !== -1) {
-			sf.success(xhr.responseText);
-		} else if (xhr.readyState == 4 && xhr.status !== 200) {
-			sf.failed(xhr.status, xhr.responseText);
-		}
+$.ft = function (p, d, sf, m, hd) { /*(path,data,success or fail,method,authheader,async,sendasjson)*/
+	let options = {
+		body: JSON.stringify(d),
+		cache: 'default',
+		headers: new Headers({
+			'Content-Type': 'application/x-www-form-urlencoded'
+		}),
+		method: m.toUpperCase()
 	};
-	if (!as) {
-		if (xhr.responseText !== undefined) {
-			sf.success(xhr.responseText);
-		} else {
-			sf.failed(xhr.responseText);
-		}
+	if (m == 'get') delete options.body;
+	if ($.ce(hd)) {
+		options.headers.append('Authorization', hd);
 	}
+	fetch(p, options)
+		.then((res) => (res.text()))
+		.then(resp => sf.success(resp, p))
+		.catch(err => sf.failed(err, p))
 }
 $.r = function (a, o, p, g = true) { /*(All,Original,ReplaceStr,IfReplaceAll)*/
 	if (g) {

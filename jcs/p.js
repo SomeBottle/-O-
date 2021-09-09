@@ -1,4 +1,5 @@
 /*Simple PJAX - SomeBottle*/
+"use strict";
 var mainhost = window.location.host;
 var dt = new Date().getTime();
 if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
@@ -9,29 +10,29 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
 		lasthref: window.location.href,
 		preventurl: new Array(),
 		replace: '',
-		sel: function(r) {
+		sel: function (r) {
 			this.replace = r;
 		},
-		jump: function(href) {
+		jump: function (href) {
 			var ts = this;
 			window.dispatchEvent(ts.PJAXStart);/*激活事件来显示加载动画*/
-			$.aj(href, {}, {
-				success: function(m) {
+			$.ft(href, {}, {
+				success: function (m) {
 					var e = ts.replace;
 					$.ht(m, e);
 					window.dispatchEvent(ts.PJAXFinish);
 				},
-				failed: function(m) {
+				failed: function (m) {
 					window.dispatchEvent(ts.PJAXFinish);
 				}
-			}, 'get', '', true);
+			}, 'get', '');
 		},
-		start: function() {
+		start: function () {
 			var ts = this;
 			var p = document.getElementsByTagName("a");
 			for (var i in p) {
-				p[i].onclick = function(e) {
-					if (ts.preventurl.indexOf(this.href) !== -1||this.href.indexOf('#')!==-1) {
+				p[i].onclick = function (e) {
+					if (ts.preventurl.indexOf(this.href) !== -1 || this.href.indexOf('#') !== -1) {
 						return true;
 					} else {
 						window.history.pushState(null, null, this.href);/*加入历史*/
@@ -40,13 +41,13 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
 					}
 				};
 			}
-			window.onpopstate = function(e) {/*回退或者前进时触发*/
+			window.onpopstate = function (e) {/*回退或者前进时触发*/
 				if (window.location.href.indexOf(mainhost) !== -1) {
 					PJAX.jump(window.location.href);
 				}
 			}
 		},
-		autoprevent: function() {
+		autoprevent: function () {
 			var ts = this;
 			var p = document.getElementsByTagName("a");
 			var h = window.location.host;

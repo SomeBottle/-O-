@@ -1,4 +1,5 @@
-/*ControlPosts4.0.0 - SomeBottle202105*/
+/*ControlPosts4.2.0 - SomeBottle202109*/
+"use strict";
 var md = new showdown.Converter();
 var editpost = 'none';
 var tpjs = JSON.parse(window.tjson); /*编辑的文章*/
@@ -718,6 +719,7 @@ function delpost(id) { /*删除文章*/
                     window.tjson = JSON.stringify(tpjs);/*更新本地的json*/
                     renderlist(); /*渲染最新文章列表*/
                     notice('删除成功');
+                    loadhide();
                 }, failed: (m) => {
                     notice('删除:更新push失败', true);
                     loadhide();
@@ -734,7 +736,7 @@ function postopen(id) { /*编辑文章*/
     if (tj['postindex'][id]['link']) {
         ifpage = true; /*是页面*/
     }
-    this.loadpost = function (ct) {
+    let loadpost = function (ct) {
         loadhide();
         var ht = Base64.decode(ct);
         var title = Base64.decode(tj['postindex'][id]['title']);
@@ -761,7 +763,7 @@ function postopen(id) { /*编辑文章*/
 
         blog.getfileblob(window.accesstoken, window.githubrepo, blog.findfilesha(filename), true, {
             success: function (m) { /*已经初始化*/
-                ot.loadpost(m.content);
+                loadpost(m.content);
                 window.htmls[filename] = m.content; /*已经加载过的文章先存着*/
             },
             failed: function (msg) {
@@ -771,7 +773,7 @@ function postopen(id) { /*编辑文章*/
             }
         });
     } else {
-        this.loadpost(window.htmls[filename]);
+        loadpost(window.htmls[filename]);
     }
 }
 
