@@ -1,4 +1,4 @@
-/*ControlPosts4.2.0 - SomeBottle202109*/
+/*ControlPosts4.2.1 - SomeBottle202109*/
 "use strict";
 var md = new showdown.Converter();
 var editpost = 'none';
@@ -141,7 +141,7 @@ function scriptcutter(h) { /*处理script标签*/
         if (sc !== undefined) {
             sc = B.r(sc, '/*', ''); /*去除原有注释*/
             sc = B.r(sc, '*/', '');
-            prc = '/*' + sc + '*/'; /*加上总体注释*/
+            let prc = '/*' + sc + '*/'; /*加上总体注释*/
             ss[i].innerHTML = prc;
         }
     }
