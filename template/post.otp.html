@@ -1,4 +1,4 @@
-{(Post)}
+{(PostTemplate)}
 <ifcover><img src='{[postcover]}'></img></ifcover>
 <h3 class='posttitle'>{[posttitle]}</h3>
 <small class='small-date'>{[postdate]}</small>
@@ -10,3 +10,7 @@
 <!--Comment-->
 <div class='comments'>{[comments]}</div>
 {(Footer:)}
+{(PostTemplateEnd)}
+{(PostTagsTemplate)}<a href="{[tagurl]}" class="taglink">{[tagname]}</a>{(PostTagsTemplateEnd)}
+{(PostTagsDelimiter)},{(PostTagsDelimiterEnd)}
+{(IfPage)}页面{(IfPageEnd)}

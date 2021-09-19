@@ -1,4 +1,4 @@
-/*FrontMainJS ver4.2.0 - SomeBottle*/
+/*FrontMainJS ver4.3.0 - SomeBottle*/
 /*q.js*/
 "use strict";
 var md;
@@ -231,7 +231,7 @@ if (!B) { /*PreventInitializingTwice*/
     window.htmls = new Object();
     var B = { /*B Part*/
         moreperpage: 0,
-        r: function (a, o, p, tp = false, g = true) { /*别改这里！，没有写错！(All,Original,ReplaceStr,IfReplaceAll,IfTemplate(false,'[','('))*/
+        r: function (a, o, p, tp = false, g = true) { /*别改这里！，没有写错！(All,Original,ReplaceStr,IfReplaceAll,IfTemplate(false,'['(true),'('))*/
             if (tp) return tp == '(' ? a.replace(new RegExp('\\{\\(' + o + '\\)\\}', (g ? 'g' : '') + 'i'), p) : a.replace(new RegExp('\\{\\[' + o + '\\]\\}', (g ? 'g' : '') + 'i'), p); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
             if (g) {
                 while (a.indexOf(o) !== -1) {
@@ -554,6 +554,7 @@ if (!B) { /*PreventInitializingTwice*/
             window.location.href = window.location.protocol + '//' +
                 window.location.host + window.location.pathname + '#' + (current > 1 ? (current - 1) : 1);
         },
+        currentpagetype: '',/*20210919记录renderer获取到的pagetype*/
         renderer: function (fcontent = false) { /*(fcontent=是否指定内容)*/
             var ot = this;
             if (!ot.rendering) {
@@ -562,6 +563,7 @@ if (!B) { /*PreventInitializingTwice*/
                 md = new showdown.Converter();
                 var comment = window.htmls[j['templatehtmls']['comment']];
                 var pagetype = ot.gt('PageType', 'PageTypeEnd', fcontent); /*Get Page Type*/
+                ot.currentpagetype = pagetype;
                 var tj = window.mainjson; /*get json*/
                 if (pagetype == j['templatehtmls']['post']) {
                     var content = ot.gt('PostContent', 'PostContentEnd', fcontent); /*Get Post Content*/
@@ -571,24 +573,30 @@ if (!B) { /*PreventInitializingTwice*/
                     var pid = ot.gt('PostID', 'PostIDEnd', fcontent); /*Get Post ID*/
                     var cover = ot.gt('PostCover', 'PostCoverEnd', fcontent); /*Get Post Cover*/
                     var pagetitle = (ot.gt('MainTitle', 'MainTitleEnd', fcontent)).replace(/<\/?.+?>/g, ""); /*Get Page Title(No html characters)*/
-                    var post = window.htmls[j['templatehtmls']['post']];
+                    var post = window.htmls[j['templatehtmls']['post']],
+                        tag_tp = ot.gt('PostTagsTemplate', 'PostTagsTemplateEnd', post),/*20210919获得tags模板*/
+                        tag_deli = ot.gt('PostTagsDelimiter', 'PostTagsDelimiterEnd', post),/*20210919获得tags分隔部分*/
+                        ifpage_tp = ot.gt('IfPage', 'IfPageEnd', post);/*如果是页面，标签的部分就显示这里面的内容*/
                     var render11 = ot.r(post, 'postcontent', ot.lazypre(md.makeHtml(ot.hc(content.trim()))), true); /*unescape and Analyse md*/
                     var render12 = ot.r(render11, 'posttitle', title, true);
                     var alltags = [];
                     if (isNaN(date)) {
-                        tags = '页面';
+                        tags = ifpage_tp;
                     } else { /*Tag Process*/
                         alltags = tags.split(',');
                         tags = '';
-                        alltags.forEach(function (i, v) {
-                            tags = tags + '<a href="' + j['generatehtmls']['tags'] + '#' + encodeURIComponent(i) + '" class="taglink">' + i + '</a>,';
+                        alltags.forEach(function (v, i) {
+                            let filled = ot.r(tag_tp, 'tagurl', j['generatehtmls']['tags'] + '#' + encodeURIComponent(v), true);
+                            filled = ot.r(filled, 'tagname', v, true);
+                            tags += filled;
+                            if (i !== (alltags.length - 1)) tags += tag_deli;/*如果不是最后一个标签就加分隔部分*/
                         });
-                        tags = tags.substr(0, tags.length - 1); /*去掉末尾逗号*/
                     }
                     var render13 = ot.r(render12, 'posttags', tags, true);
                     var render14 = ot.r(render13, 'postdate', $.dt(date), true);
                     var render15 = ot.r(render14, 'comments', comment, true); /*LoadCommentsForPost*/
                     var render16 = ot.r(render15, 'pid', pid, true); /*SetPid*/
+                    var theanchor = window.location.hash.replace('#', '');/*获得要跳转的锚点*/
                     render16 = ot.r(render16, 'pagetype', pagetype, true); /*SetPageType*/
                     render16 = ot.r(render16, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
                     render16 = ot.r(render16, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
@@ -603,12 +611,14 @@ if (!B) { /*PreventInitializingTwice*/
                         var r8 = '<!--Footer-->' + render16.split('{(Footer:)}')[1];
                         render16 = r7 + r8;
                     }
+                    render16 = ot.gt('PostTemplate', 'PostTemplateEnd', render16);
                     ot.checkfirstrender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                     $.title(pagetitle); /*设置title*/
                     $.ht(ot.deltemptags(render16), 'contentcontainer');
                     anichecker($.ecls($.loadset['listening'], '', false, true), function () {
                         ot.lazycheck(); /*LazyLoad初次检测*/
                     });
+                    if (SC(theanchor)) setTimeout(() => { SC(theanchor).scrollIntoView(); }, 300);/*20210919如果锚点存在就跳转到锚点*/
                     window.addEventListener('scroll', B.lazycheck, false); /*只有文章页面监听懒加载20210909*/
                     render16 = tj = null; /*释放*/
                 } else if (pagetype == j['templatehtmls']['postlist']) {
@@ -1090,8 +1100,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             if (e == '') {
                 e = 'contentcontainer'; /*默认指定container*/
             }
-            var listener; /*初始化监听器*/
-            if (ts.recenturl.indexOf('#') !== -1 && href.indexOf('#') !== -1) { /*防止Tag页面的跳转问题*/
+            if (ts.recenturl.indexOf('#') !== -1 && href.indexOf('#') !== -1 && ts.recenturl.split('#')[0] == href.split('#')[0]) { /*防止Tag页面的跳转问题*/
                 return false;
             } else if (ts.recenturl.indexOf('#') == -1 && href.indexOf('#') !== -1) {
                 B.nowpage = 0; /*防止页码bug*/
@@ -1136,7 +1145,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             });
         },
         pjaxautojump: function () {
-            if (PJAX.recenturl.split('#')[0] == window.location.href) { /*用于处理首页没有hash和有hash页码时回退跳转的问题20200808*/
+            if (PJAX.recenturl.split('#')[0] == window.location.href && B.currentpagetype == window.templjson['templatehtmls']['postlist']) { /*用于处理**首页**没有hash和有hash页码时回退跳转的问题20200808*/
                 window.history.replaceState(null, null, window.location.href + '#1'); /*从https://xxx/#2回退到https://xxx/时自动变成https://xxx/#1跳转到页码1(不改变历史)20200808*/
                 PJAX.jump(window.location.href + '#1');
             }

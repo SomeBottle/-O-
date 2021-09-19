@@ -146,13 +146,22 @@
      
      4. post.otp.html **文章/页面单页**  **-->[具体看wiki](https://github.com/SomeBottle/-O-/wiki/%E6%A8%A1%E6%9D%BF%7CFooter%E5%92%8CPostEnd)**
      ```html
-	 {(Post)}
+	 {(PostTemplate)}  模板开头
      {[posttitle]}  文章标题  
      {[postdate]}  文章日期  
      {[postcontent]}  文章内容  
      {[posttags]}  文章标签(html)  
      {(:PostEnd)}  (需要保留) 指定文章结束的地方.  
      {[comments]}  用于渲染评论(接comment.otp.html)  
+     {(PostTemplateEnd)} 模板结尾  
+     {(PostTagsTemplate)}  文章底部单个标签的模板
+     {[tagurl]} 这个标签的url  
+     {[tagname]}  这个标签的名字  
+     {(PostTagsTemplateEnd)}   文章底部单个标签模板结束
+     {(PostTagsDelimiter)},{(PostTagsDelimiterEnd)}  标签与标签之间的分隔，这里默认是一个逗号  
+     {(IfPage)}<span>这里是页面</span>{(IfPageEnd)}  如果是页面，标签这里显示的内容
+
+
      <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
      ```
 
