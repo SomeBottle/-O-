@@ -1,5 +1,4 @@
-/*FrontMainJS ver4.3.1 - SomeBottle*/
-/*q.js*/
+/*FrontMainJS ver4.4.0 - SomeBottle*/
 "use strict";
 var md;
 if (typeof ($) !== 'object') {
@@ -441,7 +440,7 @@ if (!B) { /*PreventInitializingTwice*/
                         return o.tpcheck(true, ct);
                     },
                         25);
-                } else if (typeof showdown !== 'object' || typeof Base64 !== 'object' || !localStorage['obottle-ldpage']) { /*Markdown or Base64 or loadingpage is not ready!*/
+                } else if (typeof markdownit !== 'function' || typeof Base64 !== 'object' || !localStorage['obottle-ldpage']) { /*Markdown or Base64 or loadingpage is not ready!*/
                     setTimeout(function () {
                         return o.tpcheck(true, ct);
                     },
@@ -560,7 +559,7 @@ if (!B) { /*PreventInitializingTwice*/
             if (!ot.rendering) {
                 ot.rendering = true; /*示意正在渲染20200805*/
                 var j = window.templjson;
-                md = new showdown.Converter();
+                md = window.markdownit({ html: true, linkify: true });
                 var comment = window.htmls[j['templatehtmls']['comment']];
                 var pagetype = ot.gt('PageType', 'PageTypeEnd', fcontent); /*Get Page Type*/
                 ot.currentpagetype = pagetype;
@@ -577,7 +576,7 @@ if (!B) { /*PreventInitializingTwice*/
                         tag_tp = ot.gt('PostTagsTemplate', 'PostTagsTemplateEnd', post),/*20210919获得tags模板*/
                         tag_deli = ot.gt('PostTagsDelimiter', 'PostTagsDelimiterEnd', post),/*20210919获得tags分隔部分*/
                         ifpage_tp = ot.gt('IfPage', 'IfPageEnd', post);/*如果是页面，标签的部分就显示这里面的内容*/
-                    var render11 = ot.r(post, 'postcontent', ot.lazypre(md.makeHtml(ot.hc(content.trim()))), true); /*unescape and Analyse md*/
+                    var render11 = ot.r(post, 'postcontent', ot.lazypre(md.render(ot.hc(content.trim()))), true); /*unescape and Analyse md*/
                     var render12 = ot.r(render11, 'posttitle', title, true);
                     var alltags = [];
                     if (isNaN(date)) {
@@ -630,7 +629,7 @@ if (!B) { /*PreventInitializingTwice*/
                         backbtn = ot.gt('BackBtn', 'BackBtnEnd', pt);
                     ptt = ot.r(ptt, 'morebtn', '<span id=\'morebtn\'>' + morebtn + '</span>', true);
                     ptt = ot.r(ptt, 'backbtn', '<span id=\'backbtn\'>' + backbtn + '</span>', true);
-                    var render11 = ot.r(ptt, 'postitems', '<div id=\'postitems\'>' + md.makeHtml((content.trim())) + '</div>', true); /*Analyse md*/
+                    var render11 = ot.r(ptt, 'postitems', '<div id=\'postitems\'>' + md.render((content.trim())) + '</div>', true); /*Analyse md*/
                     var render12 = ot.r(render11, 'pagetype', pagetype, true); /*SetPageType*/
                     render12 = ot.r(render12, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
                     render12 = ot.r(render12, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
