@@ -440,7 +440,7 @@ if (!B) { /*PreventInitializingTwice*/
                         return o.tpcheck(true, ct);
                     },
                         25);
-                } else if (typeof markdownit !== 'function' || typeof Base64 !== 'object' || !localStorage['obottle-ldpage']) { /*Markdown or Base64 or loadingpage is not ready!*/
+                } else if (typeof markdownItAnchor !== 'function' || typeof markdownit !== 'function' || typeof Base64 !== 'object' || !localStorage['obottle-ldpage']) { /*Markdown or Base64 or loadingpage is not ready!*/
                     setTimeout(function () {
                         return o.tpcheck(true, ct);
                     },
@@ -559,7 +559,7 @@ if (!B) { /*PreventInitializingTwice*/
             if (!ot.rendering) {
                 ot.rendering = true; /*示意正在渲染20200805*/
                 var j = window.templjson;
-                md = window.markdownit({ html: true, linkify: true });
+                md = window.markdownit({ html: true, linkify: true }).use(window.markdownItAnchor, { permalink: true, permalinkBefore: true, permalinkSymbol: '' });
                 var comment = window.htmls[j['templatehtmls']['comment']];
                 var pagetype = ot.gt('PageType', 'PageTypeEnd', fcontent); /*Get Page Type*/
                 ot.currentpagetype = pagetype;
