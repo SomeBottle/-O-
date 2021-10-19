@@ -1,6 +1,6 @@
 /*FrontMainJS ver4.5.0 - SomeBottle*/
 "use strict";
-console.log('changed at 18:34');
+console.log('changed at 21:25');
 if (typeof ($) !== 'object') {
     var $ = new Object();
     var SC = function (e) { /*元素选择器*/
@@ -169,18 +169,18 @@ if (typeof ($) !== 'object') {
             title[0].innerHTML = theTitle;
         }
     }
-    $.ldparse = function (ld) { /*解析loading页面*/
-        var ht = document.createElement('html');
-        ht.innerHTML = ld;
-        var obj = ht.getElementsByTagName('loadset'),
+    $.ldParse = function (ldHtml) { /*解析loading页面*/
+        let element = document.createElement('html');
+        element.innerHTML = ldHtml;
+        let obj = element.getElementsByTagName('loadset'),
             set = obj ? JSON.parse(obj[0].innerHTML) : false; /*获得设置JSON*/
         if (set) {
             $.loadSettings = set;
         } else { /*获取配置失败*/
             console.log('Failed to initialize loading page.');
         }
-        ht.remove(); /*移除临时元素*/
-        ht = obj = null;
+        element.remove(); /*移除临时元素*/
+        obj = null;
     }
     $.alterClass = function (selection, operateClass, rm = false, returnE = false) {
         /*元素class应用(选择器,值,是否移除,是否返回元素)，
@@ -213,20 +213,20 @@ if (typeof ($) !== 'object') {
 if (!B) { /*PreventInitializingTwice*/
     /*Include LoadingPage*/
     if (localStorage['obottle-ldpage']) {
-        var e = SC('html').innerHTML,
-            ldlocalused = true;
-        $.ldparse(localStorage['obottle-ldpage']); /*解析加载页*/
-        SC('html').innerHTML = e.replace('<loadingarea></loadingarea>', localStorage['obottle-ldpage']);
+        var prevHtml = SC('html').innerHTML,
+            ldLocalUsed = true;
+        $.ldParse(localStorage['obottle-ldpage']); /*解析加载页*/
+        SC('html').innerHTML = prevHtml.replace('<loadingarea></loadingarea>', localStorage['obottle-ldpage']);
     } else {
-        var ldlocalused = false;
+        var ldLocalUsed = false;
     }
     $.ft('./loading.otp.html', '', {
-        success: function (m, p) {
-            if (!ldlocalused) { /*如果本地已经有了就不热更新了20200808*/
-                B.hr('<loadingarea></loadingarea>', m);
-                $.ldparse(m); /*解析加载页*/
+        success: function (pageHtml) {
+            if (!ldLocalUsed) { /*如果本地已经有了就不热更新了20200808*/
+                B.hr('<loadingarea></loadingarea>', pageHtml);
+                $.ldParse(pageHtml); /*解析加载页*/
             }
-            localStorage['obottle-ldpage'] = m;
+            localStorage['obottle-ldpage'] = pageHtml;
         },
         failed: function (m) { /*Failed*/
             console.log('LoadingPage Load Failed');
@@ -234,175 +234,160 @@ if (!B) { /*PreventInitializingTwice*/
     }, 'get', '');
     $.script('./library.js'); /*Include Library Once*/
     $.script('./search.js'); /*Include Search.js Once*/
-    window.htmls = new Object();
+    window.htmls = new Object();/*Prepare for the HTMLS variable.*/
     var B = { /*B Part*/
         moreperpage: 0,
-        r: function (a, o, p, tp = false, g = true) { /*别改这里！，没有写错！(All,Original,ReplaceStr,IfReplaceAll,IfTemplate(false,'['(true),'('))*/
-            if (tp) return tp == '(' ? a.replace(new RegExp('\\{\\(' + o + '\\)\\}', (g ? 'g' : '') + 'i'), p) : a.replace(new RegExp('\\{\\[' + o + '\\]\\}', (g ? 'g' : '') + 'i'), p); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
-            if (g) {
-                while (a.indexOf(o) !== -1) {
-                    a = a.replace(o, p);
+        r: function (origin, from, to, forTemplate = false, replaceAll = true) { /*别改这里！，没有写错！(All,Original,ReplaceStr,IfTemplate[false,'['(true),'('],IfReplaceAll)*/
+            if (forTemplate) return forTemplate == '(' ? origin.replace(new RegExp('\\{\\(' + from + '\\)\\}', (replaceAll ? 'g' : '') + 'i'), to) : origin.replace(new RegExp('\\{\\[' + from + '\\]\\}', (replaceAll ? 'g' : '') + 'i'), to); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
+            if (replaceAll) {
+                while (origin.indexOf(from) !== -1) {
+                    origin = origin.replace(from, to);
                 }
             } else {
-                a = a.replace(o, p);
+                origin = origin.replace(from, to);
             }
-            return a;
+            return origin;
         },
-        navlist: {
+        navList: {
             statu: false,
             conf: {}
         },
-        navcurrent: function (v = '') { /*getcurrentnav*/
+        navCurrent: function (v = '') { /*getcurrentnav*/
             return ((-1 == v.indexOf('http') ? v = v : (v.replace(window.location.protocol + '//' + window.location.hostname, ''))) || window.location.pathname).replace('.html', ''); /*割掉尾巴*/
         },
-        navcheck: function () { /*modify html*/
-            var c = document.body,
-                o = this,
-                cl = o.navlist.conf;
-            if (o.navlist.statu) {
-                var e = c.getElementsByClassName(cl.navclass),
-                    path = o.navcurrent();
-                for (var i in e) { /*20201229更改算法*/
-                    var p = o.navcurrent(e[i].href),
-                        pathpos = path.lastIndexOf(p),
-                        pathlen = path.length,
-                        hreflen = p.length;
-                    if ((path == p || (pathpos + hreflen == pathlen && pathpos !== -1)) && e[i] instanceof Element) {
-                        e[i].classList.add(cl.activeclass); /*设置为焦点*/
-                    } else if (e[i] instanceof Element) {
-                        (e[i].classList.contains(cl.activeclass)) ? (e[i].classList.remove(cl.activeclass)) : p = p; /*取消其他的焦点*/
+        navCheck: function () { /*modify html*/
+            let that = this,
+                classesForNav = that.navList.conf;
+            if (that.navList.statu) {
+                let elements = document.body.getElementsByClassName(classesForNav.navclass),
+                    path = that.navCurrent();
+                for (var i in elements) { /*20201229更改算法*/
+                    let comparePath = that.navCurrent(elements[i].href),
+                        pathPos = path.lastIndexOf(comparePath),
+                        pathLen = path.length,
+                        hrefLen = comparePath.length;
+                    if ((path == comparePath || (pathPos + hrefLen == pathLen && pathPos !== -1)) && elements[i] instanceof Element) {
+                        elements[i].classList.add(classesForNav.activeclass); /*设置为焦点*/
+                    } else if (elements[i] instanceof Element) {
+                        (elements[i].classList.contains(classesForNav.activeclass)) ? (elements[i].classList.remove(classesForNav.activeclass)) : comparePath = comparePath; /*取消其他的焦点*/
                     }
                 }
-                e = null;
+                elements = null;
             }
-            c = null;
         },
         nav: function (v) {
-            var o = this;
-            o.navlist.statu = true;
-            o.navlist.conf = v;
+            let o = this;
+            o.navList.statu = true;
+            o.navList.conf = v;
         },
-        scrollbottom: function () {
-            let wholeheight = document.documentElement.scrollHeight;
-            window.scrollTo(0, wholeheight);
+        scrollBottom: function () {
+            let wholeHeight = document.documentElement.scrollHeight;
+            window.scrollTo(0, wholeHeight);
         },
-        scrolltop: function (maxspeed, minspeed) {
-            var nt = document.body.scrollTop;
-            var stages = Math.floor(parseInt(nt) / 3); /*分成加速、匀速、减速三段*/
-            var v1 = maxspeed; /*加速到maxspeed px/s*/
-            var vmin = minspeed; /*最小减速到minspeed px/s*/
-            var a1 = (Math.pow(v1, 2)) / (stages * 2); /*2ax=V²*/
-            var vn = 0; /*当前速度*/
-            var st = setInterval(function () {
-                var ntnow = document.body.scrollTop;
-                if (parseInt(ntnow) > (stages * 2)) {
-                    vn += a1;
-                    document.body.scrollTop = parseInt(ntnow) - vn;
-                } else if (parseInt(ntnow) > (stages)) { /*第二阶段*/
-                    document.body.scrollTop = parseInt(ntnow) - vn;
-                } else if (parseInt(ntnow) <= (stages)) { /*第三阶段*/
-                    vn -= a1;
-                    if (vn <= vmin) {
-                        vn = vmin;
+        scrollTop: function (maxSpeed, minSpeed) {
+            var totalHeight = document.body.scrollTop,
+                stages = Math.floor(parseInt(totalHeight) / 3), /*分成加速、匀速、减速三段*/
+                v1 = maxSpeed, /*加速到maxspeed px/s*/
+                vmin = minSpeed, /*最小减速到minspeed px/s*/
+                a1 = (Math.pow(v1, 2)) / (stages * 2), /*2ax=V²*/
+                vn = 0, /*当前速度*/
+                timer = setInterval(function () {
+                    let nowHeight = document.body.scrollTop;
+                    if (parseInt(nowHeight) > (stages * 2)) {
+                        vn += a1;
+                        document.body.scrollTop = parseInt(nowHeight) - vn;
+                    } else if (parseInt(nowHeight) > (stages)) { /*第二阶段*/
+                        document.body.scrollTop = parseInt(nowHeight) - vn;
+                    } else if (parseInt(nowHeight) <= (stages)) { /*第三阶段*/
+                        vn -= a1;
+                        if (vn <= vmin) {
+                            vn = vmin;
+                        }
+                        if (parseInt(nowHeight) <= 0) {
+                            document.body.scrollTop = 0;
+                            clearInterval(timer);
+                        } else {
+                            document.body.scrollTop = parseInt(nowHeight) - vn;
+                        }
                     }
-                    if (parseInt(ntnow) <= 0) {
-                        document.body.scrollTop = 0;
-                        clearInterval(st);
-                    } else {
-                        document.body.scrollTop = parseInt(ntnow) - vn;
-                    }
-                }
-            }, 10);
-        },
-        hc: function (v) { /*反转义html的某些字符*/
-            v = ((v.replace(/&amp;/g, "&")).replace(/&lt;/g, "<")).replace(/&gt;/g, ">");
-            return v;
+                }, 10);
         },
         hr: function (o, p) { /*htmlreplace*/
             var e = SC('html').innerHTML;
             SC('html').innerHTML = this.r(e, o, p);
         },
-        deltemptags: function (h) { /*删除模板多余的标识符，像{(xxx)}一类*/
+        delTempTags: function (h) { /*删除模板多余的标识符，像{(xxx)}一类*/
             return h.replace(/\{\((.*?)\)\}/g, '');
         },
-        preventscript: function () {
-            var e = SC('html');
-            var sc = e.getElementsByTagName('script');
-            for (var i in sc) {
-                if (sc[i].src && !$.loadedScripts.includes(sc[i].src)) {
-                    $.loadedScripts.push(sc[i].src);
+        preventScript: function () {
+            let scriptTags = SC('html').getElementsByTagName('script');
+            for (var i in scriptTags) {
+                if (scriptTags[i].src && !$.loadedScripts.includes(scriptTags[i].src)) {
+                    $.loadedScripts.push(scriptTags[i].src);
                 }
             }
-            sc = null;
+            scriptTags = null;
         },
-        dehtml: function (h) { /*decodehtml*/
-            var temp = h.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#039;/g, "\'").replace(/&#39;/g, "\'").replace(/&quot;/g, "\"");
-            return temp;
+        deHtml: function (h) { /*decodeHtml*/
+            return h.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#039;/g, "\'").replace(/&#39;/g, "\'").replace(/&quot;/g, "\"");
         },
-        gt: function (p1, p2, ct = false, ntp = false) { /*htmlget(between,and,content,NotTemplate=false)*/
-            var e;
-            if (!ct) {
-                e = SC('html').innerHTML;
-            } else {
-                e = ct;
-            }
-            try { /*ntp=false，也就是模板中匹配的时候，默认匹配{(xxx)}和{(xxx)}之间的内容*/
-                var k = ntp ? e.split(p1)[1] : e.split(new RegExp('\\{\\(' + p1 + '\\)\\}', 'i'))[1]; /*正则支持大小写忽略*/
-                var d = ntp ? k.split(p2)[0] : k.split(new RegExp('\\{\\(' + p2 + '\\)\\}', 'i'))[0];
-                return this.dehtml(d);
+        gt: function (between, and, useContent = false, notTemplate = false) { /*htmlget(between,and,content,NotTemplate=false)*/
+            let element = useContent ? useContent : SC('html').innerHTML;
+            try { /*notTemplate=false，也就是模板中匹配的时候，默认匹配{(xxx)}和{(xxx)}之间的内容*/
+                let contentAfter = notTemplate ? element.split(between)[1] : element.split(new RegExp('\\{\\(' + between + '\\)\\}', 'i'))[1], /*正则支持大小写忽略*/
+                    contentBetween = notTemplate ? contentAfter.split(and)[0] : contentAfter.split(new RegExp('\\{\\(' + and + '\\)\\}', 'i'))[0];
+                return this.deHtml(contentBetween);
             } catch (e) {
                 return false;
             }
         },
-        lazyload: true, /*是否开启lazyload*/
-        lazy: (bool) => { /*lazyload触发器*/
-            B.lazyload = bool;
+        lazyLoad: true, /*是否开启lazyLoad*/
+        lazy: (bool) => { /*lazyLoad触发器*/
+            B.lazyLoad = bool;
         },
-        lazypre: function (c) { /*处理Lazyload图片*/
-            var i = document.createElement('div');
-            i.innerHTML = c;
-            var s = i.getElementsByTagName('img');
-            for (var p in s) {
-                if (s[p].src) {
-                    var sr = s[p].src;
-                    s[p].src = "data:image/svg+xml,%3Csvg width='302' height='27' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E %3Ctitle%3Ebackground%3C/title%3E %3Crect x='-1' y='-1' width='304' height='29' id='canvas_background' fill='none'/%3E %3Cg id='canvasGrid' display='none'%3E %3Crect id='svg_2' width='100%25' height='100%25' x='0' y='0' stroke-width='0' fill='url(%23gridpattern)'/%3E %3C/g%3E %3C/g%3E %3Cg%3E %3Ctitle%3ELayer 1%3C/title%3E %3Ctext fill='%23000000' stroke='%23000' stroke-width='0' x='129.703125' y='16.303124' id='svg_1' font-size='8' font-family='Helvetica, Arial, sans-serif' text-anchor='start' xml:space='preserve'%3Epic sleeping%3C/text%3E %3C/g%3E %3C/svg%3E";
-                    if (s[p].style.width !== '') {
-                        sr = sr + '[width]' + s[p].style.width; /*记录元素原本的样式*/
+        lazyPre: function (c) { /*预先处理lazyLoad图片*/
+            let temp = document.createElement('div');
+            temp.innerHTML = c;
+            let imgTags = temp.getElementsByTagName('img');
+            for (var p in imgTags) {
+                if (imgTags[p].src) {
+                    let theTag = imgTags[p], originData = theTag.src;
+                    theTag.src = "data:image/svg+xml,%3Csvg width='302' height='27' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E %3Ctitle%3Ebackground%3C/title%3E %3Crect x='-1' y='-1' width='304' height='29' id='canvas_background' fill='none'/%3E %3Cg id='canvasGrid' display='none'%3E %3Crect id='svg_2' width='100%25' height='100%25' x='0' y='0' stroke-width='0' fill='url(%23gridpattern)'/%3E %3C/g%3E %3C/g%3E %3Cg%3E %3Ctitle%3ELayer 1%3C/title%3E %3Ctext fill='%23000000' stroke='%23000' stroke-width='0' x='129.703125' y='16.303124' id='svg_1' font-size='8' font-family='Helvetica, Arial, sans-serif' text-anchor='start' xml:space='preserve'%3Epic sleeping%3C/text%3E %3C/g%3E %3C/svg%3E";
+                    if (theTag.style.width !== '') {
+                        originData += '[width]' + theTag.style.width; /*记录元素原本的样式*/
                     }
-                    s[p].setAttribute('data-src', '[lazy]' + sr);
-                    s[p].style.width = '100%';
+                    theTag.setAttribute('data-src', '[lazy]' + originData);
+                    theTag.style.width = '100%';
                 }
             }
-            var rt = i.innerHTML;
-            i.remove(); /*移除临时元素*/
-            i = s = null;
-            return rt;
+            let returnV = temp.innerHTML;
+            temp.remove(); /*移除临时元素*/
+            imgTags = null;
+            return returnV;
         },
-        lazycheck: function () { /*包租婆————怎么没水了呢？*/
-            if (!B.lazyload) return false;/*关闭了lazyload*/
-            var H = window.innerHeight;
-            var S = document.documentElement.scrollTop || document.body.scrollTop;
-            var es = document.getElementsByTagName('img');
-            for (var i in es) {
-                var cty = es[i].offsetTop;
-                if (H + S > cty && ((H + S) - cty < H)) {/*修正算法，只展示在文档显示区的图片20210909*/
-                    B.lazyshow(es[i]);
+        lazyCheck: function () { /*包租婆————怎么没水了呢？*/
+            if (!B.lazyLoad) return false;/*关闭了lazyLoad*/
+            let H = window.innerHeight, S = document.documentElement.scrollTop || document.body.scrollTop, imgTags = document.getElementsByTagName('img');
+            for (var i in imgTags) {
+                let imgPos = imgTags[i].offsetTop;
+                if (H + S > imgPos && ((H + S) - imgPos < H)) {/*修正算法，只展示在文档显示区的图片20210909*/
+                    B.lazyShow(imgTags[i]);
                 }
             }
-            es = null;
+            imgTags = null;
         },
-        lazyshow: function (el) {/*展示懒加载的图片*/
-            var lazy = el.getAttribute('data-src');
-            if (lazy !== 'undefined' && lazy) {
-                el.setAttribute('data-src', '');
-                var mainsrc = lazy.split('[lazy]')[1];
-                if (mainsrc.indexOf('[width]') !== -1) {
-                    var sp = mainsrc.split('[width]');
-                    el.src = sp[0];
-                    el.style.width = sp[1]; /*恢复原来的width样式*/
+        lazyShow: function (element) {/*展示懒加载的图片*/
+            let origin = element.getAttribute('data-src');
+            if (origin !== 'undefined' && origin) {
+                element.setAttribute('data-src', '');
+                let mainSrc = origin.split('[lazy]')[1];
+                if (mainSrc.indexOf('[width]') !== -1) {
+                    let sp = mainSrc.split('[width]');
+                    element.src = sp[0];
+                    element.style.width = sp[1]; /*恢复原来的width样式*/
                 } else {
-                    el.src = lazy.split('[lazy]')[1];
-                    el.style.width = 'auto';
+                    element.src = origin.split('[lazy]')[1];
+                    element.style.width = 'auto';
                 }
             }
         },
@@ -452,7 +437,7 @@ if (!B) { /*PreventInitializingTwice*/
                         return o.tpcheck(true, ct);
                     }, 25);
                 } else {
-                    ot.preventscript(); /*剔除已加载scripts*/
+                    ot.preventScript(); /*剔除已加载scripts*/
                     var j = window.templjson;
                     j['necessary'].push(pagetype); /*Pagetype Pushed*/
                     if (pagetype == j['templatehtmls']['postlist']) {
@@ -546,7 +531,7 @@ if (!B) { /*PreventInitializingTwice*/
                 var render1 = ot.r(main, 'contents', '<div id=\'contentcontainer\'></div>', true); /*预设好id以便后面调用*/
                 var render2 = ot.r(cloth, 'main', render1, true);
                 var ghead = $.rmHead(render2); /*把cloth内的头部去掉，咱分头行动*/
-                $.ht(ot.deltemptags(ghead[0]), 'container'); /*先把外皮给渲染出来*/
+                $.ht(ot.delTempTags(ghead[0]), 'container'); /*先把外皮给渲染出来*/
                 $.addHead(ghead[1]); /*把头接到head里面去*/
                 ot.clothmainrendered = true;
             }
@@ -581,7 +566,7 @@ if (!B) { /*PreventInitializingTwice*/
                         tag_tp = ot.gt('PostTagsTemplate', 'PostTagsTemplateEnd', post),/*20210919获得tags模板*/
                         tag_deli = ot.gt('PostTagsDelimiter', 'PostTagsDelimiterEnd', post),/*20210919获得tags分隔部分*/
                         ifpage_tp = ot.gt('IfPage', 'IfPageEnd', post);/*如果是页面，标签的部分就显示这里面的内容*/
-                    var render11 = ot.r(post, 'postcontent', ot.lazypre($.mark(ot.hc(content.trim()))), true); /*unescape and Analyse md*/
+                    var render11 = ot.r(post, 'postcontent', ot.lazyPre($.mark(content.trim())), true); /*unescape and Analyse md*/
                     var render12 = ot.r(render11, 'posttitle', title, true);
                     var alltags = [];
                     if (isNaN(date)) {
@@ -618,12 +603,12 @@ if (!B) { /*PreventInitializingTwice*/
                     render16 = ot.gt('PostTemplate', 'PostTemplateEnd', render16);
                     ot.checkfirstrender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                     $.title(pagetitle); /*设置title*/
-                    $.ht(ot.deltemptags(render16), 'contentcontainer');
+                    $.ht(ot.delTempTags(render16), 'contentcontainer');
                     $.aniChecker($.alterClass($.loadSettings['listening'], '', false, true), function () {
-                        ot.lazycheck(); /*LazyLoad初次检测*/
+                        ot.lazyCheck(); /*lazyLoad初次检测*/
                     });
                     if (SC(theanchor)) setTimeout(() => { SC(theanchor).scrollIntoView(); }, 300);/*20210919如果锚点存在就跳转到锚点*/
-                    window.addEventListener('scroll', B.lazycheck, false); /*只有文章页面监听懒加载20210909*/
+                    window.addEventListener('scroll', B.lazyCheck, false); /*只有文章页面监听懒加载20210909*/
                     render16 = tj = null; /*释放*/
                 } else if (pagetype == j['templatehtmls']['postlist']) {
                     var content = ot.gt('PostContent', 'PostContentEnd', fcontent); /*Get Post Content*/
@@ -642,7 +627,7 @@ if (!B) { /*PreventInitializingTwice*/
                     ot.itempagefixer(); /*修复因忽略页面而造成的列表重复*/
                     ot.checkfirstrender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                     $.title(pagetitle); /*设置标题*/
-                    $.ht(ot.deltemptags(render12), 'contentcontainer');
+                    $.ht(ot.delTempTags(render12), 'contentcontainer');
                     render12 = null; /*释放*/
                     ot.backchecker();/*检查是否显示后退按钮*/
                     ot.indexpagechecker();
@@ -705,7 +690,7 @@ if (!B) { /*PreventInitializingTwice*/
                     render12 = ot.r(render12, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                     ot.checkfirstrender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                     $.title(pagetitle); /*设置标题*/
-                    $.ht(ot.deltemptags(render12), 'contentcontainer');
+                    $.ht(ot.delTempTags(render12), 'contentcontainer');
                     render12 = null; /*释放*/
                 } else if (pagetype == j['templatehtmls']['tags']) {
                     var pagetitle = (ot.gt('MainTitle', 'MainTitleEnd', fcontent)).replace(/<\/?.+?>/g, ""),
@@ -757,7 +742,7 @@ if (!B) { /*PreventInitializingTwice*/
                     render12 = ot.r(render12, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                     ot.checkfirstrender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                     $.title(pagetitle); /*设置标题*/
-                    $.ht(ot.deltemptags(render12), 'contentcontainer');
+                    $.ht(ot.delTempTags(render12), 'contentcontainer');
                     render12 = null; /*释放*/
                 }
                 ot.tpcheckstatu = false; /*模板检查拼接完毕*/
@@ -766,7 +751,7 @@ if (!B) { /*PreventInitializingTwice*/
                 PJAX.autoprevent();
                 PJAX.sel('contentcontainer');
                 PJAX.start();
-                ot.navcheck(); /*进行导航栏检查*/
+                ot.navCheck(); /*进行导航栏检查*/
                 window.dispatchEvent(PJAX.PJAXFinish); /*调用事件隐藏loading浮层20201229*/
             }
         },
@@ -1023,7 +1008,7 @@ if (!B) { /*PreventInitializingTwice*/
             ot.itempage = ot.itempage + maxrender;
             if (ot.switchpage >= (ot.moreperpage - 1) && !nochangehash) { /*nochangehash搭配indexpagefixer20200812*/
                 SC('postitems').innerHTML = listrender;
-                ot.scrolltop(20, 2);
+                ot.scrollTop(20, 2);
                 ot.switchpage = 0;
                 ot.realpage += 1;
                 PJAX.pause();
@@ -1036,7 +1021,6 @@ if (!B) { /*PreventInitializingTwice*/
             PJAX.start(); /*refresh pjax links*/
         }
     };
-    //window.addEventListener('scroll', B.lazycheck, false); /*LazyLoadCheck*/
     window.addEventListener('pjaxstart',
 
         function () { /*加载动画*/
@@ -1082,7 +1066,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                 B.nowpage = 0; /*防止页码bug*/
             }
             window.dispatchEvent(ts.PJAXStart); /*激活事件来显示加载动画*/
-            window.removeEventListener('scroll', B.lazycheck, false); /*移除懒加载监听*/
+            window.removeEventListener('scroll', B.lazyCheck, false); /*移除懒加载监听*/
             $.aniChecker($.alterClass($.loadSettings['listening'], '', false, true), function () {
                 window.scrollTo(0, 0); /*滚动到头部*/
                 if (ts.LoadedPage[ehref]) { /*临时缓存*/

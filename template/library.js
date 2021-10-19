@@ -10,6 +10,6 @@ $.script("https://cdn.jsdelivr.net/npm/markdown-it-anchor@8.4.1/dist/markdownItA
 /*默认使用了markdown-it以及其组件markdown-it-anchor*/
 $.mark = function (content) {
     return window.markdownit({ html: true, linkify: true })
-        .use(window.markdownItAnchor, { permalink: true, permalinkBefore: true, permalinkSymbol: '' })
+        .use(window.markdownItAnchor, { permalinkBefore: true, permalinkSymbol: '' })
         .render(content);
 }
