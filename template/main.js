@@ -1,4 +1,4 @@
-/*FrontMainJS ver4.4.0 - SomeBottle*/
+/*FrontMainJS ver4.4.2 - SomeBottle*/
 "use strict";
 var md;
 if (typeof ($) !== 'object') {
@@ -6,7 +6,7 @@ if (typeof ($) !== 'object') {
     $.ls = new Array();
     $.lss = '';
     $.loadset = new Object(); /*加载页配置*/
-    $.loadingjs = 0;/*正在用$.script载入的外部js数量，这个数量不归零，文章页面中script标签内的js不会执行*/
+    $.loadingJS = 0;/*正在用$.script载入的外部js数量，这个数量不归零，文章页面中script标签内的js不会执行*/
     $.ft = function (p, d, sf, m, proxy) { /*(path,data,success or fail,method,proxyurl,async)*/
         if (p !== 'false' && p) { /*奇妙的false问题*/
             let options = {
@@ -48,7 +48,7 @@ if (typeof ($) !== 'object') {
             }
         }
         if (!exist && $.scripturl.indexOf(url) == -1) {
-            $.loadingjs += 1;/*有外部js正在载入*/
+            $.loadingJS += 1;/*有外部js正在载入*/
             $.ls[$.ls.length] = url;
             script.type = "text/javascript";
             script.src = url;
@@ -57,16 +57,16 @@ if (typeof ($) !== 'object') {
             }
             $.scripturl.push(url);
             document.body.appendChild(script);
-            var scriptloaded = function sl() {
-                $.loadingjs -= 1;/*这个外部js载入完毕*/
-                this.removeEventListener("load", scriptloaded, false);
+            let scriptLoaded = function () {
+                $.loadingJS -= 1;/*这个外部js载入完毕*/
+                this.removeEventListener("load", scriptLoaded, false);
             }.bind(script);
-            script.addEventListener("load", scriptloaded, false);
+            script.addEventListener("load", scriptLoaded, false);
         }
         script = null;
     }
     $.scriptcircle = function (content, retry = 0) {/*20210522执行脚本的延迟函数，在$.script导入的js没有完全载入之前页面中的js会在此处滞留。所有js载入成功后会执行页面中的js*/
-        if ($.loadingjs > 0) {
+        if ($.loadingJS > 0) {
             setTimeout(function () { $.scriptcircle(content, retry + 1) }, 100);/*循环延迟*/
         } else {
             for (var i in content) setTimeout("try{" + content[i] + "}catch(e){console.log('Page script Error: ' + e.message);}", 0);
@@ -440,11 +440,10 @@ if (!B) { /*PreventInitializingTwice*/
                         return o.tpcheck(true, ct);
                     },
                         25);
-                } else if (typeof markdownItAnchor !== 'function' || typeof markdownit !== 'function' || typeof Base64 !== 'object' || !localStorage['obottle-ldpage']) { /*Markdown or Base64 or loadingpage is not ready!*/
+                } else if ($.loadingJS > 0 || !localStorage['obottle-ldpage']) { /*Make sure that JS libraries and the loadingpage are ready!*/
                     setTimeout(function () {
                         return o.tpcheck(true, ct);
-                    },
-                        25);
+                    }, 25);
                 } else {
                     ot.preventscript(); /*剔除已加载scripts*/
                     var j = window.templjson;
@@ -536,7 +535,7 @@ if (!B) { /*PreventInitializingTwice*/
                 cloth = window.htmls[j['templatehtmls']['cloth']],
                 main = window.htmls[j['templatehtmls']['main']];
             if (!ot.clothmainrendered) { /*还没有渲染cloth,main模板*/
-                console.log('first render');
+                console.log('Document rendered with clothes.(๑•̀ㅂ•́)و✧');
                 var render1 = ot.r(main, 'contents', '<div id=\'contentcontainer\'></div>', true); /*预设好id以便后面调用*/
                 var render2 = ot.r(cloth, 'main', render1, true);
                 var ghead = $.rmhead(render2); /*把cloth内的头部去掉，咱分头行动*/
