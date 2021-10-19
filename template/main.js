@@ -1,13 +1,21 @@
-/*FrontMainJS ver4.4.2 - SomeBottle*/
+/*FrontMainJS ver4.5.0 - SomeBottle*/
 "use strict";
-var md;
+console.log('changed at 18:34');
 if (typeof ($) !== 'object') {
     var $ = new Object();
-    $.ls = new Array();
-    $.lss = '';
-    $.loadset = new Object(); /*加载页配置*/
+    var SC = function (e) { /*元素选择器*/
+        if (e == 'body') {
+            return document.body;
+        } else if (e == 'html') {
+            return document.getElementsByTagName('html')[0];
+        } else {
+            return document.getElementById(e);
+        }
+    }
+    $.loadedScripts = new Array();
+    $.loadSettings = new Object(); /*加载页配置*/
     $.loadingJS = 0;/*正在用$.script载入的外部js数量，这个数量不归零，文章页面中script标签内的js不会执行*/
-    $.ft = function (p, d, sf, m, proxy) { /*(path,data,success or fail,method,proxyurl,async)*/
+    $.ft = function (p, d, sf, m, proxy) { /*Fetcher(path,data,success or fail,method,proxyurl,async)*/
         if (p !== 'false' && p) { /*奇妙的false问题*/
             let options = {
                 body: JSON.stringify(d),
@@ -25,37 +33,18 @@ if (typeof ($) !== 'object') {
                 .catch(err => sf.failed(err, p))
         }
     }
-    var SC = function (e) { /*元素选择器*/
-        if (e == 'body') {
-            return document.body;
-        } else if (e == 'html') {
-            return document.getElementsByTagName('html')[0];
-        } else {
-            return document.getElementById(e);
-        }
-    }
     $.script = function (url, element = false) { /*外部js加载器，页面已经加载的不会重复加载*/
-        if (!$.scripturl) {
-            $.scripturl = [];
-        }
-        var script = document.createElement("script");
-        var exist = false;
-        var originalAttrs = element ? $.attrs(element) : {};/*20210722原本标签所带的属性要补上*/
-        for (var up in $.ls) {
-            if ($.ls[up] == url) {
-                exist = true;
-                break;
-            }
-        }
-        if (!exist && $.scripturl.indexOf(url) == -1) {
+        let script = document.createElement("script"),
+            exist = $.loadedScripts.includes(url),
+            originalAttrs = element ? $.attrs(element) : {};/*20210722原本标签所带的属性要补上*/
+        if (!exist) {
             $.loadingJS += 1;/*有外部js正在载入*/
-            $.ls[$.ls.length] = url;
+            $.loadedScripts.push(url);
             script.type = "text/javascript";
             script.src = url;
             for (var i in originalAttrs) {
                 script.setAttribute(i, originalAttrs[i]);/*把原script的属性给补上*/
             }
-            $.scripturl.push(url);
             document.body.appendChild(script);
             let scriptLoaded = function () {
                 $.loadingJS -= 1;/*这个外部js载入完毕*/
@@ -65,47 +54,65 @@ if (typeof ($) !== 'object') {
         }
         script = null;
     }
-    $.scriptcircle = function (content, retry = 0) {/*20210522执行脚本的延迟函数，在$.script导入的js没有完全载入之前页面中的js会在此处滞留。所有js载入成功后会执行页面中的js*/
+    $.aniChecker = function (element, func) { /*css3变换检查器(元素,执行完毕执行的函数)*/
+        let chosenTester = '', testers = {
+            'animation': 'animationend',
+            'OAnimation': 'oAnimationEnd',
+            'MozAnimation': 'animationend',
+            'WebkitAnimation': 'webkitAnimationEnd'
+        }; /*兼容多浏览器*/
+        for (var i in testers) {
+            if (element.style[i] !== undefined) {
+                chosenTester = testers[i];
+            }
+        }
+        function callBack() {
+            element.removeEventListener(chosenTester, callBack);
+            func();
+        }
+        element.addEventListener(chosenTester, callBack);
+    }
+    $.scriptCircle = function (content, retry = 0) {/*20210522执行脚本的延迟函数，在$.script导入的js没有完全载入之前页面中的js会在此处滞留。所有js载入成功后会执行页面中的js*/
         if ($.loadingJS > 0) {
-            setTimeout(function () { $.scriptcircle(content, retry + 1) }, 100);/*循环延迟*/
+            setTimeout(function () { $.scriptCircle(content, retry + 1) }, 100);/*循环延迟*/
         } else {
             for (var i in content) setTimeout("try{" + content[i] + "}catch(e){console.log('Page script Error: ' + e.message);}", 0);
         }
     }
     $.attrs = function (element) {/*20210722获得元素所有属性并返回数组，用于修复script掉属性的问题*/
-        var attarr = {};
+        let attrArr = {};
         if (element.hasAttributes()) {
-            var allattrs = element.attributes;
-            for (var i in allattrs) {
-                if (allattrs[i].name && allattrs[i].value) attarr[allattrs[i].name] = allattrs[i].value;
+            let allAttrs = element.attributes;
+            for (var i in allAttrs) {
+                if (allAttrs[i].name && allAttrs[i].value) attrArr[allAttrs[i].name] = allAttrs[i].value;
             }
         }
-        return attarr;
+        return attrArr;
     }
-    $.ht = function (h, e, scinclude = true) { /*元素内容设置器(html,element,run script or not when ht)*/
-        var ht = SC(e), pagescripts = [];
-        if (!ht) {
+    $.ht = function (html, element, scriptInclude = true) { /*元素内容设置器(html,element,run script or not when ht)*/
+        let theElement = SC(element), pageScripts = [];
+        if (!theElement) {
             console.log('Unable to find the Element:' + e);
             return false;
         }
-        ht.innerHTML = h;
-        let os = ht.getElementsByTagName('script');
-        for (var o = 0; o < os.length; o++) {
-            if (os[o].src !== undefined && os[o].src !== null && os[o].src !== '') {
-                $.script(os[o].src, os[o]);
+        theElement.innerHTML = html;
+        let allTags = theElement.getElementsByTagName('script');
+        for (var o = 0; o < allTags.length; o++) {
+            if (allTags[o].src !== undefined && allTags[o].src !== null && allTags[o].src !== '') {
+                $.script(allTags[o].src, allTags[o]);
             } else {
-                var h = os[o].innerHTML;
-                if (scinclude) { /*是否去除注释执行*/
+                var h = allTags[o].innerHTML;
+                if (scriptInclude) { /*是否去除注释执行*/
                     h = B.r(h, '/*', '');
                     h = B.r(h, '*/', '');
                 }
-                pagescripts.push(h);/*综合一下页面中的js*/
+                pageScripts.push(h);/*综合一下页面中的js*/
             }
         }
-        $.scriptcircle(pagescripts);
-        ht = os = null; /*释放*/
+        $.scriptCircle(pageScripts);
+        theElement = allTags = null; /*释放*/
     }
-    $.tr = function (url) { /*PreventURLProblem(Fuck QQ Querying URI*/
+    $.trimMark = function (url) { /*PreventURLProblem(Fuck QQ Querying URI*/
         var a = url;
         let b = a.split('?');
         if (b[1]) {
@@ -116,7 +123,7 @@ if (typeof ($) !== 'object') {
     }
     $.dt = function (v) { /*date transformer*/
         if (Number(v) >= 10000000) {
-            var dt = String(v),
+            let dt = String(v),
                 md = dt.slice(-4),
                 d = md.slice(-2),
                 m = md.substring(0, 2),
@@ -127,41 +134,39 @@ if (typeof ($) !== 'object') {
             return v;
         }
     }
-    $.rmhead = function (html) { /*去头并返回处理后的内容*/
-        var tp = document.createElement('html');
-        tp.innerHTML = html;
-        var head = tp.getElementsByTagName('clothhead')[0]; /*获得cloth.html内的头*/
+    $.rmHead = function (html) { /*去头并返回处理后的内容*/
+        let temp = document.createElement('html');
+        temp.innerHTML = html;
+        let head = temp.getElementsByTagName('clothhead')[0]; /*获得cloth.html内的头*/
         head.parentNode.removeChild(head);
-        var rt = [tp.innerHTML, head.innerHTML];
-        tp.remove(); /*移除临时元素*/
-        head = tp = null;
-        return rt;
+        let returnV = [temp.innerHTML, head.innerHTML];
+        temp.remove(); /*移除临时元素*/
+        head = null;
+        return returnV;
     }
-    $.addhead = function (hd) { /*接头霸王*/
-        var e = SC('html'),
-            head = e.getElementsByTagName('head')[0],
-            clothhead = head.getElementsByTagName('clothhead');
+    $.addHead = function (headHtml) { /*接头霸王*/
+        let head = SC('html').getElementsByTagName('head')[0],
+            clothHead = head.getElementsByTagName('clothhead');
         if (head.parentNode.tagName.toLowerCase() !== 'html') return false; /*父级元素不是html就算了*/
-        if (clothhead.length <= 0) { /*还没有渲染cloth的头部*/
-            var cloth = document.createElement('clothhead');
-            cloth.innerHTML = hd;
+        if (clothHead.length <= 0) { /*还没有渲染cloth的头部*/
+            let cloth = document.createElement('clothhead');
+            cloth.innerHTML = headHtml;
             head.appendChild(cloth);
             cloth = null;
         } else { /*渲染过了，直接改*/
-            clothhead[0].innerHTML = hd;
+            clothHead[0].innerHTML = headHtml;
         }
-        head = clothhead = null;
+        head = clothHead = null;
     }
-    $.title = function (t) { /*修改页面<title>*/
-        var e = SC('html'),
-            head = e.getElementsByTagName('head')[0],
+    $.title = function (theTitle) { /*修改页面<title>*/
+        let head = SC('html').getElementsByTagName('head')[0],
             title = head.getElementsByTagName('title');
         if (title.length <= 0) { /*还没有加过<title>*/
-            var te = document.createElement('title');
-            te.innerHTML = t;
+            let titleElement = document.createElement('title');
+            titleElement.innerHTML = theTitle;
             head.appendChild(te);
         } else {
-            title[0].innerHTML = t;
+            title[0].innerHTML = theTitle;
         }
     }
     $.ldparse = function (ld) { /*解析loading页面*/
@@ -170,15 +175,17 @@ if (typeof ($) !== 'object') {
         var obj = ht.getElementsByTagName('loadset'),
             set = obj ? JSON.parse(obj[0].innerHTML) : false; /*获得设置JSON*/
         if (set) {
-            $.loadset = set;
+            $.loadSettings = set;
         } else { /*获取配置失败*/
             console.log('Failed to initialize loading page.');
         }
         ht.remove(); /*移除临时元素*/
         ht = obj = null;
     }
-    $.ecls = function (v, clsv, rmv = false, returne = false) { /*元素class应用(选择器,值,是否移除,是否返回元素)*/
-        var ps = v.split(':'),
+    $.alterClass = function (selection, operateClass, rm = false, returnE = false) {
+        /*元素class应用(选择器,值,是否移除,是否返回元素)，
+        选择器由两部分组成：[选择方法(id,class,id):目标标识名*/
+        var ps = selection.split(':'),
             content = document.getElementsByTagName('html')[0],
             es;
         switch (ps[0]) {
@@ -192,13 +199,13 @@ if (typeof ($) !== 'object') {
                 es = content.getElementsByTagName(ps[1]);
                 break;
         }
-        if (returne) return es; /*返回元素*/
+        if (returnE) return es; /*返回元素*/
         if (!(es instanceof Element)) {
             for (var i in es) {
-                es[i] instanceof Element ? (rmv ? es[i].classList.remove(clsv) : es[i].classList.add(clsv)) : es = es;
+                es[i] instanceof Element ? (rm ? es[i].classList.remove(operateClass) : es[i].classList.add(operateClass)) : es = es;
             }
         } else {
-            rmv ? es.classList.remove(clsv) : es.classList.add(clsv);
+            rm ? es.classList.remove(operateClass) : es.classList.add(operateClass);
         }
         es = content = null;
     }
@@ -322,8 +329,8 @@ if (!B) { /*PreventInitializingTwice*/
             var e = SC('html');
             var sc = e.getElementsByTagName('script');
             for (var i in sc) {
-                if (sc[i].src && $.scripturl.indexOf(sc[i].src) == -1) {
-                    $.scripturl.push(sc[i].src);
+                if (sc[i].src && !$.loadedScripts.includes(sc[i].src)) {
+                    $.loadedScripts.push(sc[i].src);
                 }
             }
             sc = null;
@@ -459,7 +466,7 @@ if (!B) { /*PreventInitializingTwice*/
                             if (cache['c']) { /*如果有缓存，先装载缓存*/
                                 usecache = true;
                                 var p = j['necessary'][i];
-                                console.log('Template using cache:' + p);
+                                console.log('Template loaded from local: ' + p);
                                 window.htmls[p] = cache['c'];
                                 o.templateloaded.push(p);
                                 o.templonload -= 1;
@@ -538,9 +545,9 @@ if (!B) { /*PreventInitializingTwice*/
                 console.log('Document rendered with clothes.(๑•̀ㅂ•́)و✧');
                 var render1 = ot.r(main, 'contents', '<div id=\'contentcontainer\'></div>', true); /*预设好id以便后面调用*/
                 var render2 = ot.r(cloth, 'main', render1, true);
-                var ghead = $.rmhead(render2); /*把cloth内的头部去掉，咱分头行动*/
+                var ghead = $.rmHead(render2); /*把cloth内的头部去掉，咱分头行动*/
                 $.ht(ot.deltemptags(ghead[0]), 'container'); /*先把外皮给渲染出来*/
-                $.addhead(ghead[1]); /*把头接到head里面去*/
+                $.addHead(ghead[1]); /*把头接到head里面去*/
                 ot.clothmainrendered = true;
             }
         },
@@ -558,7 +565,6 @@ if (!B) { /*PreventInitializingTwice*/
             if (!ot.rendering) {
                 ot.rendering = true; /*示意正在渲染20200805*/
                 var j = window.templjson;
-                md = window.markdownit({ html: true, linkify: true }).use(window.markdownItAnchor, { permalink: true, permalinkBefore: true, permalinkSymbol: '' });
                 var comment = window.htmls[j['templatehtmls']['comment']];
                 var pagetype = ot.gt('PageType', 'PageTypeEnd', fcontent); /*Get Page Type*/
                 ot.currentpagetype = pagetype;
@@ -575,7 +581,7 @@ if (!B) { /*PreventInitializingTwice*/
                         tag_tp = ot.gt('PostTagsTemplate', 'PostTagsTemplateEnd', post),/*20210919获得tags模板*/
                         tag_deli = ot.gt('PostTagsDelimiter', 'PostTagsDelimiterEnd', post),/*20210919获得tags分隔部分*/
                         ifpage_tp = ot.gt('IfPage', 'IfPageEnd', post);/*如果是页面，标签的部分就显示这里面的内容*/
-                    var render11 = ot.r(post, 'postcontent', ot.lazypre(md.render(ot.hc(content.trim()))), true); /*unescape and Analyse md*/
+                    var render11 = ot.r(post, 'postcontent', ot.lazypre($.mark(ot.hc(content.trim()))), true); /*unescape and Analyse md*/
                     var render12 = ot.r(render11, 'posttitle', title, true);
                     var alltags = [];
                     if (isNaN(date)) {
@@ -613,7 +619,7 @@ if (!B) { /*PreventInitializingTwice*/
                     ot.checkfirstrender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                     $.title(pagetitle); /*设置title*/
                     $.ht(ot.deltemptags(render16), 'contentcontainer');
-                    anichecker($.ecls($.loadset['listening'], '', false, true), function () {
+                    $.aniChecker($.alterClass($.loadSettings['listening'], '', false, true), function () {
                         ot.lazycheck(); /*LazyLoad初次检测*/
                     });
                     if (SC(theanchor)) setTimeout(() => { SC(theanchor).scrollIntoView(); }, 300);/*20210919如果锚点存在就跳转到锚点*/
@@ -628,7 +634,7 @@ if (!B) { /*PreventInitializingTwice*/
                         backbtn = ot.gt('BackBtn', 'BackBtnEnd', pt);
                     ptt = ot.r(ptt, 'morebtn', '<span id=\'morebtn\'>' + morebtn + '</span>', true);
                     ptt = ot.r(ptt, 'backbtn', '<span id=\'backbtn\'>' + backbtn + '</span>', true);
-                    var render11 = ot.r(ptt, 'postitems', '<div id=\'postitems\'>' + md.render((content.trim())) + '</div>', true); /*Analyse md*/
+                    var render11 = ot.r(ptt, 'postitems', '<div id=\'postitems\'>' + $.mark((content.trim())) + '</div>', true); /*Analyse md*/
                     var render12 = ot.r(render11, 'pagetype', pagetype, true); /*SetPageType*/
                     render12 = ot.r(render12, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
                     render12 = ot.r(render12, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
@@ -709,7 +715,7 @@ if (!B) { /*PreventInitializingTwice*/
                         /*Get tag main html*/
                         tagitemtemp = ot.gt('TagItemTemplate', 'TagItemTemplateEnd', tgs),
                         /*get item template*/
-                        href = $.tr(window.location.href),
+                        href = $.trimMark(window.location.href),
                         /*Generate Tags*/
                         rendertg = '',
                         pts = tj['postindex'],
@@ -816,7 +822,7 @@ if (!B) { /*PreventInitializingTwice*/
         tagpagechecker: function () { /*标签页hash更新检查器*/
             var ot = this;
             var eh = SC('html').innerHTML; /*Get All html*/
-            var href = $.tr(window.location.href);
+            var href = $.trimMark(window.location.href);
             if (href.indexOf('#') == -1) {
                 PJAX.pause();
                 window.location.replace(href + '#alltags'); /*利用replace防止浏览器记录history导致无法回退的bug*/
@@ -839,7 +845,7 @@ if (!B) { /*PreventInitializingTwice*/
         indexpagechecker: function () {
             var eh = SC('html').innerHTML; /*Get All html*/
             var j = window.templjson;
-            var href = $.tr(decodeURIComponent(window.location.href));
+            var href = $.trimMark(decodeURIComponent(window.location.href));
             var tj = window.mainjson; /*get json*/
             var maxrender = parseInt(tj['posts_per_page']);
             var ot = this;
@@ -949,27 +955,18 @@ if (!B) { /*PreventInitializingTwice*/
         },
         loadshow: function () {
             this.loadstatu = true; /*加载未就绪*/
-            if ($.loadset['animations']) {
-                var es = $.loadset['animations']['in'],
-                    eo = $.loadset['animations']['out'];
-                for (var i in es) {
-                    $.ecls(i, es[i]);
-                }
-                for (var i in eo) {
-                    $.ecls(i, eo[i], true); /*移除元素*/
-                }
+            if ($.loadSettings['animations']) {
+                /*解构赋值*/
+                let { in: eIn, out: eOut } = $.loadSettings['animations'];
+                for (var i in eIn) $.alterClass(i, eIn[i]);
+                for (var i in eOut) $.alterClass(i, eOut[i], true); /*移除元素*/
             }
         },
         loadhide: function () {
             this.loadstatu = false; /*加载就绪*/
-            var es = $.loadset['animations']['out'],
-                eo = $.loadset['animations']['in'];
-            for (var i in es) {
-                $.ecls(i, es[i]);
-            }
-            for (var i in eo) {
-                $.ecls(i, eo[i], true); /*移除元素*/
-            }
+            let { out: eOut, in: eIn } = $.loadSettings['animations'];
+            for (var i in eOut) $.alterClass(i, eOut[i]);
+            for (var i in eIn) $.alterClass(i, eIn[i], true); /*移除元素*/
         },
         morehtmls: {},
         more: function (nochangehash = false) { /*(是否阻止改变hash(用于适配indexpagechecker20200812)*/
@@ -1054,26 +1051,7 @@ if (!B) { /*PreventInitializingTwice*/
         false);
 }
 
-function anichecker(e, func) { /*css3变换检查器(元素,执行完毕执行的函数)*/
-    var ts = '';
-    var tss = {
-        'animation': 'animationend',
-        'OAnimation': 'oAnimationEnd',
-        'MozAnimation': 'animationend',
-        'WebkitAnimation': 'webkitAnimationEnd'
-    }; /*兼容多浏览器*/
-    for (var i in tss) {
-        if (e.style[i] !== undefined) {
-            ts = tss[i];
-        }
-    }
-
-    function doit() {
-        func();
-        e.removeEventListener(ts, doit);
-    }
-    e.addEventListener(ts, doit);
-} /*Simple PJAX For Front MAIN - SomeBottle*/
+/*Simple PJAX For Front MAIN - SomeBottle*/
 var mainhost = window.location.host;
 var dt = new Date().getTime();
 if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
@@ -1105,11 +1083,11 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             }
             window.dispatchEvent(ts.PJAXStart); /*激活事件来显示加载动画*/
             window.removeEventListener('scroll', B.lazycheck, false); /*移除懒加载监听*/
-            anichecker($.ecls($.loadset['listening'], '', false, true), function () {
+            $.aniChecker($.alterClass($.loadSettings['listening'], '', false, true), function () {
                 window.scrollTo(0, 0); /*滚动到头部*/
                 if (ts.LoadedPage[ehref]) { /*临时缓存*/
                     ts.clearevent(); /*清除之前的监听器*/
-                    B.tpcheck(false, ts.LoadedPage[ehref]); /*因为tpcheck末尾已经有loadhide，此处没必要anichecker20201229*/
+                    B.tpcheck(false, ts.LoadedPage[ehref]); /*因为tpcheck末尾已经有loadhide，此处没必要$.aniChecker20201229*/
                 } else {
                     var cache = q('r', ehref, '', '', ''); /*获取缓存信息*/
                     if (cache['c']) { /*如果有缓存*/
@@ -1133,7 +1111,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                                 } else {
                                     q('e', ehref, '', '', 1); /*更新缓存读取次数*/
                                 }
-                            } /*因为tpcheck末尾已经有loadhide，此处没必要anichecker20201229*/
+                            } /*因为tpcheck末尾已经有loadhide，此处没必要$.aniChecker20201229*/
                         },
                         failed: function (m) {
                             window.dispatchEvent(ts.PJAXFinish);
