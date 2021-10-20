@@ -210,8 +210,8 @@
    
    * 平滑滚动至顶部，直接滚到底部  
    ```javascript
-   B.scrollTop(maxspeed,minspeed); //(最大速度,最小速度)单位：px/10ms
-   B.scrollBottom();  //直接滚到底部，用于快速看到底部的内容
+   B.scrolltop(maxspeed,minspeed); //(最大速度,最小速度)单位：px/10ms
+   B.scrollbottom();  //直接滚到底部，用于快速看到底部的内容
    ```
 
    * 暂停当前会话中的lazyload（懒加载）  
