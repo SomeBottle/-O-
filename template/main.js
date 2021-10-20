@@ -401,7 +401,7 @@ if (!B) { /*PreventInitializingTwice*/
             let that = this;
             if (!that.tpcheckStatus || polling) { /*防止短时间内重复检查模板20200805*/
                 that.tpcheckStatus = true; /*正在检查模板*/
-                that.loadShow();
+                that.loadshow();
                 let pageType = that.gt('PageType', 'PageTypeEnd', contents); /*Get Page Type*/
                 if (!window.tpJson) {
                     $.ft('template.json', '', {
@@ -480,7 +480,7 @@ if (!B) { /*PreventInitializingTwice*/
         },
         itemPage: 0,
         switchPage: 0,
-        nowPage: 0,
+        currentPageBefore: 0,
         realPage: 1,
         searchWd: '',
         hashExist: false,
@@ -497,6 +497,7 @@ if (!B) { /*PreventInitializingTwice*/
                 counter += 1;
             }
             that.itemPage -= 1; /*项目会多计算一个，减去*/
+            mj = null;
         },
         cd: function (rendered) { /*covercutter封面<ifcover>去除器*/
             while (rendered.indexOf('<ifcover>') !== -1) {
@@ -614,8 +615,8 @@ if (!B) { /*PreventInitializingTwice*/
                 $.title(pageTitle); /*设置标题*/
                 $.ht(that.delTempTags(renders), 'contentcontainer');
                 renders = null; /*释放*/
-                that.backchecker();/*检查是否显示后退按钮*/
-                that.indexpagechecker();
+                that.backChecker();/*检查是否显示后退按钮*/
+                that.indexPageChecker();
                 var timer = setInterval(function () { /*CheckIndexPage*/
                     if (that.gt('<!--[PageType]', '[PageTypeEnd]-->', false, true) !== j['templatehtmls']['postlist']) { /*跳离index页了*/
                         console.log('Jumped out of the index page w(ﾟДﾟ)w');
@@ -625,100 +626,97 @@ if (!B) { /*PreventInitializingTwice*/
                         clearInterval(timer);
                         return false;
                     }
-                    that.indexpagechecker();
+                    that.indexPageChecker();
                 }, 100);
             } else if (pageType == j['templatehtmls']['archives']) {
                 let ar = tps[j['templatehtmls']['archives']],
                     /*get entire html*/
-                    archivemain = that.gt('Archives', 'ArchivesEnd', ar),
+                    archiveMain = that.gt('Archives', 'ArchivesEnd', ar),
                     /*Get archive main html*/
-                    archivetemp = that.gt('ArchiveTemplate', 'ArchiveTemplateEnd', ar),
+                    archiveTemp = that.gt('ArchiveTemplate', 'ArchiveTemplateEnd', ar),
                     /*get section template*/
-                    archiveitemtemp = that.gt('ArchiveItemTemplate', 'ArchiveItemTemplateEnd', ar),
+                    archiveItemTemp = that.gt('ArchiveItemTemplate', 'ArchiveItemTemplateEnd', ar),
                     /*get item template*/
                     /*Generate Archives*/
-                    din = mj['dateindex'],
-                    renderar = '',
+                    dateIndexes = mj['dateindex'],
+                    rdSections = '',
                     /*archive section render*/
-                    renderarit = '',
+                    rdArcItems = '',
                     /*archive item render*/
                     year = 0;
-                for (var td in din) {
-                    var t = (din[td].toString()).substring(0, 4); /*get years*/
-                    if (t !== year) {
-                        year = t;
-                        if (renderarit !== '') renderar = that.r(renderar, 'archiveitems', renderarit, true), renderarit = ''; /*apply items to section*/
-                        renderar += that.r(archivetemp, 'archiveyear', t, true); /*render year section*/
+                for (let post in dateIndexes) {
+                    let currentYear = (dateIndexes[post].toString()).substring(0, 4); /*get years*/
+                    if (currentYear !== year) {
+                        year = currentYear;
+                        if (rdArcItems !== '') rdSections = that.r(rdSections, 'archiveitems', rdArcItems, true), rdArcItems = ''; /*apply items to section*/
+                        rdSections += that.r(archiveTemp, 'archiveyear', currentYear, true); /*render year section*/
                     }
-                    var pid = td.replace('post', ''),
+                    let pid = post.replace('post', ''),
                         title = Base64.decode(mj['postindex'][pid]['title']),
                         date = mj['postindex'][pid]['date'],
-                        itemlink = '';
-                    if (!mj['postindex'][pid]['link']) { /*render items*/
-                        itemlink = 'post-' + pid + '.html';
-                    } else {
-                        itemlink = mj['postindex'][pid]['link'] + '.html';
-                    }
-                    var itemrender = that.r(archiveitemtemp, 'archiveitemlink', itemlink, true),
-                        itemrender = that.r(itemrender, 'archiveitemtitle', title, true),
-                        itemrender = that.r(itemrender, 'archiveitemdate', $.dt(date), true);
-                    renderarit += itemrender;
+                        itemLink = mj['postindex'][pid]['link'] ? mj['postindex'][pid]['link'] + '.html' : 'post-' + pid + '.html',/*render items*/
+                        itemrender = that.r(archiveItemTemp, 'archiveitemlink', itemLink, true);
+                    itemrender = that.r(itemrender, 'archiveitemtitle', title, true);
+                    itemrender = that.r(itemrender, 'archiveitemdate', $.dt(date), true);
+                    rdArcItems += itemrender;
                 }
-                if (renderarit !== '') renderar = that.r(renderar, 'archiveitems', renderarit, true); /*apply items to section#2*/
-                renderar += '</ul>'; /*Generate Finish*/
-                var render11 = that.r(archivemain, 'archives', renderar, true); /*渲染模板部分*/
-                //var render4 = ot.r(render3, 'title', pageTitle, true);
-                var renders = that.r(render11, 'pagetype', pageType, true); /*SetPageType*/
+                rdSections = (rdArcItems !== '') ? that.r(rdSections, 'archiveitems', rdArcItems, true) : rdSections; /*apply items to section#2*/
+                rdSections += '</ul>'; /*Generate Finish*/
+                let renders = that.r(archiveMain, 'archives', rdSections, true); /*渲染模板部分*/
+                renders = that.r(renders, 'pagetype', pageType, true); /*SetPageType*/
                 renders = that.r(renders, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
                 renders = that.r(renders, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                 that.checkFirstRender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                 $.title(pageTitle); /*设置标题*/
                 $.ht(that.delTempTags(renders), 'contentcontainer');
-                renders = null; /*释放*/
+                renders = rdArcItems = rdSections = null; /*释放*/
             } else if (pageType == j['templatehtmls']['tags']) {
-                let tgs = tps[j['templatehtmls']['tags']],
-                    tagmain = that.gt('Tags', 'TagsEnd', tgs),
+                let tagsTp = tps[j['templatehtmls']['tags']],
+                    tagsMain = that.gt('Tags', 'TagsEnd', tagsTp),
                     /*Get tag main html*/
-                    tagitemtemp = that.gt('TagItemTemplate', 'TagItemTemplateEnd', tgs),
+                    tagItemTp = that.gt('TagItemTemplate', 'TagItemTemplateEnd', tagsTp),
                     /*get item template*/
                     href = $.trimMark(window.location.href),
                     /*Generate Tags*/
-                    rendertg = '',
-                    pts = mj['postindex'],
-                    tagarr = new Array();
-                for (var i in pts) {
-                    var t = pts[i]['tags'].split(',');
-                    t.forEach(function (item, index) {
-                        if (item !== '' && tagarr.indexOf(item) == -1) {
-                            tagarr.push(item);
-                        }
+                    renderTgs = '',
+                    pIndexes = mj['postindex'],
+                    tagsArr = new Array();
+                if (that.allTagsHtml == '') {
+                    for (var i in pIndexes) {
+                        let currentTags = pIndexes[i]['tags'].split(',');
+                        currentTags.forEach(function (item) {
+                            if (item !== '' && tagsArr.indexOf(item) == -1) {
+                                tagsArr.push(item);
+                            }
+                        });
+                    }
+                    tagsArr.forEach(function (item) {
+                        let g = that.r(tagItemTp, 'tagitemtitle', item, true); /*replace and render*/
+                        g = that.r(g, 'tagitemlink', '#' + encodeURIComponent(item), true);
+                        renderTgs += g;
                     });
+                    that.allTagsHtml = renderTgs;
+                } else {/*如果渲染过了就不必重复了，节省算力*/
+                    renderTgs = that.allTagsHtml;
                 }
-                tagarr.forEach(function (item, index) {
-                    var g = that.r(tagitemtemp, 'tagitemtitle', item, true); /*replace and render*/
-                    g = that.r(g, 'tagitemlink', '#' + encodeURIComponent(item), true);
-                    rendertg += g;
-                });
-                that.alltaghtml = rendertg;
                 if (href.indexOf('#') !== -1) {
-                    var pg = href.split('#')[1];
-                    that.nowtag = pg;
-                    if (pg !== 'alltags') {
-                        rendertg = '<script>B.taguper(\'' + pg + '\');PJAX.sel(\'contentcontainer\');PJAX.start();</script>';
+                    let specific = href.split('#')[1];
+                    that.nowTag = specific;
+                    if (specific !== 'alltags') {
+                        renderTgs = '<script>B.tagUper(\'' + specific + '\');PJAX.sel(\'contentcontainer\');PJAX.start();</script>';
                     }
                 } /*Generate Finish*/
-                var timer = setInterval(function () { /*CheckTagPage*/
+                let timer = setInterval(function () { /*CheckTagPage*/
                     if (window.location.href.indexOf(j['generatehtmls']['tags']) == -1 && window.location.href.indexOf((j['generatehtmls']['tags']).replace('.html', '')) == -1) { /*跳离tag页了*/
                         PJAX.sel('contentcontainer');
                         PJAX.start();
                         clearInterval(timer);
                         return false;
                     }
-                    that.tagpagechecker();
-                },
-                    100);
-                var render11 = that.r(tagmain, 'tags', '<div id=\'contenttags\'>' + rendertg + '</div>', true);
-                var renders = that.r(render11, 'pagetype', pageType, true); /*SetPageType*/
+                    that.tagPageChecker();
+                }, 100);
+                let renders = that.r(tagsMain, 'tags', '<div id=\'contenttags\'>' + renderTgs + '</div>', true);
+                renders = that.r(renders, 'pagetype', pageType, true); /*SetPageType*/
                 renders = that.r(renders, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
                 renders = that.r(renders, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                 that.checkFirstRender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
@@ -733,191 +731,175 @@ if (!B) { /*PreventInitializingTwice*/
             PJAX.start();
             that.navcheck(); /*进行导航栏检查*/
             window.dispatchEvent(PJAX.PJAXFinish); /*调用事件隐藏loading浮层20201229*/
+            mj = tps = null;
         },
-        backchecker: function () {/*检查后退按钮是否显示*/
-            if (this.realPage == 1) {
-                SC('backbtn').style.display = 'none';
-            } else {
-                SC('backbtn').style.display = 'initial';
-            }
+        backChecker: function () {/*检查后退按钮是否显示*/
+            SC('backbtn').style.display = this.realPage == 1 ? 'none' : 'initial';
         },
-        nowtag: '',
-        alltaghtml: '',
-        taguper: function (tg) { /*渲染特定标签索引的文章列表*/
-            tg = decodeURIComponent(tg);
-            var eh = SC('html').innerHTML,
-                ot = this,
+        nowTag: '',
+        allTagsHtml: '',
+        tagUper: function (tag) { /*渲染特定标签索引的文章列表*/
+            tag = decodeURIComponent(tag);
+            let that = this,
                 j = window.tpJson,
-                tgs = window.tpHtmls[j['templatehtmls']['tags']],
+                tagsTp = window.tpHtmls[j['templatehtmls']['tags']],
                 /*get main tag html*/
-                taglisttemp = ot.gt('TagListTemplate', 'TagListTemplateEnd', tgs),
+                tagListTp = that.gt('TagListTemplate', 'TagListTemplateEnd', tagsTp),
                 /*get item template*/
-                taglistitemtemp = ot.gt('TagListItemTemplate', 'TagListItemTemplateEnd', tgs),
+                tagListItemTp = that.gt('TagListItemTemplate', 'TagListItemTemplateEnd', tagsTp),
                 /*get item template*/
-                tj = window.mainJson; /*get json*/
-            var dti = tj['dateindex'];
-            var pts = tj['postindex'];
-            var postlist = new Array();
-            var rendertgs = '';
-            for (var i in dti) { /*Sel Posts in the order of date*/
+                mj = window.mainJson, /*get json*/
+                dIndexes = mj['dateindex'],
+                pIndexes = mj['postindex'],
+                postlist = new Array(),
+                renderTgs = '';
+            for (var i in dIndexes) { /*Sel Posts in the order of date*/
                 var pid = i.replace('post', '');
-                if (pts[pid]['tags'].indexOf(tg) !== -1) {
+                if (pIndexes[pid]['tags'].indexOf(tag) !== -1) {
                     postlist.push(pid);
                 }
             }
-            rendertgs += '<ul>';
-            postlist.forEach(function (it, id) {
-                var post = pts[it];
-                var lk = 'post-' + it + '.html',
+            renderTgs += '<ul>';
+            postlist.forEach(function (item) {
+                let post = pIndexes[item],
+                    link = 'post-' + item + '.html',
                     date = $.dt(post['date']);
                 if (post['link']) {
-                    lk = post['link'] + '.html';
+                    link = post['link'] + '.html';
                 }
-                var g = ot.r(taglistitemtemp, 'taglistitemlink', lk, true);
-                g = ot.r(g, 'taglistitemtitle', Base64.decode(post['title']), true);
-                g = ot.r(g, 'taglistitemdate', $.dt(date), true);
-                rendertgs += g;
+                let g = that.r(tagListItemTp, 'taglistitemlink', link, true);
+                g = that.r(g, 'taglistitemtitle', Base64.decode(post['title']), true);
+                g = that.r(g, 'taglistitemdate', $.dt(date), true);
+                renderTgs += g;
             });
-            rendertgs = ot.r(taglisttemp, 'taglist', rendertgs, true);
-            rendertgs = ot.r(rendertgs, 'tagcurrent', tg, true);
-            SC('contenttags').innerHTML = rendertgs;
-            rendertgs = null; /*释放*/
+            renderTgs = that.r(tagListTp, 'taglist', renderTgs, true);
+            renderTgs = that.r(renderTgs, 'tagcurrent', tag, true);
+            SC('contenttags').innerHTML = renderTgs;
+            renderTgs = mj = j = null; /*释放*/
         },
-        tagpagechecker: function () { /*标签页hash更新检查器*/
-            var ot = this;
-            var eh = SC('html').innerHTML; /*Get All html*/
-            var href = $.trimMark(window.location.href);
+        tagPageChecker: function () { /*标签页hash更新检查器*/
+            let that = this,
+                href = $.trimMark(window.location.href);
             if (href.indexOf('#') == -1) {
                 PJAX.pause();
                 window.location.replace(href + '#alltags'); /*利用replace防止浏览器记录history导致无法回退的bug*/
                 PJAX.start();
             } else {
-                var pg = href.split('#')[1];
-                if (ot.nowtag !== pg) {
-                    ot.nowtag = pg;
-                    if (pg == 'alltags') {
-                        if (SC('contenttags')) {
-                            SC('contenttags').innerHTML = ot.alltaghtml;
-                        }
+                let specific = href.split('#')[1];
+                if (that.nowTag !== specific) {
+                    that.nowTag = specific;
+                    if (specific == 'alltags') {
+                        if (SC('contenttags')) SC('contenttags').innerHTML = that.allTagsHtml;
                     } else {
-                        ot.taguper(pg);
+                        that.tagUper(specific);
                     }
-                    PJAX.start();
+                    //PJAX.start();
                 }
             }
         },
-        indexpagechecker: function () {
-            var eh = SC('html').innerHTML; /*Get All html*/
-            var j = window.tpJson;
-            var href = $.trimMark(decodeURIComponent(window.location.href));
-            var tj = window.mainJson; /*get json*/
-            var maxrender = parseInt(tj['posts_per_page']);
-            var ot = this;
+        indexPageChecker: function () {
+            let j = window.tpJson,
+                href = $.trimMark(decodeURIComponent(window.location.href)),
+                mj = window.mainJson, /*get json*/
+                maxRender = parseInt(mj['posts_per_page']),
+                that = this;
             if (href.indexOf('#') !== -1) {
-                ot.hashExist = true;
-                var pg = href.split('#')[1];
+                that.hashExist = true;/*存在hash*/
+                let whichPage = href.split('#')[1] || 1;
                 if (href.indexOf('#!') == -1) {
-                    if (!isNaN(pg)) {
-                        var pnum = parseInt(pg) - 1;
-                        if (ot.nowPage !== pnum) {
-                            console.log('hash changed');
-                            ot.searchWd = ''; /*不在搜索模式,重置搜索词*/
-                            ot.nowPage = pnum;
-                            var allps = maxrender * pnum * ot.morePerPage; /*根据页码计算当前页*/
-                            ot.itemPage = allps;
-                            ot.itemPageFixer(); /*修复因忽略页面而造成的列表重复*/
-                            SC('postitems').innerHTML = '';
-                            ot.more(true); /*顺序不要颠倒!*/
-                            ot.realPage = pnum + 1;
-                            ot.switchPage = 0;
-                            ot.backchecker();/*检查是否显示后退按钮*/
+                    if (!isNaN(whichPage)) {
+                        let pageBefore = parseInt(whichPage) - 1;
+                        if (that.currentPageBefore !== pageBefore) {/*翻页了*/
+                            console.log('Page changed <(￣︶￣)>');
+                            that.searchWd = ''; /*不在搜索模式,重置搜索词*/
+                            that.currentPageBefore = pageBefore;
+                            that.itemPage = maxRender * pageBefore * that.morePerPage; /*根据页码计算当前页(每按一次“more"按钮最多展示多少页) × (当前页码-1，也就是算当前页之前的项目) × (每页能按多少次"more"按钮) 20211020补充*/
+                            that.itemPageFixer(); /*修复因忽略页面而造成的列表重复*/
+                            /*itemPage变量在renderer里被初始化为了posts_per_page值，经过itemPageFixer校正为不算进页面的itemPage值 20211020补充*/
+                            SC('postitems').innerHTML = '';/*因为翻页了，清空之前页的文章列表*/
+                            that.more(true); /*顺序不要颠倒!*/
+                            that.realPage = pageBefore + 1;/*真正的页码是这个，值其实是等同于上面的whichPage的*/
+                            that.switchPage = 0;/*将点击more按钮的次数归零*/
+                            that.backChecker();/*检查是否显示后退按钮*/
                         }
                     }
                 } else { /*Search mode*/
-                    var item = window.tpHtmls[j['templatehtmls']['postitem']],
-                        ptitem = ot.gt('PostItem', 'PostItemEnd', item),
+                    let item = window.tpHtmls[j['templatehtmls']['postitem']],
+                        postItemTp = that.gt('PostItem', 'PostItemEnd', item),
                         /*有项目的模板*/
-                        noitem = ot.gt('NoItem', 'NoItemEnd', item); /*无项目的模板*/
-                    var v = href.split('#!')[1];
-                    if (v !== ot.searchWd) {
-                        ot.searchWd = v;
-                        var pt = tj['postindex'];
-                        function renderlist(postindexes, id, title = false, intro = false, date = false, tgs = false) {
-                            var rendertp = '';
-                            let pt = postindexes, i = id, tt = title || (Base64.decode(pt[i]['title'])), cc = intro || (Base64.decode(pt[i]['intro'])), dd = date || (pt[i]['date']), tags = tgs || pt[i]['tags'];
-                            var render1 = B.r(ptitem, 'postitemtitle', tt, true);
-                            var render2 = B.r(render1, 'postitemintro', cc + '...', true);
-                            var render3 = B.r(render2, 'postitemdate', $.dt(dd), true);
-                            var render35 = B.r(render3, 'postitemtags', tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
-                            var render4;
-                            if (!pt[i]['link']) {
-                                render4 = B.r(render35, 'postitemlink', 'post-' + i + '.html', true); /*把页面也算入*/
-                            } else {
-                                render4 = B.r(render35, 'postitemlink', pt[i]['link'] + '.html', true);
-                            }
-                            if (pt[i]['cover']) { /*如果有封面*/
-                                render4 = B.r(render4, 'postcover', pt[i]['cover'], true); /*把页面也算入*/
-                            } else {
-                                render4 = ot.cd(render4); /*没有封面就删掉整段<ifcover>*/
-                            }
-                            rendertp += render4; /*渲染到列表模板*/
-                            render4 = null; /*释放*/
-                            return rendertp;
+                        noItemTp = that.gt('NoItem', 'NoItemEnd', item), /*无项目的模板*/
+                        queryWd = href.split('#!')[1];/*获得搜索的内容*/
+                    if (queryWd !== that.searchWd && !that.tpcheckStatus && !that.loadStatus) {/*如果模板未拼接完毕，就先不处理搜索*/
+                        that.searchWd = queryWd;
+                        let pIndexes = JSON.parse(JSON.stringify(mj['postindex']));/*进行深复制，防止对原对象造成了影响*/
+                        for (i in pIndexes) {/*因为搜索要遍历到整个对象，而且要做base64处理，为了防止后面多次重复操作造成资源消耗，这里就先全部处理*/
+                            pIndexes[i]['title'] = Base64.decode(pIndexes[i]['title']);
+                            pIndexes[i]['intro'] = Base64.decode(pIndexes[i]['intro']);
                         }
-                        var rendertp = '', pushedids = {};/*用pushed ids排除原生搜索打印的内容*/
-                        for (var i in pt) {
-                            var tt = (Base64.decode(pt[i]['title'])).toLowerCase();
-                            var cc = (Base64.decode(pt[i]['intro'])).toLowerCase();
-                            var dd = (pt[i]['date']).toLowerCase();
-                            var tags = pt[i]['tags'],
-                                tg = tags.toLowerCase();
-                            v = v.toLowerCase(); /*大小写忽略*/
-                            if (tt.indexOf(v) !== -1 || cc.indexOf(v) !== -1 || dd.indexOf(v) !== -1 || tg.indexOf(v) !== -1) {
-                                rendertp += renderlist(pt, i, tt, cc, dd, tags);
-                                pushedids[i] = true;
-                            }
+                        queryWd = queryWd.toLowerCase(); /*大小写忽略*/
+                        function renderList(postIndexes, id) {
+                            let pt = postIndexes,
+                                i = id, tt = pt[i]['title'], cc = pt[i]['intro'], dd = pt[i]['date'], tags = pt[i]['tags'],
+                                renders = B.r(postItemTp, 'postitemtitle', tt, true);
+                            renders = B.r(renders, 'postitemintro', cc + '...', true);
+                            renders = B.r(renders, 'postitemdate', $.dt(dd), true);
+                            renders = B.r(renders, 'postitemtags', tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
+                            renders = pt[i]['link'] ? B.r(renders, 'postitemlink', pt[i]['link'] + '.html', true) : B.r(renders, 'postitemlink', 'post-' + i + '.html', true);/*针对和文章不同的页面特殊处理*/
+                            renders = pt[i]['cover'] ? B.r(renders, 'postcover', pt[i]['cover'], true) : that.cd(renders);/*如果有封面就上封面，没封面就整段删掉*/
+                            pt = null;
+                            return renders;
                         }
-                        if (rendertp == '') {
-                            rendertp = noitem;
+                        let localSearch = [], renderTp = '';
+                        for (var i in pIndexes) {
+                            let tt = pIndexes[i]['title'].toLowerCase(),
+                                cc = pIndexes[i]['intro'].toLowerCase(),
+                                dd = (pIndexes[i]['date']).toLowerCase(),
+                                tags = pIndexes[i]['tags'].toLowerCase();
+                            if ((tt + cc + dd + tags).indexOf(queryWd) !== -1) {
+                                localSearch.push(i);
+                            }
                         }
                         function process() { /*局部函数*/
                             if (SC('postitems') && SC('morebtn') && SC('backbtn')) {
                                 window.scrollTo(0, 0);
-                                SC('postitems').innerHTML = rendertp;
-                                if (typeof ot.searchinj == "function") ot.searchinj(pt, v, (ids) => {
-                                    let injrendertp = '';
-                                    for (var i in ids) injrendertp += isNaN(ids[i]) ? '' : ((pushedids[ids[i]]) ? '' : renderlist(pt, ids[i]));
-                                    if (injrendertp == '') return false;
-                                    SC('postitems').innerHTML = rendertp + injrendertp;/*使用外部搜索的时候保留原生搜索部分，在后面附加*/
-                                    PJAX.start();
-                                });/*外部搜索search.js介入*/
+                                SC('postitems').innerHTML = "Searching...∠( ᐛ 」∠)＿";
                                 SC('morebtn').style.display = 'none';
                                 SC('backbtn').style.display = 'none';
-                                PJAX.start(); /*refresh pjax links*/
+                                Promise.resolve(localSearch)
+                                    .then((localSearch) => {
+                                        return typeof that.searchInj == "function" ? that.searchInj(pIndexes, queryWd, localSearch) : Promise.resolve(localSearch);/*如果没有外置搜索，就直接返回renderTp，如果有，就返回searchInj函数（返回一个Promise对象）*/
+                                    })
+                                    .then((respArr) => {
+                                        respArr = Array.from(new Set(respArr));/*利用集合去重*/
+                                        respArr.forEach((item) => {
+                                            renderTp += renderList(pIndexes, item);/*遍历渲染项目*/
+                                        });
+                                        renderTp = renderTp || noItemTp;/*如果没有找到结果就返回noItem模板*/
+                                        SC('postitems').innerHTML = renderTp;
+                                        PJAX.start(); /*refresh pjax links*/
+                                        pIndexes = renderTp = localSearch = null;/*释放内存*/
+                                    })
                             } else {
                                 setTimeout(function () {
                                     return process();
                                 }, 10); /*如果没有需要的元素存在滞留一下*/
                             }
                         }
-                        if (!ot.tpcheckStatus && !ot.loadStatus) { /*如果页面加载完,模板拼接完毕就可以打印搜索结果了*/
+                        if (!that.tpcheckStatus && !that.loadStatus) { /*如果页面加载完,模板拼接完毕就可以打印搜索结果了*/
                             process();
                         }
                     }
-                    if (ot.tpcheckStatus || ot.loadStatus) { /*如果模板未拼接完毕，清理搜索词延续循环(外层setInterval)*/
-                        ot.searchWd = '';
-                    }
                 }
             } else {
-                ot.searchWd = ''; /*不在搜索模式,重置搜索词*/
-                if (ot.hashExist) {
-                    ot.realPage = 1;
-                    ot.switchPage = 0;
-                    ot.hashExist = false;
+                if (that.hashExist) {
+                    that.realPage = 1;
+                    that.switchPage = 0;
+                    that.hashExist = false;
                 }
             }
+            j = mj = null;
         },
-        loadShow: function () {
+        loadshow: function () {
             this.loadStatus = true; /*加载未就绪*/
             if ($.loadSettings['animations']) {
                 /*解构赋值*/
@@ -996,14 +978,14 @@ if (!B) { /*PreventInitializingTwice*/
                 SC('postitems').innerHTML = SC('postitems').innerHTML + listrender;
                 ot.switchPage += 1;
             }
-            ot.backchecker();
+            ot.backChecker();
             PJAX.start(); /*refresh pjax links*/
         }
     };
     window.addEventListener('pjaxstart',
 
         function () { /*加载动画*/
-            B.loadShow();
+            B.loadshow();
         },
         false);
     window.addEventListener('pjaxfinish',
@@ -1042,7 +1024,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             if (ts.recenturl.indexOf('#') !== -1 && href.indexOf('#') !== -1 && ts.recenturl.split('#')[0] == href.split('#')[0]) { /*防止Tag页面的跳转问题*/
                 return false;
             } else if (ts.recenturl.indexOf('#') == -1 && href.indexOf('#') !== -1) {
-                B.nowPage = 0; /*防止页码bug*/
+                B.currentPageBefore = 0; /*防止页码bug*/
             }
             window.dispatchEvent(ts.PJAXStart); /*激活事件来显示加载动画*/
             window.removeEventListener('scroll', B.lazyCheck, false); /*移除懒加载监听*/
