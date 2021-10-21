@@ -1,6 +1,15 @@
-/*ControlPosts4.2.1 - SomeBottle202109*/
+/*ControlPosts4.5.0 - SomeBottle20211021*/
 "use strict";
-var md = new showdown.Converter();
+var mark = function (content) {
+    return window.markdownit({ html: true, linkify: true })
+        .use(window.markdownItAnchor, {
+            permalink: window.markdownItAnchor.permalink.linkInsideHeader({
+                symbol: '#',
+                placement: 'before'
+            })
+        })
+        .render(content);
+}
 var editpost = 'none';
 var tpjs = JSON.parse(window.tjson); /*编辑的文章*/
 renderlist(); /*渲染最新文章列表*/
@@ -78,15 +87,15 @@ function renderlist() {
 
 function eswitch() {
     choose += 1;
-    if (choose >= 7) {
-        choose = 7;
+    if (choose >= 8) {
+        choose = 8;
     }
     if (choose == 5) {
         SC('fbtn').style.backgroundColor = '#FA5858';
     } else {
         SC('fbtn').style.backgroundColor = '#0080ff';
     }
-    var txt = new Array('编辑/发布', '预览', '保存草稿', '读取草稿', '删除', '生成归档', '取消');
+    var txt = new Array('编辑/发布', '预览', '保存草稿', '读取草稿', '删除', '预览前置', '生成归档', '取消');
     SC('fbtn').innerHTML = txt[choose - 1];
     clearTimeout(timer);
     timer = setTimeout(function () {
@@ -118,10 +127,14 @@ function eswitch() {
                 }
                 break;
             case 6:
+                console.log('预览前置');
+                beforePreviewHtml();
+                break;
+            case 7:
                 console.log('生成归档');
                 tagarchive();
                 break;
-            case 7:
+            case 8:
                 console.log('取消');
                 break;
         }
@@ -148,7 +161,11 @@ function scriptcutter(h) { /*处理script标签*/
     var rh = c.innerHTML;
     return rh;
 }
-
+function beforePreviewHtml() {
+    localStorage.OBeforePreview = localStorage.OBeforePreview || '';
+    let getPre = prompt('请输入你在预览body部分中要插入的前置html\n（用于文章中需要外部js库的脚本预览)', localStorage.OBeforePreview);
+    localStorage.OBeforePreview = getPre;
+}
 function enhtml(h) { /*转义html*/
     var temp = h.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     return temp;
@@ -237,7 +254,7 @@ function covercutter(rc) { /*从内容中去除所有<ifcover>的部分*/
 }
 
 function transdate(v) { /*date transformer*/
-    var dt = String(v),
+    let dt = String(v),
         md = dt.slice(-4),
         d = md.slice(-2),
         m = md.substring(0, 2),
@@ -346,7 +363,7 @@ function preview() {
     SC('sbr').innerHTML = '<a class=\'closebtn\' href=\'javascript:void(0);\' onclick=\'sbrclose()\'>×<\/a><h2>Preview:<\/h2><style>img{max-width:100%;}</style>' + md.makeHtml(content);*/
     var prwindow = window.open('');
     prwindow.opener = null;
-    prwindow.document.write(md.makeHtml(sc));
+    prwindow.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown-light.css' rel="stylesheet" /></head><body>${localStorage.OBeforePreview || ''}<div class='markdown-body'>${mark(sc)}</div></body>`);
     prwindow.document.close();
 }
 
@@ -378,7 +395,7 @@ function edit() {
         }
         tag = ''; /*页面不显示标签*/
     }
-    var intro = ((((md.makeHtml(content)).replace(/<\/?.+?>/g, "")).substring(0, 100)).replace(/[ ]/g, "")).replace(/[\r\n]/g, ""); /*防止回车造成的json解析失败*/
+    var intro = ((((mark(content)).replace(/<\/?.+?>/g, "")).substring(0, 100)).replace(/[ ]/g, "")).replace(/[\r\n]/g, ""); /*防止回车造成的json解析失败*/
     if (content.length >= 70) {
         intro += '...';
     }

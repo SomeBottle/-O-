@@ -2,7 +2,6 @@
 "use strict";
 var $ = new Object();
 $.ls = new Array();
-$.lss = '';
 $.hash = window.location.href;
 var SC = function (e) {
 	if (e == 'body') {

@@ -6,25 +6,23 @@ function rlen(t) {
     return t.length;
 }
 
-function anichecker(e, func) { /*css3变换检查器(元素,执行完毕执行的函数)*/
-    var ts = '';
-    var tss = {
+function anichecker(element, func) { /*css3变换检查器(元素,执行完毕执行的函数)*/
+    let chosenTester = '', testers = {
         'animation': 'animationend',
         'OAnimation': 'oAnimationEnd',
         'MozAnimation': 'animationend',
         'WebkitAnimation': 'webkitAnimationEnd'
     }; /*兼容多浏览器*/
-    for (var i in tss) {
-        if (e.style[i] !== undefined) {
-            ts = tss[i];
+    for (var i in testers) {
+        if (element.style[i] !== undefined) {
+            chosenTester = testers[i];
         }
     }
-
-    function doit() {
+    function callBack() {
+        element.removeEventListener(chosenTester, callBack);
         func();
-        e.removeEventListener(ts, doit);
     }
-    e.addEventListener(ts, doit);
+    element.addEventListener(chosenTester, callBack);
 }
 
 function notice(s, pop = false) { /*(消息，是否弹窗警示)*/
