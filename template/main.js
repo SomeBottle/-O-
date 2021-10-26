@@ -1,4 +1,4 @@
-/*FrontMainJS ver4.5.0 - SomeBottle*/
+/*FrontMainJS ver4.5.1 - SomeBottle*/
 "use strict";
 if (typeof ($) !== 'object') {
     var $ = new Object();
@@ -620,8 +620,8 @@ if (!B) { /*PreventInitializingTwice*/
                 var timer = setInterval(function () { /*CheckIndexPage*/
                     if (that.gt('<!--[PageType]', '[PageTypeEnd]-->', false, true) !== j['templatehtmls']['postlist']) { /*跳离index页了*/
                         console.log('Jumped out of the index page w(ﾟДﾟ)w');
-                        PJAX.sel('contentcontainer');
-                        PJAX.start(); /*修复more按钮的bug - 20190727*/
+                        //PJAX.sel('contentcontainer');
+                        //PJAX.start(); /*修复more按钮的bug - 20190727*/
                         that.switchPage = 0;/*(和morebtn有关)将单页文章展示归零*/
                         clearInterval(timer);
                         j = null;/*释放掉临时的tpJson*/
@@ -703,14 +703,14 @@ if (!B) { /*PreventInitializingTwice*/
                 if (href.indexOf('#') !== -1) {
                     let specific = href.split('#')[1];
                     that.nowTag = specific;
-                    if (specific !== 'alltags') {
+                    if (specific !== 'alltags') {/*如果指定了标签，在页面载入后调用一下tagUper20211026*/
                         renderTgs = '<script>B.tagUper(\'' + specific + '\');PJAX.sel(\'contentcontainer\');PJAX.start();</script>';
                     }
                 } /*Generate Finish*/
                 let timer = setInterval(function () { /*CheckTagPage*/
                     if (window.location.href.indexOf(j['generatehtmls']['tags']) == -1 && window.location.href.indexOf((j['generatehtmls']['tags']).replace('.html', '')) == -1) { /*跳离tag页了*/
-                        PJAX.sel('contentcontainer');
-                        PJAX.start();
+                        //PJAX.sel('contentcontainer');
+                        //PJAX.start();
                         clearInterval(timer);
                         j = null;
                         return false;
@@ -794,6 +794,7 @@ if (!B) { /*PreventInitializingTwice*/
                         if (SC('contenttags')) SC('contenttags').innerHTML = that.allTagsHtml;
                     } else {
                         that.tagUper(specific);
+                        PJAX.start();/*防止标签更新后a标签没有监听PJAX的问题*/
                     }
                 }
             }
@@ -917,7 +918,7 @@ if (!B) { /*PreventInitializingTwice*/
             for (var i in eOut) $.alterClass(i, eOut[i]);
             for (var i in eIn) $.alterClass(i, eIn[i], true); /*移除元素*/
         },
-        applyAfterLoad: function () {/*等加载完毕后再应用html改动(渲染出的html,是否追加)*/
+        applyAfterLoad: function () {/*等加载完毕后再应用html改动(操作函数(参数数组),参数1,参数2,...)*/
             let that = this, oriArgs = arguments, args = Array.from(oriArgs), func = args.shift();/*得到传入的参数列表*/
             if (that.loadStatus) {
                 setTimeout(() => that.applyAfterLoad.apply(that, oriArgs), 50);
@@ -978,7 +979,10 @@ if (!B) { /*PreventInitializingTwice*/
             }
             that.itemPage += maxRender;/*itemPage加上一个分片中的项目数，就是下一个分片的起始位置*/
             if (that.switchPage >= (that.morePerPage - 1) && !checkerTrigger) { /*如果switchPage（一个页面的分片数量,从0开始）大于morePerPage(一个页面最多分片数量,从1开始)，就换到下一页面。值得注意的是，more函数分用户触发和indexPageChecker触发，只有用户触发的时候会执行这个选择块中的语句，indexPageChecker触发的话只是为了打印列表分片，所以执行的是else块中的语句*/
-                that.applyAfterLoad((x) => { [SC('postitems').innerHTML] = [x] }, listRender);/*渲染分片到页面*/
+                that.applyAfterLoad((x) => {
+                    [SC('postitems').innerHTML] = x;
+                    PJAX.start(); /*在更新postitems后给a标签附上PJAX监听器20211026*/
+                }, listRender);/*渲染分片到页面*/
                 that.currentPageBefore = that.realPage;/*用户触发的时候也要修改和indexPageChecker有关的currentPageBefore*/
                 that.scrolltop(20, 2);
                 that.switchPage = 0;/*将页面已经载入的分片数量归零*/
@@ -986,11 +990,13 @@ if (!B) { /*PreventInitializingTwice*/
                 PJAX.pause();/*暂停PJAX监听，防止翻页时加载浮页跳出*/
                 window.location.href = '#' + that.realPage;/*这里是用户触发的情况下，修改hash*/
             } else {
-                that.applyAfterLoad((x) => { SC('postitems').innerHTML = x[1] ? x[0] : SC('postitems').innerHTML + x[0] }, listRender, checkerTrigger);/*渲染分片到页面*/
+                that.applyAfterLoad((x) => {
+                    SC('postitems').innerHTML = x[1] ? x[0] : SC('postitems').innerHTML + x[0];
+                    PJAX.start(); /*在更新postitems后给a标签附上PJAX监听器20211026*/
+                }, listRender, checkerTrigger);/*渲染分片到页面，如果是indexPageChecker触发的就更新所有的postitems，如果是more自己触发的就追加在现有的postitems后面20211026*/
                 that.switchPage += 1;
             }
             that.backChecker();
-            PJAX.start(); /*refresh pjax links*/
             j = dIndexes = listRender = null;
         }
     };
