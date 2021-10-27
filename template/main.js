@@ -1,4 +1,4 @@
-/*FrontMainJS ver4.5.1 - SomeBottle*/
+/*FrontMainJS ver4.5.2 - SomeBottle*/
 "use strict";
 if (typeof ($) !== 'object') {
     var $ = new Object();
@@ -620,8 +620,6 @@ if (!B) { /*PreventInitializingTwice*/
                 var timer = setInterval(function () { /*CheckIndexPage*/
                     if (that.gt('<!--[PageType]', '[PageTypeEnd]-->', false, true) !== j['templatehtmls']['postlist']) { /*跳离index页了*/
                         console.log('Jumped out of the index page w(ﾟДﾟ)w');
-                        //PJAX.sel('contentcontainer');
-                        //PJAX.start(); /*修复more按钮的bug - 20190727*/
                         that.switchPage = 0;/*(和morebtn有关)将单页文章展示归零*/
                         clearInterval(timer);
                         j = null;/*释放掉临时的tpJson*/
@@ -709,8 +707,6 @@ if (!B) { /*PreventInitializingTwice*/
                 } /*Generate Finish*/
                 let timer = setInterval(function () { /*CheckTagPage*/
                     if (window.location.href.indexOf(j['generatehtmls']['tags']) == -1 && window.location.href.indexOf((j['generatehtmls']['tags']).replace('.html', '')) == -1) { /*跳离tag页了*/
-                        //PJAX.sel('contentcontainer');
-                        //PJAX.start();
                         clearInterval(timer);
                         j = null;
                         return false;
@@ -1080,7 +1076,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             }
         },
         clickEvent: function (e) {
-            if (PJAX.preventUrl.indexOf(this.href) !== -1 || !this.href || this.href.indexOf('#') !== -1) {/*如果a标签的href是hash也直接放行，这样在文章内就可以使用锚点了*/
+            if (PJAX.preventUrl.indexOf(this.href) !== -1 || !this.href || this.href.includes(location.pathname) && this.href.includes('#')) {/*如果a标签的href是hash且指向当前页面，也直接放行，这样在文章内就可以使用锚点了*/
                 return true;
             } else {
                 window.history.pushState(null, null, this.href); /*加入历史*/
