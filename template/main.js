@@ -88,6 +88,9 @@ if (typeof ($) !== 'object') {
         }
         return attrArr;
     }
+    $.scriptRestore = function (html) {/*使用正则去除script注释*/
+        return h.replace(new RegExp('(<script[\\s\\S]*?>)(?:\\/\\*)([\\s\\S]*?)(?:\\*\\/)(<\/script>)', 'gi'), (match, p1, p2, p3) => (p1 + p2 + p3));
+    }
     $.ht = function (html, element, scriptInclude = true) { /*元素内容设置器(html,element,run script or not when ht)*/
         let theElement = SC(element), pageScripts = [];
         if (!theElement) {
@@ -102,8 +105,7 @@ if (typeof ($) !== 'object') {
             } else {
                 var h = allTags[o].innerHTML;
                 if (scriptInclude) { /*是否去除注释执行*/
-                    h = B.r(h, '/*', '');
-                    h = B.r(h, '*/', '');
+                    h = $.scriptRestore(h);
                 }
                 pageScripts.push(h);/*综合一下页面中的js*/
             }

@@ -38,7 +38,7 @@ var B = { /*Replace Part*/
     r: function (a, o, p, tp = false, g = true) { /*(All,Original,ReplaceStr,IfTemplate(false,'[','('),IfReplaceAll)*/
         if (a) {
             if (tp) {
-                a = (tp == '(') ? a.replace(new RegExp('\\{\\(' + o + '\\)\\}', (g ? 'g' : '') + 'i'), ()=>p) : a.replace(new RegExp('\\{\\[' + o + '\\]\\}', (g ? 'g' : '') + 'i'), ()=>p); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
+                a = (tp == '(') ? a.replace(new RegExp('\\{\\(' + o + '\\)\\}', (g ? 'g' : '') + 'i'), () => p) : a.replace(new RegExp('\\{\\[' + o + '\\]\\}', (g ? 'g' : '') + 'i'), () => p); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
             } else if (g) {
                 while (a.indexOf(o) !== -1) {
                     a = a.replace(o, p);
@@ -145,22 +145,15 @@ function eswitch() {
     },
         1000);
 }
-
-function scriptcutter(h) { /*处理script标签*/
-    var c = document.createElement('div');
-    c.innerHTML = h;
-    var ss = c.getElementsByTagName('script');
-    for (var i in ss) {
-        var sc = ss[i].innerHTML;
-        if (sc !== undefined) {
-            sc = B.r(sc, '/*', ''); /*去除原有注释*/
-            sc = B.r(sc, '*/', '');
-            let prc = '/*' + sc + '*/'; /*加上总体注释*/
-            ss[i].innerHTML = prc;
-        }
-    }
-    var rh = c.innerHTML;
-    return rh;
+function scriptrestore(h) {/*script标签去注释，用上正则2021.11.6*/
+    return h.replace(new RegExp('(<script[\\s\\S]*?>)(?:\\/\\*)([\\s\\S]*?)(?:\\*\\/)(<\/script>)', 'gi'), (match, p1, p2, p3) => {
+        return p1 + p2 + p3;
+    });
+}
+function scriptcutter(h) { /*处理script标签，用上正则2021.11.6*/
+    return scriptrestore(h).replace(new RegExp('(<script[\\s\\S]*?>)([\\s\\S]*?)(<\/script>)', 'gi'), (match, p1, p2, p3) => {
+        return p2.trim() ? p1 + '/*' + p2 + '*/' + p3 : match;
+    });
 }
 function beforePreviewHtml() {
     localStorage.OBeforePreview = localStorage.OBeforePreview || '';
