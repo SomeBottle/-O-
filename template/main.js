@@ -1,4 +1,4 @@
-/*FrontMainJS ver4.5.6 - SomeBottle*/
+/*FrontMainJS ver4.5.7 - SomeBottle*/
 "use strict";
 if (typeof ($) !== 'object') {
     var $ = new Object();
@@ -338,7 +338,7 @@ if (!B) { /*PreventInitializingTwice*/
             try { /*notTemplate=false，也就是模板中匹配的时候，默认匹配{(xxx)}和{(xxx)}之间的内容*/
                 let contentAfter = notTemplate ? element.split(between)[1] : element.split(new RegExp('\\{\\(' + between + '\\)\\}', 'i'))[1], /*正则支持大小写忽略*/
                     contentBetween = notTemplate ? contentAfter.split(and)[0] : contentAfter.split(new RegExp('\\{\\(' + and + '\\)\\}', 'i'))[0];
-                return this.deHtml(contentBetween);
+                return contentBetween;
             } catch (e) {
                 return false;
             }
@@ -546,7 +546,7 @@ if (!B) { /*PreventInitializingTwice*/
                 pageType = that.gt('PageType', 'PageTypeEnd', fcontent); /*Get Page Type*/
             that.currentPageType = pageType;
             if (pageType == j['templatehtmls']['post']) {
-                let content = that.gt('PostContent', 'PostContentEnd', fcontent), /*Get Post Content*/
+                let content = that.deHtml(that.gt('PostContent', 'PostContentEnd', fcontent)), /*Get Post Content*/
                     title = that.gt('PostTitle', 'PostTitleEnd', fcontent), /*Get Post Title*/
                     date = that.gt('PostDate', 'PostDateEnd', fcontent), /*Get Post Date*/
                     tags = that.gt('PostTag', 'PostTagEnd', fcontent), /*Get Post Content*/
@@ -601,7 +601,7 @@ if (!B) { /*PreventInitializingTwice*/
                 window.addEventListener('scroll', B.lazyCheck, false); /*只有文章页面监听懒加载20210909*/
                 renders = j = null; /*释放*/
             } else if (pageType == j['templatehtmls']['postlist']) {
-                let content = that.gt('PostContent', 'PostContentEnd', fcontent), /*Get Post Content*/
+                let content = that.deHtml(that.gt('PostContent', 'PostContentEnd', fcontent)), /*Get Post Content*/
                     listTemplate = tps[j['templatehtmls']['postlist']],
                     postListTp = that.gt('PostListTemplate', 'PostListTemplateEnd', listTemplate),
                     moreBtn = that.gt('MoreBtn', 'MoreBtnEnd', listTemplate),
