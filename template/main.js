@@ -1,4 +1,4 @@
-/*FrontMainJS ver4.5.5 - SomeBottle*/
+/*FrontMainJS ver4.5.6 - SomeBottle*/
 "use strict";
 if (typeof ($) !== 'object') {
     var $ = new Object();
@@ -89,7 +89,7 @@ if (typeof ($) !== 'object') {
         return attrArr;
     }
     $.scriptRestore = function (html) {/*使用正则去除script注释*/
-        return html.replace(new RegExp('(<script[\\s\\S]*?>)(?:\\/\\*)([\\s\\S]*?)(?:\\*\\/)(<\/script>)', 'gi'), (match, p1, p2, p3) => (p1 + p2 + p3));
+        return html.replace(new RegExp('^(?:\\/\\*)([\\s\\S]*?)(?:\\*\\/)$', 'gi'), (match, p1) => p1);
     }
     $.ht = function (html, element, scriptInclude = true) { /*元素内容设置器(html,element,run script or not when ht)*/
         let theElement = SC(element), pageScripts = [];
@@ -105,7 +105,7 @@ if (typeof ($) !== 'object') {
             } else {
                 var h = allTags[o].innerHTML;
                 if (scriptInclude) { /*是否去除注释执行*/
-                    h = $.scriptRestore(h);
+                    h = $.scriptRestore(h.trim());
                 }
                 pageScripts.push(h);/*综合一下页面中的js*/
             }
