@@ -215,7 +215,7 @@ if (!B) { /*PreventInitializingTwice*/
         var prevHtml = SC('html').innerHTML,
             ldLocalUsed = true;
         $.ldParse(localStorage['obottle-ldpage']); /*解析加载页*/
-        SC('html').innerHTML = prevHtml.replace('<loadingarea></loadingarea>', localStorage['obottle-ldpage']);
+        SC('html').innerHTML = prevHtml.replace('<loadingarea></loadingarea>', () => localStorage['obottle-ldpage']);
     } else {
         var ldLocalUsed = false;
     }
@@ -237,8 +237,9 @@ if (!B) { /*PreventInitializingTwice*/
     var B = { /*B Part*/
         morePerPage: 0,
         r: function (origin, from, to, forTemplate = false, replaceAll = true) { /*别改这里！，没有写错！(All,Original,ReplaceStr,IfTemplate[false,'['(true),'('],IfReplaceAll)*/
-            if (forTemplate) return forTemplate == '(' ? origin.replace(new RegExp('\\{\\(' + from + '\\)\\}', (replaceAll ? 'g' : '') + 'i'), to) : origin.replace(new RegExp('\\{\\[' + from + '\\]\\}', (replaceAll ? 'g' : '') + 'i'), to); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
-            if (replaceAll) {
+            if (forTemplate) {
+                origin = (forTemplate == '(') ? origin.replace(new RegExp('\\{\\(' + from + '\\)\\}', (replaceAll ? 'g' : '') + 'i'), () => to) : origin.replace(new RegExp('\\{\\[' + from + '\\]\\}', (replaceAll ? 'g' : '') + 'i'), () => to); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
+            } else if (replaceAll) {
                 while (origin.indexOf(from) !== -1) {
                     origin = origin.replace(from, to);
                 }

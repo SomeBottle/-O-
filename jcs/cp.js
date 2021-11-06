@@ -37,8 +37,9 @@ function getdate() { /*获得今天日期*/
 var B = { /*Replace Part*/
     r: function (a, o, p, tp = false, g = true) { /*(All,Original,ReplaceStr,IfTemplate(false,'[','('),IfReplaceAll)*/
         if (a) {
-            if (tp) return tp == '(' ? a.replace(new RegExp('\\{\\(' + o + '\\)\\}', (g ? 'g' : '') + 'i'), p) : a.replace(new RegExp('\\{\\[' + o + '\\]\\}', (g ? 'g' : '') + 'i'), p); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
-            if (g) {
+            if (tp) {
+                a = (tp == '(') ? a.replace(new RegExp('\\{\\(' + o + '\\)\\}', (g ? 'g' : '') + 'i'), ()=>p) : a.replace(new RegExp('\\{\\[' + o + '\\]\\}', (g ? 'g' : '') + 'i'), ()=>p); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
+            } else if (g) {
                 while (a.indexOf(o) !== -1) {
                     a = a.replace(o, p);
                 }
@@ -736,6 +737,7 @@ function delpost(id) { /*删除文章*/
                     window.tjson = JSON.stringify(tpjs);/*更新本地的json*/
                     renderlist(); /*渲染最新文章列表*/
                     notice('删除成功');
+                    addnew();
                     loadhide();
                 }, failed: (m) => {
                     notice('删除:更新push失败', true);

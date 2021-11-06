@@ -71,7 +71,15 @@ function initialcheck() { /*检查是否初始化*/
             blog.getfileshas(window.accesstoken, window.githubrepo, true, {
                 success: function (m) { /*已经初始化*/
                     window.fileshas = m;
-                    res(blog.findfilesha(mj['mainjson']));/*返回MainJson的sha值*/
+                    let mainJsonSha = blog.findfilesha(mj['mainjson']);
+                    console.log('mainJsonSha: ' + mainJsonSha);
+                    if (mainJsonSha) {
+                        res(mainJsonSha);/*返回MainJson的sha值*/
+                    } else {
+                        notice('Retrying to get file shas.');
+                        window.test += 1;
+                        rej('failed');
+                    }
                 },
                 failed: function (msg) {
                     notice('Failed to get file shas.');
@@ -80,6 +88,9 @@ function initialcheck() { /*检查是否初始化*/
                 }
             });
         });
+    }).catch(e => {
+        initialcheck();
+        throw 'failed, retrying';
     }).then(function (d) {
         blog.getfileblob(window.accesstoken, window.githubrepo, d, true, {
             success: function (m) { /*已经初始化*/
