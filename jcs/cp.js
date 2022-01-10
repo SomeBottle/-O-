@@ -799,7 +799,7 @@ function addnew() {
 }
 document.onkeydown = function (event) { /*Search Enter Listener*/
     var e = event || window.event;
-    if (e && e.keyCode == 13) {
+    if (e && e.key == 'Enter') {
         var v = SC('search').value;
         if (v !== '' && SC('search') == document.activeElement) {
             SC('sbr').style.zIndex = 50;
@@ -856,10 +856,26 @@ function addhide() {
     },
         1000);
 }
+function insertAtCursor(e, str) {
+    let startPos = e.selectionStart,
+        insertLen = str.length,
+        strLen = e.value.length,
+        beforeStr = e.value.substring(0, startPos),
+        afterStr = e.value.substring(startPos, strLen);
+    e.value = beforeStr + str + afterStr;
+    e.selectionStart = e.selectionEnd = startPos + insertLen;
+}
 SC('date').placeholder = getdate(); /*预设日期*/
 document.addEventListener('keydown', function (e) {/*监听ctrl+S保存*/
-    if (e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+    if (e.code == 'KeyS' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         tempsave();
+    } else if (e.code == 'KeyV' && e.altKey && SC('content') == document.activeElement) { // alt + V在指定地方插入视频标签
+        e.preventDefault();
+        let link = prompt('输入视频URL:', '');
+        if (link) insertAtCursor(SC('content'), `<video controls="controls" style="max-width:100%" src="${link}"></video>`);
+    } else if (e.key == 'Tab' && SC('content') == document.activeElement) {
+        e.preventDefault();
+        insertAtCursor(SC('content'), '    '); // 一个Tab换四个空格
     }
 });

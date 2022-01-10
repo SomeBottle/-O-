@@ -398,9 +398,13 @@ body {
 .rp {
     /*recent posts*/
     position: inherit;
-    width: 100%;
+    width: calc(100%-20px);
     height: 60%;
-    overflow-y: hidden;
+    overflow-y: auto;
+}
+
+.rp::-webkit-scrollbar {
+    display: none;
 }
 
 .postitemp {

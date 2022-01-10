@@ -100,6 +100,13 @@ $.param = function (pr, bs64 = false) {/*params(object)*/
 		return param;
 	}
 }
+$.fHook = function (resp) {
+	if (resp.status >= 200 && resp.status < 400) {
+		return resp;
+	} else {
+		throw 'Error response, code:' + resp.status;
+	}
+}
 $.ft = function (p, d, sf, m, hd) { /*(path,data,success or fail,method,authheader,async,sendasjson)*/
 	let options = {
 		body: JSON.stringify(d),
@@ -114,9 +121,12 @@ $.ft = function (p, d, sf, m, hd) { /*(path,data,success or fail,method,authhead
 		options.headers.append('Authorization', hd);
 	}
 	fetch(p, options)
-		.then((res) => (res.text()))
+		.then((res) => ($.fHook(res).text()))
+		.catch(err => {
+			sf.failed(err, p);
+			throw err;
+		})
 		.then(resp => sf.success(resp, p))
-		.catch(err => sf.failed(err, p))
 }
 $.r = function (a, o, p, g = true) { /*(All,Original,ReplaceStr,IfReplaceAll)*/
 	if (g) {

@@ -59,8 +59,8 @@ function typer() {
         if (code !== '') {
             token = blog.crypt(code, pass, true);
         } else {
-            token = SC('n').value,
-                lc('secretcode', blog.crypt(token, pass));
+            token = SC('n').value;
+            lc('secretcode', blog.crypt(token, pass));
         }
         if (code !== '' && $.ce(pass) || code == '' && $.ce(pass) && $.ce(token)) {
             window.accesstoken = token;
