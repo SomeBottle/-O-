@@ -1,4 +1,4 @@
-/*FrontMainJS ver4.5.7 - SomeBottle*/
+/*FrontMainJS ver4.6.1 - SomeBottle*/
 "use strict";
 if (typeof ($) !== 'object') {
     var $ = new Object();
@@ -113,7 +113,7 @@ if (typeof ($) !== 'object') {
         $.scriptCircle(pageScripts);
         theElement = allTags = null; /*释放*/
     }
-    $.trimMark = function (url) { /*PreventURLProblem(Fuck QQ Querying URI*/
+    $.trimMark = function (url) { /*PreventURLProblem(F*ck QQ Querying URI*/
         var a = url;
         let b = a.split('?');
         if (b[1]) {
@@ -730,9 +730,33 @@ if (!B) { /*PreventInitializingTwice*/
             PJAX.autoprevent();
             PJAX.sel('contentcontainer');
             PJAX.start();
+            that.generateCata(); // 生成目录数组20220113
             that.navcheck(); /*进行导航栏检查*/
             window.dispatchEvent(PJAX.PJAXFinish); /*调用事件隐藏loading浮层20201229*/
             mj = tps = null;
+        },
+        catalogue: [], // 目录数组
+        generateCata: function () {/*目录生成器20220113*/
+            let container = SC('contentcontainer'),
+                elements = container.querySelectorAll('*'), // 获得文章中所有元素
+                titleTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+                generated = [];
+            titleTags = titleTags.filter(x => container.querySelector(x)); // 剔除文章中没有的标签
+            elements.forEach((val, ind) => {
+                let tag = val.tagName.toLowerCase(),
+                    id = val.id, // 获得元素锚点
+                    name = val.innerHTML.replace(/<a.*?>.*?<\/a>/g, '').trim(), // 获得标题内容
+                    titleIndex = titleTags.indexOf(tag), // 获得权重
+                    objToPush = {
+                        'id': id,
+                        'name': name,
+                        'index': titleIndex
+                    };
+                if (titleIndex !== -1 && id) {
+                    generated.push(objToPush);
+                }
+            });
+            this.catalogue = generated;
         },
         backChecker: function () {/*检查后退按钮是否显示*/
             SC('backbtn').style.display = this.realPage == 1 ? 'none' : 'initial';
@@ -978,16 +1002,14 @@ if (!B) { /*PreventInitializingTwice*/
             }
             that.itemPage += maxRender;/*itemPage加上一个分片中的项目数，就是下一个分片的起始位置*/
             if (that.switchPage >= (that.morePerPage - 1) && !checkerTrigger) { /*如果switchPage（一个页面的分片数量,从0开始）大于morePerPage(一个页面最多分片数量,从1开始)，就换到下一页面。值得注意的是，more函数分用户触发和indexPageChecker触发，只有用户触发的时候会执行这个选择块中的语句，indexPageChecker触发的话只是为了打印列表分片，所以执行的是else块中的语句*/
-                that.applyAfterLoad((x) => {
-                    [SC('postitems').innerHTML] = x;
-                    PJAX.start(); /*在更新postitems后给a标签附上PJAX监听器20211026*/
-                }, listRender);/*渲染分片到页面*/
                 that.currentPageBefore = that.realPage;/*用户触发的时候也要修改和indexPageChecker有关的currentPageBefore*/
                 that.scrolltop(20, 2);
                 that.switchPage = 0;/*将页面已经载入的分片数量归零*/
                 that.realPage += 1;/*真实页数+1*/
                 PJAX.pause();/*暂停PJAX监听，防止翻页时加载浮页跳出*/
                 window.location.href = '#' + that.realPage;/*这里是用户触发的情况下，修改hash*/
+                SC('postitems').innerHTML = listRender;
+                PJAX.start(); /*在更新postitems后给a标签附上PJAX监听器20211026*/
             } else {
                 that.applyAfterLoad((x) => {
                     SC('postitems').innerHTML = x[1] ? x[0] : SC('postitems').innerHTML + x[0];
@@ -1071,11 +1093,15 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             });
         },
         pjaxAutoJump: function () {
-            if (PJAX.recentUrl.split('#')[0] == window.location.href && B.currentPageType == window.tpJson['templatehtmls']['postlist']) { /*用于处理**首页**没有hash和有hash页码时回退跳转的问题20200808*/
-                window.history.replaceState(null, null, window.location.href + '#1'); /*从https://xxx/#2回退到https://xxx/时自动变成https://xxx/#1跳转到页码1(不改变历史)20200808*/
+            let currentHref = window.location.href, tpHtmls = window.tpJson['templatehtmls'];
+            if (PJAX.recentUrl.split('#')[0] == currentHref && B.currentPageType == tpHtmls['postlist']) { /*用于处理**首页**没有hash和有hash页码时回退跳转的问题20200808*/
+                window.history.replaceState(null, null, currentHref + '#1');/*从https://xxx/#2回退到https://xxx/时自动变成https://xxx/#1跳转到页码1(不改变历史)20200808*/
+                return true;
+            } else if (PJAX.recentUrl == currentHref.split('#')[0] && B.currentPageType == tpHtmls['post']) { // 在文章页面点击锚点时不要重载页面！20220113
+                return true;
             }
-            if (window.location.href.indexOf(mainHost) !== -1) { /*回退时跳转20200808*/
-                PJAX.jump(window.location.href);
+            if (currentHref.indexOf(mainHost) !== -1) { /*回退时跳转20200808*/
+                PJAX.jump(currentHref);
             }
         },
         clickEvent: function (e) {
