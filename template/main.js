@@ -1,4 +1,4 @@
-/*FrontMainJS ver4.6.1 - SomeBottle*/
+/*FrontMainJS ver4.7.0 - SomeBottle*/
 "use strict";
 if (typeof ($) !== 'object') {
     var $ = new Object();
@@ -14,7 +14,7 @@ if (typeof ($) !== 'object') {
     $.loadedScripts = new Array();
     $.loadSettings = new Object(); /*加载页配置*/
     $.loadingJS = 0;/*正在用$.script载入的外部js数量，这个数量不归零，文章页面中script标签内的js不会执行*/
-    $.ft = function (p, d, sf, m, proxy) { /*Fetcher(path,data,success or fail,method,proxyurl,async)*/
+    $.ft = function (p, proxy = '', m = 'get', d = {}) { /*Fetcher(path,proxyurl,method,data)*/
         if (p !== 'false' && p) { /*奇妙的false问题*/
             let options = {
                 body: JSON.stringify(d),
@@ -26,10 +26,19 @@ if (typeof ($) !== 'object') {
             };
             if (m == 'get') delete options.body;
             p = (proxy !== '') ? proxy + p : p;
-            fetch(p, options)
-                .then(res => res.text())
-                .then(resp => sf.success(resp, p))
-                .catch(err => sf.failed(err, p))
+            return fetch(p, options)
+                .then(res => {
+                    if (res.status >= 200 && res.status < 400) {
+                        return res.text();
+                    } else {
+                        return Promise.reject('failed:invalid status code.');
+                    }
+                })
+                .catch(e => {
+                    return Promise.reject(e);
+                })
+        } else {
+            return Promise.reject('failed:wrong URL.')
         }
     }
     $.script = function (url, element = false) { /*外部js加载器，页面已经加载的不会重复加载*/
@@ -221,18 +230,16 @@ if (!B) { /*PreventInitializingTwice*/
     } else {
         var ldLocalUsed = false;
     }
-    $.ft('./loading.otp.html', '', {
-        success: function (pageHtml) {
+    $.ft('./loading.otp.html')
+        .then(resp => {
             if (!ldLocalUsed) { /*如果本地已经有了就不热更新了20200808*/
-                B.hr('<loadingarea></loadingarea>', pageHtml);
-                $.ldParse(pageHtml); /*解析加载页*/
+                B.hr('<loadingarea></loadingarea>', resp);
+                $.ldParse(resp); /*解析加载页*/
             }
-            localStorage['obottle-ldpage'] = pageHtml;
-        },
-        failed: function (m) { /*Failed*/
-            console.log('LoadingPage Load Failed');
-        }
-    }, 'get', '');
+            localStorage['obottle-ldpage'] = resp;
+        }, rej => {
+            console.log('LoadingPage Load Failed -> ' + rej);
+        });
     $.script('./library.js'); /*Include Library Once*/
     $.script('./search.js'); /*Include Search.js Once*/
     window.tpHtmls = new Object();/*Prepare for the HTMLS variable.*/
@@ -400,85 +407,85 @@ if (!B) { /*PreventInitializingTwice*/
         /*模板拼接状态*/
         loadStatus: false,
         /*加载div显示状态*/
-        tpcheck: function (polling = false, contents = false) { /*template check(polling=是否轮询,ct=是否指定内容)*/
+        tpcheck: function (contents = false) { /*template check(ct=是否指定内容)*/
             let that = this;
-            if (!that.tpcheckStatus || polling) { /*防止短时间内重复检查模板20200805*/
+            if (!that.tpcheckStatus) { /*防止短时间内重复检查模板20200805*/
                 that.tpcheckStatus = true; /*正在检查模板*/
                 that.loadshow();
                 let pageType = that.gt('PageType', 'PageTypeEnd', contents); /*Get Page Type*/
-                if (!window.tpJson) {
-                    $.ft('template.json', '', {
-                        success: function (rawJson) {
-                            window.tpJson = JSON.parse(rawJson);
-                            return that.tpcheck(true, contents);
-                        },
-                        failed: function (m) { /*Failed*/
-                            console.log('TemplateJson Load Failed.');
-                        }
-                    }, 'get', '');
-                } else if (!window.mainJson && window.tpJson['usemain'].includes(pageType)) { /*Some pages are in need of Main.json*/
-                    $.ft(window.tpJson['mainjson'], '', {
-                        success: function (rawJson) {
-                            window.mainJson = JSON.parse(rawJson.replace(/[\r\n]/g, ""));
+                /*用Promise改写20220115*/
+                Promise.resolve(window.tpJson ? false : $.ft('template.json')) // 抓取template.json
+                    .then(tpJson => {
+                        if (tpJson) window.tpJson = JSON.parse(tpJson);
+                        let condition = (!window.mainJson && window.tpJson['usemain'].includes(pageType)); //有页面需要mainJson时才获取
+                        return Promise.resolve(condition ? $.ft(window.tpJson['mainjson'], '') : false); // false代表不用获取
+                    }, rej => {// 获得template.json失败
+                        throw 'TemplateJson Load Failed -> ' + rej;
+                    })
+                    .then(mainJson => {
+                        if (mainJson) {
+                            window.mainJson = JSON.parse(mainJson.replace(/[\r\n]/g, ""));
                             that.morePerPage = parseInt(window.mainJson['more_per_page']); /*Update morePerPage*/
-                            return that.tpcheck(true, contents);
-                        },
-                        failed: function (m) { /*Failed*/
-                            console.log('MainJson Load Failed');
                         }
-                    }, 'get', '');
-                } else if ($.loadingJS > 0 || !localStorage['obottle-ldpage']) { /*Make sure that JS libraries and the loadingpage are ready!*/
-                    setTimeout(function () {
-                        return that.tpcheck(true, contents);
-                    }, 25);
-                } else {
-                    that.preventScript(); /*剔除已加载scripts*/
-                    let j = window.tpJson;
-                    j['necessary'].push(pageType); /*Pagetype Pushed*/
-                    if (pageType == j['templatehtmls']['postlist']) {/*如果是文章列表页，就还需要载入单个文章列表项的模板20211020*/
-                        j['necessary'].push(j['templatehtmls']['postitem']); /*Extra Load*/
-                    }
-                    for (var i in j['necessary']) {
-                        if (that.templateLoaded.indexOf(j['necessary'][i]) == -1) {
-                            that.templateOnload += 1;
-                            let useCache = false,
-                                theCache = q('r', 'template-' + j['necessary'][i], '', '', ''),
-                                tpHtmls = window.tpHtmls; /*Test Cache*/
-                            if (theCache['c']) { /*如果有缓存，先装载缓存*/
-                                useCache = true;
-                                let tpName = j['necessary'][i];
-                                console.log('Preload the template locally: ' + tpName);
-                                tpHtmls[tpName] = theCache['c'];
-                                that.templateLoaded.push(tpName);
-                                that.templateOnload -= 1;
-                            }
-                            $.ft(j['necessary'][i], '', {
-                                success: function (rawHtml, tpName) {
-                                    tpHtmls[tpName] = rawHtml;
-                                    if (!useCache) {
-                                        that.templateLoaded.push(tpName);
-                                        that.templateOnload -= 1;
-                                        q('w', 'template-' + tpName, rawHtml, timestamp(), '');
-                                    } else if (theCache['c'] !== rawHtml) { /*缓存需要更新*/
-                                        q('w', 'template-' + tpName, rawHtml, timestamp(), '');
-                                    } else { /*增加缓存读取次数*/
-                                        q('e', 'template-' + tpName, '', '', 1);
-                                    }
-                                },
-                                failed: function (m) { /*Failed*/
-                                    console.log('Necessary HTML Load Failed...');
+                        return new Promise(res => {
+                            let poller = setInterval(() => {
+                                if ($.loadingJS <= 0 && localStorage['obottle-ldpage']) { // 保证库中的外部js和loading页面加载完全
+                                    clearInterval(poller);
+                                    res(true);
                                 }
-                            }, 'get', '');
+                            }, 25);
+                        });
+                    }, rej => {// 获得main.json失败
+                        throw 'MainJson Load Failed -> ' + rej;
+                    })
+                    .then(res => {
+                        that.preventScript(); /*剔除已加载scripts*/
+                        let j = window.tpJson;
+                        j['necessary'].push(pageType); /*Pagetype Pushed*/
+                        if (pageType == j['templatehtmls']['postlist']) {/*如果是文章列表页，就还需要载入单个文章列表项的模板20211020*/
+                            j['necessary'].push(j['templatehtmls']['postitem']); /*Extra Load*/
                         }
-                    }
-                    var timer = setInterval(function () {
-                        if (that.templateOnload <= 0) {
-                            clearInterval(timer);
-                            that.renderer(contents); /*Call the renderer*/
+                        for (var i in j['necessary']) {
+                            if (that.templateLoaded.indexOf(j['necessary'][i]) == -1) {
+                                that.templateOnload += 1;
+                                let useCache = false,
+                                    theCache = q('r', 'template-' + j['necessary'][i], '', '', ''),
+                                    tpHtmls = window.tpHtmls, /*Test Cache*/
+                                    tpName = j['necessary'][i];
+                                if (theCache['c']) { /*如果有缓存，先装载缓存*/
+                                    useCache = true;
+                                    console.log('Preload the template locally: ' + tpName);
+                                    tpHtmls[tpName] = theCache['c'];
+                                    that.templateLoaded.push(tpName);
+                                    that.templateOnload -= 1;
+                                }
+                                ((tpName) => {
+                                    $.ft(j['necessary'][i])
+                                        .then(rawHtml => {
+                                            tpHtmls[tpName] = rawHtml;
+                                            if (!useCache) {
+                                                that.templateLoaded.push(tpName);
+                                                that.templateOnload -= 1;
+                                                q('w', 'template-' + tpName, rawHtml, timestamp(), '');
+                                            } else if (theCache['c'] !== rawHtml) { /*缓存需要更新*/
+                                                q('w', 'template-' + tpName, rawHtml, timestamp(), '');
+                                            } else { /*增加缓存读取次数*/
+                                                q('e', 'template-' + tpName, '', '', 1);
+                                            }
+                                        }, rej => {
+                                            console.log('Necessary HTML Load Failed... -> ' + rej);
+                                        })
+                                })(tpName);// 闭包传递模板路径
+                            }
                         }
-                    }, 50); /*加快页面速度，我也是加把劲骑士！*/
-                    j = null; /*释放*/
-                }
+                        let poller = setInterval(function () {
+                            if (that.templateOnload <= 0) {
+                                clearInterval(poller);
+                                that.renderer(contents); /*Call the renderer*/
+                            }
+                        }, 50); /*加快页面速度，我也是加把劲骑士！*/
+                        j = null; /*释放*/
+                    });
             }
         },
         itemPage: 0,
@@ -535,7 +542,12 @@ if (!B) { /*PreventInitializingTwice*/
             let current = this.realPage;
             window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + '#' + (current > 1 ? (current - 1) : 1);
         },
+        notNumber: function (num) {
+            let pattern = /^\d+$/g;
+            return !pattern.test(num.toString());
+        },
         currentPageType: '',/*20210919记录renderer获取到的pagetype*/
+        isPost: false,//是不是页面，不是页面就是文章20220115
         renderer: function (fcontent = false) { /*(fcontent=是否指定内容)*/
             let that = this,
                 j = window.tpJson,
@@ -545,6 +557,7 @@ if (!B) { /*PreventInitializingTwice*/
                 pageTitle = (that.gt('MainTitle', 'MainTitleEnd', fcontent)).replace(/<\/?.+?>/g, ""), /*Get Page Title(No html characters)*/
                 pageType = that.gt('PageType', 'PageTypeEnd', fcontent); /*Get Page Type*/
             that.currentPageType = pageType;
+            that.isPost = false;
             if (pageType == j['templatehtmls']['post']) {
                 let content = that.deHtml(that.gt('PostContent', 'PostContentEnd', fcontent)), /*Get Post Content*/
                     title = that.gt('PostTitle', 'PostTitleEnd', fcontent), /*Get Post Title*/
@@ -559,7 +572,7 @@ if (!B) { /*PreventInitializingTwice*/
                     renders = that.r(post, 'postcontent', that.lazyPre($.mark(content.trim())), true), /*unescape and Analyse md*/
                     alltags = [];
                 renders = that.r(renders, 'posttitle', title, true);
-                if (isNaN(date)) {
+                if (that.notNumber(date)) { // 是页面
                     tags = ifPageTp;
                 } else { /*Tag Process*/
                     alltags = tags.split(',');
@@ -570,6 +583,7 @@ if (!B) { /*PreventInitializingTwice*/
                         tags += filled;
                         if (i !== (alltags.length - 1)) tags += tagsDelimiter;/*如果不是最后一个标签就加分隔部分*/
                     });
+                    that.isPost = true; // 更新属性：是文章
                 }
                 renders = that.r(renders, 'posttags', tags, true);
                 renders = that.r(renders, 'postdate', $.dt(date), true);
@@ -585,7 +599,7 @@ if (!B) { /*PreventInitializingTwice*/
                 } else { /*没有封面，按标签一起删掉*/
                     renders = that.cd(renders);
                 }
-                if (isNaN(date)) { /*不是页面，就不显示评论了*/
+                if (that.notNumber(date)) { /*是页面，就不显示评论了*/
                     let beforeEnd = renders.split('{(:PostEnd)}')[0] + '<!--PostEnd-->',
                         afterComment = '<!--Footer-->' + renders.split('{(Footer:)}')[1];
                     renders = beforeEnd + afterComment;
@@ -832,7 +846,7 @@ if (!B) { /*PreventInitializingTwice*/
                 that.hashExist = true;/*存在hash*/
                 let whichPage = href.split('#')[1] || 1;
                 if (href.indexOf('#!') == -1) {
-                    if (!isNaN(whichPage)) {
+                    if (!that.notNumber(whichPage)) {
                         let currentPage = parseInt(whichPage), pageBefore = currentPage - 1;
                         if (that.currentPageBefore !== pageBefore && that.realPage !== currentPage) {/*翻页了，这里判断realPage是为了防止more已经被用户触发了indexpagechecker再触发一遍，造成无用的资源浪费*/
                             console.log('Page change triggered by indexPageChecker <(￣︶￣)>');
@@ -1043,8 +1057,7 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
         },
         jump: function (href) {
             let eHref = encodeURIComponent(href),
-                that = this,
-                useCache = false; /*是否使用缓存*/
+                that = this;
             that.replace = that.replace || 'contentcontainer';/*默认指定contentcontainer*/
             if (that.recentUrl.indexOf('#') !== -1 && href.indexOf('#') !== -1 && that.recentUrl.split('#')[0] == href.split('#')[0]) { /*防止Tag页面的跳转问题*/
                 return false;
@@ -1059,36 +1072,28 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
                 window.scrollTo(0, 0); /*滚动到头部*/
                 if (that.loadedPage[eHref]) { /*有临时缓存*/
                     that.clearEvent(); /*清除之前的监听器*/
-                    B.tpcheck(false, that.loadedPage[eHref]); /*因为tpcheck末尾已经有loadhide，此处没必要$.aniChecker20201229*/
+                    B.tpcheck(that.loadedPage[eHref]); /*因为tpcheck末尾已经有loadhide，此处没必要$.aniChecker20201229*/
                 } else {
                     let cache = q('r', eHref, '', '', ''), cacheContent = cache['c']; /*获取缓存信息*/
                     if (cacheContent) { /*如果有缓存*/
-                        useCache = true; /*本地缓存使用模式*/
                         that.clearEvent(); /*清除之前的监听器*/
-                        B.tpcheck(false, cacheContent); /*预填装缓存*/
+                        B.tpcheck(cacheContent); /*预填装缓存*/
                     }
-                    $.ft(href, {}, {
-                        success: function (raw) {
+                    $.ft(href)
+                        .then(raw => {
                             that.recentUrl = href;
                             that.loadedPage[eHref] = raw;/*给临时缓存装载*/
-                            if (!useCache) { /*如果没有使用本地缓存就缓存传输过来的数据*/
-                                that.clearEvent(); /*清除之前的监听器*/
-                                B.tpcheck(false, raw);
+                            if (cacheContent !== raw) { /*缓存需要更新了，把新数据写入本地*/
                                 q('w', eHref, raw, timestamp(), '');
+                                that.clearEvent();/*清除之前的监听器*/
+                                B.tpcheck(raw);
                             } else {
-                                if (cacheContent !== raw) { /*缓存需要更新了，把新数据写入本地*/
-                                    q('w', eHref, raw, timestamp(), '');
-                                    that.clearEvent();
-                                    B.tpcheck(false, raw);
-                                } else {
-                                    q('e', eHref, '', '', 1); /*更新缓存读取次数*/
-                                }
-                            } /*因为tpcheck末尾已经有loadhide，此处没必要$.aniChecker20201229*/
-                        },
-                        failed: function (m) {
+                                q('e', eHref, '', '', 1); /*更新缓存读取次数*/
+                            }/*因为tpcheck末尾已经有loadhide，此处没必要$.aniChecker20201229*/
+                        }, rej => {
                             window.dispatchEvent(that.PJAXFinish);
-                        }
-                    }, 'get', '');
+                            console.log(rej);
+                        });
                 }
             });
         },
@@ -1173,33 +1178,34 @@ function q(md, k, c, t, rt) { /*(mode,key,content,timestamp,readtime)*/
         timestamp = caches[k].t;
         cache = caches[k].h;
     }
-    if (md == 'w') {/*Write*/
-        let caches = JSON.parse(localStorage.obottle),
-            cc = new Object();
-        cc.h = c;
-        cc.t = t;
-        cc.rt = 0; /*使用缓存次数*/
-        caches[k] = cc;
-        try {
-            localStorage.obottle = JSON.stringify(caches);
-        } catch (e) {
-            for (var d in caches) {
-                if (Number(caches[d].rt) <= 20 || Number(t) - Number(caches[d].t) >= 172800) { /*自动清理本地储存空间*/
-                    delete caches[d];
+    switch (md) {
+        case 'w':/*Write*/
+            let cc = new Object();
+            cc.h = c;
+            cc.t = t;
+            cc.rt = 0; /*使用缓存次数*/
+            caches[k] = cc;
+            try {
+                localStorage.obottle = JSON.stringify(caches);
+            } catch (e) {
+                for (var d in caches) {
+                    if (Number(caches[d].rt) <= 20 || Number(t) - Number(caches[d].t) >= 172800) { /*自动清理本地储存空间*/
+                        delete caches[d];
+                    }
                 }
+                localStorage.obottle = JSON.stringify(caches);
             }
+            break;
+        case 'r':/*Read*/
+            rs = {
+                t: timestamp,
+                c: cache
+            };
+            return rs;
+        case 'e':/*Edit*/
+            caches[k].rt = Number(caches[k].rt) + rt;
             localStorage.obottle = JSON.stringify(caches);
-        }
-    } else if (md == 'r') {/*Read*/
-        rs = {
-            t: timestamp,
-            c: cache
-        };
-        return rs;
-    } else if (md == 'e') {/*Edit*/
-        let caches = JSON.parse(localStorage.obottle);
-        caches[k].rt = Number(caches[k].rt) + rt;
-        localStorage.obottle = JSON.stringify(caches);
+            break;
     }
 }
 function timestamp() {/*GetTimestamp*/

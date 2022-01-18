@@ -6,8 +6,8 @@ B.searchInj = (postIndexes, searchWord, localArr) => {
     return new Promise(res => {
         if (B.githubRepo) {
             let queryString = encodeURIComponent(searchWord) + "+in:file+language:html+repo:" + B.githubRepo;
-            $.ft("https://api.github.com/search/code?q=" + queryString, {}, {
-                success: (j) => {
+            $.ft("https://api.github.com/search/code?q=" + queryString)
+                .then(j => {
                     let rs = JSON.parse(j), items = rs['items'], resultArr = localArr;
                     for (var o in items) {
                         processed = items[o]["name"].replace("post-", "").replace(".html", "");
@@ -20,11 +20,10 @@ B.searchInj = (postIndexes, searchWord, localArr) => {
                         }
                     }
                     res(resultArr);/*回调的是搜索出的文章ID组成的数组和本地数组结合的结果*/
-                }, failed: (j) => {
+                }, rej => {
                     res(localArr);/*失败了也要返回*/
-                    console.log('API Search failed.')
-                }
-            }, 'get', '');
+                    console.log('API Search failed. -> ' + rej);
+                })
         } else {
             res(localArr);
         }
