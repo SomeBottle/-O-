@@ -10,19 +10,18 @@ var mark = function (content) {
         })
         .render(content);
 }
-var editpost = 'none';
-var tpjs = JSON.parse(window.tjson); /*编辑的文章*/
-renderlist(); /*渲染最新文章列表*/
-loadhide();
-var choose = 0;
-var timer;
+var editPost = 'none',
+    tpjs = JSON.parse(window.tJson), // 这样防止tpjs直接挂上tJson的引用导致问题(某种意义上的深复制)
+    choice = 0,
+    timer;
+renderList(); /*渲染最新文章列表*/
 
-function rmj() { /*获得随机的mainjson文件名*/
-    var str = Math.random().toString(36).substr(5);
+function randomMJ() { /*获得随机的mainJson文件名*/
+    let str = Math.random().toString(36).substring(5);
     return 'main.' + str + '.json';
 }
 
-function getdate() { /*获得今天日期*/
+function getDate() { /*获得今天日期*/
     var dt = new Date();
     var month = dt.getMonth() + 1,
         day = dt.getDate();
@@ -35,72 +34,62 @@ function getdate() { /*获得今天日期*/
     return dt.getFullYear() + month.toString() + day.toString();
 }
 var B = { /*Replace Part*/
-    r: function (a, o, p, tp = false, g = true) { /*(All,Original,ReplaceStr,IfTemplate(false,'[','('),IfReplaceAll)*/
-        if (a) {
-            if (tp) {
-                a = (tp == '(') ? a.replace(new RegExp('\\{\\(' + o + '\\)\\}', (g ? 'g' : '') + 'i'), () => p) : a.replace(new RegExp('\\{\\[' + o + '\\]\\}', (g ? 'g' : '') + 'i'), () => p); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
-            } else if (g) {
-                while (a.indexOf(o) !== -1) {
-                    a = a.replace(o, p);
-                }
-            } else {
-                a = a.replace(o, p);
+    r: function (origin, from, to, forTemplate = false, replaceAll = true) { /*别改这里！，没有写错！(All,Original,ReplaceStr,IfTemplate[false,'['(true),'('],IfReplaceAll)*/
+        if (forTemplate) {
+            origin = (forTemplate == '(') ? origin.replace(new RegExp('\\{\\(' + from + '\\)\\}', (replaceAll ? 'g' : '') + 'i'), () => to) : origin.replace(new RegExp('\\{\\[' + from + '\\]\\}', (replaceAll ? 'g' : '') + 'i'), () => to); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
+        } else if (replaceAll) {
+            while (origin.indexOf(from) !== -1) {
+                origin = origin.replace(from, to);
             }
-        }
-        return a;
-    },
-    gt: function (p1, p2, ct = false, ntp = false) { /*htmlget(between,and,content,NotTemplate=false)*/
-        var e;
-        if (!ct) {
-            e = document.getElementsByTagName('html')[0].innerHTML;
         } else {
-            e = ct;
+            origin = origin.replace(from, to);
         }
-        try { /*ntp=false，也就是模板中匹配的时候，默认匹配{(xxx)}和{(xxx)}之间的内容*/
-            var k = ntp ? e.split(p1)[1] : e.split(new RegExp('\\{\\(' + p1 + '\\)\\}', 'i'))[1]; /*正则支持大小写忽略*/
-            var d = ntp ? k.split(p2)[0] : k.split(new RegExp('\\{\\(' + p2 + '\\)\\}', 'i'))[0];
-            return d;
+        return origin;
+    },
+    gt: function (between, and, useContent = false, notTemplate = false) { /*htmlget(between,and,content,NotTemplate=false)*/
+        let element = useContent ? useContent : SC('html').innerHTML;
+        try { /*notTemplate=false，也就是模板中匹配的时候，默认匹配{(xxx)}和{(xxx)}之间的内容*/
+            let contentAfter = notTemplate ? element.split(between)[1] : element.split(new RegExp('\\{\\(' + between + '\\)\\}', 'i'))[1], /*正则支持大小写忽略*/
+                contentBetween = notTemplate ? contentAfter.split(and)[0] : contentAfter.split(new RegExp('\\{\\(' + and + '\\)\\}', 'i'))[0];
+            return contentBetween;
         } catch (e) {
             return false;
         }
     }
 }
 
-function renderlist() {
-    var tj = JSON.parse(Base64.decode(window.mainjson.content.replace(/[\r\n]/g, ""))); /*获得json*/
-    var rendertp = '';
-    var nowrender = 0;
-    var maxrender = 8; /*最多加载多少最新文章*/
-    for (var i in tj['dateindex']) {
-        if (nowrender >= maxrender) {
+function renderList() {
+    let mj = JSON.parse(window.mainJson), /*获得json*/
+        renderTp = '',
+        nowRender = 0,
+        maxRender = 8; /*最多加载多少最新文章*/
+    for (let i in mj['dateindex']) { // 找最新的几篇文章
+        if (nowRender >= maxRender) {
             break;
         }
-        var id = parseInt(i.replace('post', ''));
-        var title = Base64.decode(tj['postindex'][id]['title']);
-        rendertp += "<p class='postitemp'><a class='postitema' href='javascript:void(0);' onclick='postopen(" + id + ")'>" + title + "</a></p>";
-        nowrender += 1;
+        let id = parseInt(i.replace('post', '')),
+            title = Base64.decode(mj['postindex'][id]['title']);
+        renderTp += "<p class='postitemp'><a class='postitema' href='javascript:void(0);' onclick='postOpen(" + id + ")'>" + title + "</a></p>";
+        nowRender += 1;
     }
-    if (rendertp == '') {
-        rendertp += '<p class=\'postitemp\'><a class=\'postitema\' href=\'javascript:void(0);\'>还没有文章呢</a></p>';
+    if (renderTp == '') {
+        renderTp += '<p class=\'postitemp\'><a class=\'postitema\' href=\'javascript:void(0);\'>还没有文章呢</a></p>';
     }
-    SC('rp').innerHTML = rendertp;
+    SC('rp').innerHTML = renderTp;
 }
 
-function eswitch() {
-    choose += 1;
-    if (choose >= 8) {
-        choose = 8;
-    }
-    if (choose == 5) {
+function chooseSth() {
+    choice += 1;
+    if (choice == 5) {
         SC('fbtn').style.backgroundColor = '#FA5858';
     } else {
         SC('fbtn').style.backgroundColor = '#0080ff';
     }
-    var txt = new Array('编辑/发布', '预览', '保存草稿', '读取草稿', '删除', '预览前置', '生成归档', '取消');
-    SC('fbtn').innerHTML = txt[choose - 1];
+    let txt = new Array('编辑/发布', '预览', '保存草稿', '读取草稿', '删除', '预览前置', '生成归档', '取消');
+    SC('fbtn').innerHTML = txt[choice - 1] || txt.slice(-1);
     clearTimeout(timer);
     timer = setTimeout(function () {
-        switch (choose) {
+        switch (choice) {
             case 1:
                 edit();
                 console.log('编辑/发布');
@@ -111,19 +100,19 @@ function eswitch() {
                 break;
             case 3:
                 console.log('保存草稿');
-                tempsave();
+                tempSave();
                 break;
             case 4:
                 console.log('读取草稿');
-                readsave();
+                readSave();
                 break;
             case 5:
                 console.log('删除');
-                if (editpost == 'none') {
+                if (editPost == 'none') {
                     notice('现在没有编辑任何文章');
                 } else {
                     if (confirm('真的要删除当前文章吗？！')) {
-                        delpost(editpost);
+                        delPost(editPost);
                     }
                 }
                 break;
@@ -133,25 +122,24 @@ function eswitch() {
                 break;
             case 7:
                 console.log('生成归档');
-                tagarchive();
+                tagArchive();
                 break;
-            case 8:
+            default: // 2022.1.17
                 console.log('取消');
                 break;
         }
         SC('fbtn').innerHTML = 'O_o?';
         SC('fbtn').style.backgroundColor = '#0080ff';
-        choose = 0;
-    },
-        1000);
+        choice = 0;
+    }, 1000);
 }
-function scriptrestore(h) {/*script标签去注释，用上正则2021.11.6*/
+function scriptRestore(h) {/*script标签去注释，用上正则2021.11.6*/
     return h.replace(new RegExp('(<script[\\s\\S]*?>)(?:\\/\\*)([\\s\\S]*?)(?:\\*\\/)(<\/script>)', 'gi'), (match, p1, p2, p3) => {
         return p1 + p2 + p3;
     });
 }
-function scriptcutter(h) { /*处理script标签，用上正则2021.11.6*/
-    return scriptrestore(h).replace(new RegExp('(<script[\\s\\S]*?>)([\\s\\S]*?)(<\/script>)', 'gi'), (match, p1, p2, p3) => {
+function scriptCutter(h) { /*处理script标签，用上正则2021.11.6*/
+    return scriptRestore(h).replace(new RegExp('(<script[\\s\\S]*?>)([\\s\\S]*?)(<\/script>)', 'gi'), (match, p1, p2, p3) => {
         return p2.trim() ? p1 + '/*' + p2 + '*/' + p3 : match;
     });
 }
@@ -160,94 +148,81 @@ function beforePreviewHtml() {
     let getPre = prompt('请输入你在预览body部分中要插入的前置html\n（用于文章中需要外部js库的脚本预览)', localStorage.OBeforePreview);
     localStorage.OBeforePreview = getPre;
 }
-function enhtml(h) { /*转义html*/
+function enHtml(h) { /*转义html*/
     var temp = h.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     return temp;
 }
 
-function dehtml(h) { /*反转义html*/
+function deHtml(h) { /*反转义html*/
     var temp = h.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#039;/g, "\'").replace(/&quot;/g, "\"");
     return temp;
 }
 
-function tagarchive() { /*生成tag和归档页面*/
-    var pageh1 = tpjs['templatehtmls']['tags']; /*获得配置的页面链接，默认tags.html*/
-    var pageh2 = tpjs['templatehtmls']['archives']; /*获得配置的页面链接，默认archives.html*/
-    var pageg1 = tpjs['generatehtmls']['tags']; /*获得配置的页面链接，默认tag.html*/
-    var pageg2 = tpjs['generatehtmls']['archives']; /*获得配置的页面链接，默认archive.html*/
-    var tj = JSON.parse(Base64.decode(window.mainjson.content.replace(/[\r\n]/g, ""))); /*获得json*/
-    var m = window.htmls['index.html']; /*Tags*/
-    var rendert1 = B.r(m, 'title', 'Tags', true);
-    rendert1 = B.r(rendert1, 'titlemiddle', '-', true);
-    var rendert2 = B.r(rendert1, 'sitename', tj['name'], true);
-    var rendert3 = B.r(rendert2, 'keywords', tj['name'] + ',tag', true);
-    var rendert4 = B.r(rendert3, 'description', 'Tag Page', true);
-    var rendert5 = B.r(rendert4, 'type', pageh1, true); /*Archives*/
-    var rendera1 = B.r(m, 'title', 'Archives', true);
-    rendera1 = B.r(rendera1, 'titlemiddle', '-', true);
-    var rendera2 = B.r(rendera1, 'sitename', tj['name'], true);
-    var rendera3 = B.r(rendera2, 'keywords', tj['name'] + ',archive', true);
-    var rendera4 = B.r(rendera3, 'description', 'Archive Page', true);
-    var rendera5 = B.r(rendera4, 'type', pageh2, true);
+function tagArchive() { /*生成tag和归档页面*/
+    let tagPageTp = tpjs['templatehtmls']['tags'], /*获得配置的页面模板名字，默认tags.otp.html*/
+        arcPageTp = tpjs['templatehtmls']['archives'], /*获得配置的页面模板名，默认archives.otp.html*/
+        tagPagePath = tpjs['generatehtmls']['tags'], /*获得配置的页面文件名，默认tag.html*/
+        arcPagePath = tpjs['generatehtmls']['archives'], /*获得配置的页面文件名，默认archive.html*/
+        repo = window.githubRepo,
+        mj = JSON.parse(window.mainJson), /*获得json*/
+        mainTp = window.htmls['index.html'], /*Tags*/
+        renderTg = B.r(mainTp, 'title', 'Tags', true),
+        renderArc = B.r(mainTp, 'title', 'Archives', true);
+    renderTg = B.r(renderTg, 'titlemiddle', '-', true);
+    renderTg = B.r(renderTg, 'sitename', mj['name'], true);
+    renderTg = B.r(renderTg, 'keywords', mj['name'] + ',tag', true);
+    renderTg = B.r(renderTg, 'description', 'Tag Page', true);
+    renderTg = B.r(renderTg, 'type', tagPageTp, true); /*Archives*/
+    renderArc = B.r(renderArc, 'titlemiddle', '-', true);
+    renderArc = B.r(renderArc, 'sitename', mj['name'], true);
+    renderArc = B.r(renderArc, 'keywords', mj['name'] + ',archive', true);
+    renderArc = B.r(renderArc, 'description', 'Archive Page', true);
+    renderArc = B.r(renderArc, 'type', arcPageTp, true);
     if (confirm('确定要生成标签和归档页面？')) {
-        loadshow();
-        new Promise((res, rej) => {
-            blog.cr(window.accesstoken, window.githubrepo, rendert5, {
-                success: (m) => {
-                    let treeconstruct = [];
-                    treeconstruct.push({
-                        "path": pageg1,
-                        "mode": "100644",
-                        "type": "blob",
-                        "sha": m.sha
-                    });
-                    res(treeconstruct);
-                }, failed: (m) => {
-                    notice('生成失败', true);
-                    loadhide();
-                }
-            })
-        }).then((data) => {
-            return new Promise((res, rej) => {
-                blog.cr(window.accesstoken, window.githubrepo, rendera5, {
-                    success: (m) => {
-                        data.push({
-                            "path": pageg2,
-                            "mode": "100644",
-                            "type": "blob",
-                            "sha": m.sha
-                        });
-                        res(data);
-                    }, failed: (m) => {
-                        notice('生成失败', true);
-                        loadhide();
-                    }
-                })
-            })
-        }).then((data) => {
-            blog.gpush(window.accesstoken, window.githubrepo, data, "Add Archives Page and Tags Page", {
-                success: (m) => {
-                    notice('生成成功');
-                    loadhide();
-                }, failed: (m) => {
-                    notice('生成push失败', true);
-                    loadhide();
-                }
+        loadShow();
+        blog.crBlob(repo, renderTg).then(resp => {
+            let treeConstruct = [];
+            treeConstruct.push({
+                'path': tagPagePath,
+                'mode': '100644',
+                'type': 'blob',
+                'sha': resp.sha
             });
+            return Promise.resolve(treeConstruct);
+        }, rej => {
+            throw rej;
+        }).then(treeConstruct => {
+            return blog.crBlob(repo, renderArc).then(resp => {
+                treeConstruct.push({
+                    'path': arcPagePath,
+                    'mode': '100644',
+                    'type': 'blob',
+                    'sha': resp.sha
+                });
+                return Promise.resolve(treeConstruct);
+            }, rej => {
+                throw rej;
+            });
+        }).then(treeConstruct => {
+            blog.gPush(repo, treeConstruct, 'Add Archives Page and Tags Page').then(resp => {
+                notice('标签和归档页面生成成功！');
+                loadHide();
+            }, rej => {
+                throw rej;
+            });
+        }).catch(e => {
+            notice('生成失败', true);
+            loadHide();
         });
     }
 }
 
-function covercutter(rc) { /*从内容中去除所有<ifcover>的部分*/
-    var rst = rc;
-    while (rst.indexOf('<ifcover>') !== -1) {
-        var coverhtml = B.gt('<ifcover>', '</ifcover>', rst, true);
-        rst = B.r(rst, '<ifcover>' + coverhtml + '</ifcover>', ''); /*没有封面图就删掉整段*/
-    }
-    return rst;
+function coverCutter(rc) { /*从内容中去除所有<ifcover>的部分*/
+    let pattern = new RegExp('<ifcover.*?>(.*?)</ifcover.*?>', 'gis');
+    return rc.replaceAll(pattern, '');
 }
 
-function transdate(v) { /*date transformer*/
+function transDate(v) { /*date transformer*/
     let dt = String(v),
         md = dt.slice(-4),
         d = md.slice(-2),
@@ -257,63 +232,62 @@ function transdate(v) { /*date transformer*/
     return changed;
 }
 
-function indexrenderer(js) {
-    var pageh = tpjs['templatehtmls']['postlist']; /*获得配置的页面链接，默认postlist.html*/
-    /*首页渲染者*/
-    var tj = js;
-    var m = window.htmls['index.html'];
-    var item = window.htmls['postitem.html'];
-    item = B.gt('PostItem', 'PostItemEnd', item); /*有项目的模板*/
-    var postids = tj['dateindex'];
-    var listrender = '';
-    var maxrender = parseInt(tj['posts_per_page']); /*每页最大渲染数*/
-    var nowrender = 0;
-    for (var i in postids) {
-        if (nowrender < maxrender) {
-            var pid = i.replace('post', '');
-            var pt = tj['postindex'][pid];
+function indexRenderer(mj) { // 首页渲染者
+    let pageTp = tpjs['templatehtmls']['postlist'], /*获得配置的页面模板名，默认postlist.otp.html*/
+        mainTp = window.htmls['index.html'],
+        itemTp = window.htmls['postitems.html'],
+        postIDs = mj['dateindex'],
+        listRender = '',
+        maxRender = parseInt(mj['posts_per_page']), /*每页最大渲染数*/
+        nowRender = 0;
+    itemTp = B.gt('PostItem', 'PostItemEnd', itemTp); /*有项目的模板*/
+    for (let i in postIDs) {
+        if (nowRender < maxRender) {
+            let pid = i.replace('post', ''),
+                pt = mj['postindex'][pid];
             if (!pt['link']) { /*排除页面在外*/
-                var render1 = B.r(item, 'postitemtitle', Base64.decode(pt.title), true);
-                var render2 = B.r(render1, 'postitemintro', Base64.decode(pt.intro) + '...', true);
-                var render3 = B.r(render2, 'postitemdate', transdate(pt.date), true);
-                var render35 = B.r(render3, 'postitemtags', pt.tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
-                var render4 = B.r(render35, 'postitemlink', 'post-' + pid + '.html', true);
+                let render = B.r(itemTp, 'postitemtitle', Base64.decode(pt.title), true);
+                render = B.r(render, 'postitemintro', Base64.decode(pt.intro) + '...', true);
+                render = B.r(render, 'postitemdate', transDate(pt.date), true);
+                render = B.r(render, 'postitemtags', pt.tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
+                render = B.r(render, 'postitemlink', 'post-' + pid + '.html', true);
                 if (pt['cover']) {
-                    render4 = B.r(render4, 'postcover', pt['cover'], true); /*如果有封面图就渲染一下*/
+                    render = B.r(render, 'postcover', pt['cover'], true); /*如果有封面图就渲染一下*/
                 } else {
-                    render4 = covercutter(render4); /*没有封面图就删掉整段*/
+                    render = coverCutter(render); /*没有封面图就删掉整段*/
                 }
-                listrender += render4; /*渲染到列表模板*/
+                listRender += render; /*渲染到列表模板*/
             } else {
-                nowrender -= 1;
+                nowRender -= 1; // 是页面就不算入渲染数量
             }
-            nowrender += 1;
+            nowRender += 1;
         } else {
             break;
         }
     }
-    var renderi1 = B.r(m, 'title', '', true);
-    renderi1 = B.r(renderi1, 'titlemiddle', '', true);
-    var renderi2 = B.r(renderi1, 'description', '', true);
-    var renderi3 = B.r(renderi2, 'keywords', tj['name'], true); /*站点名字加入keywords*/
-    var renderi4 = B.r(renderi3, 'type', pageh, true);
-    var renderi5 = B.r(renderi4, 'sitename', tj['name'], true); /*设定title*/
-    var renderi6 = B.r(renderi5, 'content', enhtml(listrender), true); /*注入灵魂*/
-    return renderi6;
+    let renderm = B.r(mainTp, 'title', '', true);
+    renderm = B.r(renderm, 'titlemiddle', '', true);
+    renderm = B.r(renderm, 'description', '', true);
+    renderm = B.r(renderm, 'keywords', mj['name'], true); /*站点名字加入keywords*/
+    renderm = B.r(renderm, 'type', pageTp, true);
+    renderm = B.r(renderm, 'sitename', mj['name'], true); /*设定title*/
+    renderm = B.r(renderm, 'content', enHtml(listRender), true); /*注入灵魂*/
+    return renderm;
 }
 
-function tempsave() {
-    var title = SC('title').value;
-    var date = SC('date').value;
-    var tag = SC('tag').value;
-    var content = SC('content').value;
+function tempSave() { // 保存草稿
+    let title = SC('title').value,
+        date = SC('date').value,
+        tag = SC('tag').value,
+        content = SC('content').value;
 
     function putter(key, value) { /*放值器20200808*/
-        var j = localStorage[key] || '[]',
+        let j = localStorage[key] || '[]',
             pj = JSON.parse(j),
-            savev = {};
-        savev['v'] = value;
-        savev['t'] = new Date();
+            savev = {
+                'v': value,
+                't': new Date()
+            };
         if (pj.length >= 10) { /*草稿数量保持在十个内*/
             pj.shift();
         }
@@ -327,485 +301,430 @@ function tempsave() {
     notice('保存成功');
 }
 
-function readsave() {
+function readSave() {
     function getter(key, pkey = false) { /*取值器20200808*/
-        var j = localStorage[key] || '[]',
+        let j = localStorage[key] || '[]',
             pj = JSON.parse(j);
         if (parseInt(pkey) >= 0) return pj[pkey] || false
         else return pj;
     }
-    var askword = '',
-        alld = getter('otitle');
-    for (var i in alld) askword += '序号:' + i + ' 保存时间:' + alld[i]['t'] + '\n';
-    var t = parseInt(prompt('请输入要读取的草稿序号\n' + askword + '\n\n这会覆盖你目前的内容', '')),
-        value = getter('otitle', t);
-    if (value && t >= 0) {
+    let askWords = '',
+        drafts = getter('otitle');
+    for (let i in drafts) askWords += '序号:' + i + ' 保存时间:' + drafts[i]['t'] + '\n';
+    let draftNo = parseInt(prompt('请输入要读取的草稿序号\n' + askWords + '\n\n这会覆盖你目前的内容', '')),
+        value = getter('otitle', draftNo);
+    if (value && draftNo >= 0) {
         SC('title').value = value['v'];
-        SC('date').value = getter('odate', t)['v'];
-        SC('tag').value = getter('otag', t)['v'];
-        SC('content').value = getter('ocontent', t)['v'];
+        SC('date').value = getter('odate', draftNo)['v'];
+        SC('tag').value = getter('otag', draftNo)['v'];
+        SC('content').value = getter('ocontent', draftNo)['v'];
     } else {
         notice('无此草稿');
     }
 }
 
 function preview() {
-    var content = SC('content').value, sc = B.r(content, '/*', '');
-    sc = B.r(sc, '*/', '');
+    var content = SC('content').value, restored = scriptRestore(content);
     /*SC('sbr').style.zIndex = 50;
     SC('sbr').style.opacity = 1;
-    SC('sbr').innerHTML = '<a class=\'closebtn\' href=\'javascript:void(0);\' onclick=\'sbrclose()\'>×<\/a><h2>Preview:<\/h2><style>img{max-width:100%;}</style>' + md.makeHtml(content);*/
-    var prwindow = window.open('');
-    prwindow.opener = null;
-    prwindow.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown-light.css' rel="stylesheet" /></head><body>${localStorage.OBeforePreview || ''}<div class='markdown-body'>${mark(sc)}</div></body>`);
-    prwindow.document.close();
+    SC('sbr').innerHTML = '<a class=\'closebtn\' href=\'javascript:void(0);\' onclick=\'sbrClose()\'>×<\/a><h2>Preview:<\/h2><style>img{max-width:100%;}</style>' + md.makeHtml(content);*/
+    let preWin = window.open('');
+    preWin.opener = null;
+    preWin.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown-light.css' rel="stylesheet" /></head><body>${localStorage.OBeforePreview || ''}<div class='markdown-body'>${mark(restored)}</div></body>`);
+    preWin.document.close();
 }
 
-function coverdrawer() { /*提取当前content的封面图片*/
-    return B.gt('-[cover:', ']-', SC('content').value, true);
+function coverDrawer() { /*提取当前content的封面图片*/
+    let matching = new RegExp('<!-+?\\[cover:(.*?)\\]-+?>', 'gis').exec(SC('content').value);
+    return matching ? matching[1] : '';
 }
 
 function edit() {
-    window.editprogress = 'doing'; /*设定发布/编辑状态-正在发布*/
-    var pageh = tpjs['templatehtmls']['post']; /*获得配置的页面链接，默认post.html*/
-    var title = SC('title').value;
-    if (title.match(/^[ ]+$/) || title == '') {
+    let postTp = tpjs['templatehtmls']['post'], /*获得配置的页面模板名，默认post.otp.html*/
+        title = SC('title').value,
+        date = SC('date').value,
+        tag = SC('tag').value,
+        content = scriptCutter(SC('content').value),
+        ifPage = false;/*是否是页面*/
+    if (!$.notEmpty(title)) {
         notice('标题不能为空哦');
         return false;
     }
-    var date = SC('date').value;
-    if (date.match(/^[ ]+$/) || date == '') {
-        date = getdate();
+    if (!$.notEmpty(date)) { // 如果日期为空就选用默认日期
+        date = getDate();
     }
-    var tag = SC('tag').value;
-    var content = scriptcutter(SC('content').value); /*scriptcutter先处理一下*/
-    var ifpage = false; /*是否是页面*/
-    if (isNaN(date)) {
-        ifpage = true;
-        if (tpjs.alltp.indexOf(date + '.html') !== -1) {
+    if (!$.isDate(date)) { // 判断是不是页面
+        ifPage = true;
+        if (tpjs.alltp.includes(date + '.html')) {
             notice('链接名与模板重复！');
             notice('请更换');
             return false; /*跳出函数*/
         }
         tag = ''; /*页面不显示标签*/
     }
-    var intro = ((((mark(content)).replace(/<\/?.+?>/g, "")).substring(0, 100)).replace(/[ ]/g, "")).replace(/[\r\n]/g, ""); /*防止回车造成的json解析失败*/
+    let intro = (((mark(content).replace(/<\/?.+?>/g, "")).substring(0, 100)).replace(/[ ]/g, "")).replace(/[\r\n]/g, ""); // 提取文章前面小部分作为intro
     if (content.length >= 70) {
         intro += '...';
     }
     if (confirm('真的要发布嘛？')) {
-        var tj = JSON.parse(Base64.decode(window.mainjson.content.replace(/[\r\n]/g, ""))); /*获得json*/
-        var m = window.htmls['index.html']; /*RenderArea*/
-        var render1 = B.r(m, 'title', title, true);
-        render1 = B.r(render1, 'titlemiddle', '-', true);
-        var render2 = B.r(render1, 'date', date, true);
-        var render3 = B.r(render2, 'tags', tag, true);
-        var render4 = B.r(render3, 'content', enhtml(content), true);
-        var render5 = B.r(render4, 'description', intro.replace(/<\/?.+?>/g, ""), true); /*去除html标签作为description*/
-        var render6 = B.r(render5, 'keywords', tag + ',' + tj['name'], true); /*站点名字加入keywords*/
-        var render7 = B.r(render6, 'type', pageh, true);
-        var render8 = B.r(render7, 'sitename', tj['name'], true); /*设定title*/
+        let mj = JSON.parse(window.mainJson), /*获得mainjson*/
+            mainTp = window.htmls['index.html'], /*RenderArea*/
+            render = B.r(mainTp, 'title', title, true);
+        render = B.r(render, 'titlemiddle', '-', true);
+        render = B.r(render, 'date', date, true);
+        render = B.r(render, 'tags', tag, true);
+        render = B.r(render, 'content', enHtml(content), true);
+        render = B.r(render, 'description', intro, true); /*去除html标签作为description*/
+        render = B.r(render, 'keywords', tag + ',' + mj['name'], true); /*站点名字加入keywords*/
+        render = B.r(render, 'type', postTp, true);
+        render = B.r(render, 'sitename', mj['name'], true); /*设定title*/
         /*RenderFinish*/
-        if (tj[0] == 'initialized') { /*删除默认内容*/
-            delete tj[0];
+        if (mj[0] == 'initialized') { /*删除默认内容*/
+            delete mj[0];
         } /*处理文章索引*/
-        if (!tj['postnum']) { /*未初始化*/
-            tj['postnum'] = 0;
+        if (!mj['postnum']) { // 初始化文章数量
+            mj['postnum'] = 0;
         }
-        if (!tj['postindex']) {
-            tj['postindex'] = new Object();
+        if (!mj['postindex']) { // 初始化文章索引
+            mj['postindex'] = new Object();
         }
-        if (!tj['dateindex'] || typeof (tj['dateindex']) !== 'object') {
-            tj['dateindex'] = new Object();
+        if (!mj['dateindex'] || typeof (mj['dateindex']) !== 'object') { // 初始化日期索引
+            mj['dateindex'] = new Object();
         }
-        var nownum = tj['postnum'];
-        var commit = 'New post';
-        if (editpost !== 'none') { /*是发布，还是编辑？*/
-            nownum = editpost;
+        let currentNo = mj['postnum'], // 目前的文章序号
+            commit = 'New post'; // Commit内容
+        if (editPost !== 'none') { /*是发布，还是编辑？*/
+            currentNo = editPost;
             commit = 'Edit post';
         } else {
-            tj['postnum'] += 1;
+            mj['postnum'] += 1; // 文章数量+1
         }
-        var render9 = B.r(render8, 'pid', nownum, true); /*设定pid*/
+        render = B.r(render, 'pid', currentNo, true); /*设定pid*/
         /*Render---------------------*/
-        var pagelink = ''; /*指定编辑的页面的link(不带.html)*/
-        if (ifpage) { /*如果是页面直接获取当前时间*/
-            pagelink = date;
-            date = getdate();
+        let pageLink = ''; /*指定编辑的页面的link(不带.html)*/
+        if (ifPage) { /*如果是页面直接获取当前时间*/
+            pageLink = date; // 此时日期一栏填的是页面链接
+            date = getDate();
         }
-        tj['dateindex']['post' + nownum] = date + nownum.toString(); /*利用date进行排序*/
+        mj['dateindex']['post' + currentNo] = date + currentNo.toString(); /*利用date进行排序*/
         /*排查日期序列最长length*/
-        var maxdatelength = 0;
-        for (var i in tj['dateindex']) {
-            var lens = (tj['dateindex'][i]).toString().length;
-            if (lens > maxdatelength) {
-                maxdatelength = lens;
+        let maxDateLen = 0;
+        for (let i in mj['dateindex']) {
+            var lens = (mj['dateindex'][i]).toString().length;
+            if (lens > maxDateLen) {
+                maxDateLen = lens;
             }
         } /*自动补全日期序列不足的*/
-        for (var i in tj['dateindex']) {
-            var ndt = tj['dateindex'][i];
+        for (let i in mj['dateindex']) {
+            var ndt = mj['dateindex'][i];
             var lens = (ndt).toString().length;
-            if (lens < maxdatelength) {
+            if (lens < maxDateLen) {
                 var pid = (i.replace('post', '')).toString();
-                var leftlen = maxdatelength - lens;
+                var leftlen = maxDateLen - lens;
                 var st = 0;
                 var zeroes = '';
                 while (st < leftlen) {
                     zeroes += (0).toString();
                     st += 1;
                 }
-                var datelength = getdate().toString().length; /*千年虫？*/
+                var datelength = getDate().toString().length; /*千年虫？*/
                 var ldt = ndt.toString().substring(0, datelength);
                 var rdt = ndt.toString().substring(lens - pid.length); /*先把日期和pid拆解*/
                 var rpid = rdt.toString().replace(pid, zeroes + pid); /*单独处理pid,位数不够，用零来凑*/
-                tj['dateindex'][i] = parseInt(ldt + rpid);
+                mj['dateindex'][i] = parseInt(ldt + rpid);
             }
         }
         var datearray = new Array();
-        for (var dts in tj['dateindex']) {
-            datearray.push(Array(dts, parseInt(tj['dateindex'][dts]))); /*转二维数组*/
+        for (var dts in mj['dateindex']) {
+            datearray.push(Array(dts, parseInt(mj['dateindex'][dts]))); /*转二维数组*/
         }
-        tj['dateindex'] = new Object();
+        mj['dateindex'] = new Object();
         datearray = (datearray.sort(function (a, b) {
             return a[1] - b[1];
         })).reverse(); /*二维数组排序，感谢Ghosin*/
         window.testarray = datearray;
         for (var d in datearray) { /*丢回对象*/
             var ditem = datearray[d];
-            tj['dateindex'][ditem[0]] = ditem[1];
+            mj['dateindex'][ditem[0]] = ditem[1];
         }
-        var recentlink = ''; /*如果是页面，储存修改之前的页面名*/
-        if (editpost !== 'none' && !ifpage && tj['postindex'][nownum]['link']) { /*不能将页面转为文章*/
-            notice('你正在编辑页面');
-            notice('不能转为文章');
-            return false; /*跳出函数*/
-        }
-        if (editpost !== 'none' && ifpage) {
-            recentlink = tj['postindex'][nownum]['link'];
-            if (!recentlink) { /*不能将文章转为页面*/
+        let recentLink = '', /*如果是页面，储存修改之前的页面名*/
+            currentPostObj = mj['postindex'][currentNo] || new Object(); // 目前正在操作的postindex对象
+        if (editPost !== 'none') {
+            recentLink = currentPostObj['link'] || '';
+            if (!ifPage && recentLink) {
+                notice('你正在编辑页面');
+                notice('不能转为文章');
+                return false; /*跳出函数*/
+            } else if (ifPage && !recentLink) {
                 notice('你正在编辑文章');
                 notice('不能转为页面');
                 return false; /*跳出函数*/
             }
         }
-        tj['postindex'][nownum] = new Object();
-        tj['postindex'][nownum]['title'] = Base64.encode(title);
-        tj['postindex'][nownum]['date'] = date;
-        var pcover = coverdrawer(); /*文章封面支持20190810*/
-        if (pcover) {
-            tj['postindex'][nownum]['cover'] = pcover; /*储存文章封面*/
-            var rp = '';
-            if (pcover == 'none' && tj['postindex'][nownum]['cover']) {
-                delete tj['postindex'][nownum]['cover']; /*如果是none就删除文章封面*/
-                rp = '';
+        currentPostObj = {
+            'title': Base64.encode(title),
+            'date': date,
+            'intro': Base64.encode(intro),
+            'tags': tag
+        };
+        let editCover = coverDrawer(); /*文章封面支持20190810*/
+        if (editCover) { // 编辑器里指定了封面
+            currentPostObj['cover'] = editCover; /*储存文章封面*/
+            if (editCover == 'none' && currentPostObj['cover']) {
+                delete currentPostObj['cover']; /*如果是none就删除文章封面*/
             }
-            render9 = B.r(render9, 'cover', pcover, true); /*设定封面(此处会有none值)*/
+            render = B.r(render, 'cover', editCover, true); /*设定封面(此处会有none值)*/
             /*Render---------------------*/
         } else {
-            render9 = B.r(render9, 'cover', 'none', true); /*没有封面也要替换掉占位符*/
+            render = B.r(render, 'cover', 'none', true); /*没有封面也要替换掉占位符*/
         }
-        if (ifpage) {
-            tj['postindex'][nownum]['link'] = pagelink; /*储存pagelink*/
+        loadShow();
+        let fileName = 'post-' + currentNo + '.html';
+        if (ifPage) { /*如果是页面则用指定链接*/
+            currentPostObj['link'] = pageLink; /*如果是页面就储存pagelink*/
+            fileName = pageLink + '.html';
         }
-        tj['postindex'][nownum]['intro'] = Base64.encode(intro); /*去除html标签的Intro*/
-        tj['postindex'][nownum]['tags'] = tag;
-        loadshow();
-        var filename = 'post-' + nownum + '.html';
-        if (ifpage) { /*如果是页面则用指定链接*/
-            filename = pagelink + '.html';
-        }
-        var indexpage = indexrenderer(tj); /*渲染首页*/
-        var recentmjn = tpjs['mainjson']; /*上一次的main.json名字*/
-        tpjs['mainjson'] = rmj(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
-        /*Promise NB!*/
-        new Promise((res, rej) => {
-            blog.cr(window.accesstoken, window.githubrepo, render9, {
-                success: (m) => {
-                    let treeconstruct = [];
-                    treeconstruct.push({
-                        "path": filename,
-                        "mode": "100644",
-                        "type": "blob",
-                        "sha": m.sha
-                    });
-                    res(treeconstruct);
-                }, failed: (m) => {
-                    notice('编辑/发布失败', true);
-                    loadhide();
-                }
+        mj['postindex'][currentNo] = currentPostObj; /*储存文章信息*/
+        let indexPage = indexRenderer(mj), /*渲染首页*/
+            prevMName = tpjs['mainjson'], /*上一次的main.json名字*/
+            repo = window.githubRepo;
+        tpjs['mainjson'] = randomMJ(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
+        blog.crBlob(repo, render).then(resp => {
+            let treeConstruct = [];
+            treeConstruct.push({
+                path: fileName,
+                mode: "100644",
+                type: "blob",
+                sha: resp.sha
             });
-        }).then((data) => {
-            return new Promise((res, rej) => {
-                blog.cr(window.accesstoken, window.githubrepo, JSON.stringify(tj), {
-                    success: (m) => {
-                        data.push({
-                            "path": tpjs['mainjson'],
-                            "mode": "100644",
-                            "type": "blob",
-                            "sha": m.sha
-                        });
-                        res(data);
-                    }, failed: (m) => {
-                        notice('索引上载失败', true);
-                        loadhide();
-                    }
-                });
-            })
-        }).then((data) => {
-            return new Promise((res, rej) => {
-                blog.cr(window.accesstoken, window.githubrepo, indexpage, {
-                    success: (m) => {
-                        data.push({
-                            "path": 'index.html',
-                            "mode": "100644",
-                            "type": "blob",
-                            "sha": m.sha
-                        });
-                        res(data);
-                    }, failed: (m) => {
-                        notice('首页更新失败', true);
-                        loadhide();
-                    }
-                });
-            })
-        }).then((data) => {
-            return new Promise((res, rej) => {
-                blog.cr(window.accesstoken, window.githubrepo, JSON.stringify(tpjs), {
-                    success: (m) => {
-                        data.push({
-                            "path": 'template.json',
-                            "mode": "100644",
-                            "type": "blob",
-                            "sha": m.sha
-                        });
-                        res(data);
-                    }, failed: (m) => {
-                        notice('模板索引更新失败', true);
-                        loadhide();
-                    }
-                });
-            })
-        }).then((data) => {
-            data.push({/*从树中移除文件，移除旧索引*/
-                "path": recentmjn,
+            return Promise.resolve(treeConstruct);
+        }, rej => {
+            throw rej;
+        }).then(treeConstruct => {
+            return blog.crBlob(repo, JSON.stringify(mj))
+                .then(resp => {
+                    treeConstruct.push({
+                        path: tpjs['mainjson'],
+                        mode: "100644",
+                        type: "blob",
+                        sha: resp.sha
+                    });
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
+                })
+        }).then(treeConstruct => {
+            return blog.crBlob(repo, indexPage)
+                .then(resp => {
+                    treeConstruct.push({
+                        path: 'index.html',
+                        mode: "100644",
+                        type: "blob",
+                        sha: resp.sha
+                    });
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
+                })
+        }).then(treeConstruct => {
+            return blog.crBlob(repo, JSON.stringify(tpjs))
+                .then(resp => {
+                    treeConstruct.push({
+                        path: 'template.json',
+                        mode: "100644",
+                        type: "blob",
+                        sha: resp.sha
+                    });
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
+                })
+        }).then(treeConstruct => {
+            treeConstruct.push({
+                "path": prevMName,
                 "mode": "160000",
                 "type": "commit",
                 "sha": null
             });
-            if (recentlink !== '' && recentlink !== pagelink) { /*更新页面时如果更改链接,删除先前存在的页面*/
-                data.push({/*从树中移除文件，移除旧索引*/
-                    "path": recentlink + '.html',
+            if (recentLink !== '' && recentLink !== pageLink) { /*更新页面时如果更改链接,删除先前存在的页面*/
+                treeConstruct.push({
+                    "path": recentLink + '.html',
                     "mode": "160000",
                     "type": "commit",
                     "sha": null
-                });
+                })
+                delete window.htmls[recentLink + '.html']; // 删除本地储存的页面
             }
-            return new Promise((res, rej) => {
-                blog.gpush(window.accesstoken, window.githubrepo, data, commit, {
-                    success: (m) => {
-                        res(JSON.parse(m));
-                    }, failed: (m) => {
-                        notice('更新push失败', true);
-                        loadhide();
+            return blog.gPush(repo, treeConstruct, commit)
+                .then(resp => Promise.resolve(resp), rej => {
+                    throw rej;
+                })
+        }).then(resp => {
+            return blog.getFileShas(repo, resp.object.sha) // 刷新fileShas缓存列表，详见g.js
+                .then(res => {
+                    window.mainJson = JSON.stringify(mj); /*更新本地json*/
+                    window.tJson = JSON.stringify(tpjs);
+                    notice('编辑/发布成功');
+                    renderList(); /*渲染最新文章列表*/
+                    loadHide();
+                    if (editPost !== 'none') {
+                        window.htmls[fileName] = Base64.encode(render); /*更新变量储存的post*/
+                    } else {
+                        postOpen(currentNo); /*发布文章后跳转到编辑模式*/
                     }
-                });
-            })
-        }).then((data) => {
-            blog.getfileshas(window.accesstoken, window.githubrepo, true, {
-                success: (m) => { /*已经初始化*/
-                    window.fileshas = m;
-                    window.editprogress = 'finish'; /*设定发布/编辑状态-完成*/
-                    window.mainjson.content = Base64.encode(JSON.stringify(tj)); /*更新本地json*/
-                    window.tjson = JSON.stringify(tpjs);
-                }, failed: (m) => {
-                    notice('刷新临时文件sha列表失败', true);
-                    loadhide();
-                }
-            }, data.object.sha);
+                }, rej => {
+                    throw rej;
+                })
+        }).catch(e => {
+            notice('编辑/发布失败', true);
+            loadHide();
+            console.log(e);
         });
-        var tm = setInterval(function () {
-            if (window.editprogress == 'finish') { /*发布完成进行下一步*/
-                window.gstate = 0;
-                window.editprogress = ''; /*清空发布/编辑状态*/
-                notice('编辑/发布成功');
-                renderlist(); /*渲染最新文章列表*/
-                if (editpost !== 'none') {
-                    window.htmls[(ifpage ? pagelink + '.html' : 'post-' + editpost + '.html')] = Base64.encode(render9); /*更新变量储存的post*/
-                } else {
-                    postopen(nownum); /*发布文章后跳转到编辑模式*/
-                }
-                loadhide();
-                clearInterval(tm);
-            }
-        },
-            1500);
     }
 }
 
-function delpost(id) { /*删除文章*/
-    var tj = JSON.parse(Base64.decode(window.mainjson.content.replace(/[\r\n]/g, ""))); /*获得json*/
-    if (tj['postindex'][id]) {
-        var t = tj['postindex'][id];
-        var dt = t.date;
-        var ifpage = false;
-        if (t.link) {
-            ifpage = true; /*是页面*/
-        }
-        delete tj['postindex'][id];
-        delete tj['dateindex']['post' + id];
-        loadshow();
-        var filename = 'post-' + id + '.html';
-        if (ifpage) {
-            filename = t.link + '.html';
-        }
-        var indexpage = indexrenderer(tj); /*渲染首页*/
-        var recentmjn = tpjs['mainjson']; /*上一次的main.json名字*/
-        tpjs['mainjson'] = rmj(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
-        new Promise((res, rej) => {
-            blog.cr(window.accesstoken, window.githubrepo, JSON.stringify(tj), {
-                success: (m) => {
-                    let treeconstruct = [];
-                    treeconstruct.push({
-                        "path": tpjs['mainjson'],
+function delPost(id) { /*删除文章*/
+    let mj = JSON.parse(window.mainJson), /*获得json*/
+        currentPostObj = mj['postindex'][id] || '';
+    if (currentPostObj) {
+        loadShow();
+        let ifPage = currentPostObj.link ? true : false, // 是不是页面
+            fileName = ifPage ? currentPostObj.link + '.html' : 'post-' + id + '.html',
+            repo = window.githubRepo;
+        delete mj['postindex'][id]; // 删除postindex中文章对象
+        delete mj['dateindex']['post' + id]; // 删除dateindex中文章元素
+        let indexPage = indexRenderer(mj), /*渲染首页*/
+            prevMName = tpjs['mainjson']; /*上一次的main.json名字*/
+        tpjs['mainjson'] = randomMJ(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
+        blog.crBlob(repo, JSON.stringify(mj)).then(resp => {
+            let treeConstruct = [];
+            treeConstruct.push({
+                "path": tpjs['mainjson'],
+                "mode": "100644",
+                "type": "blob",
+                "sha": resp.sha
+            });
+            return Promise.resolve(treeConstruct);
+        }, rej => {
+            throw rej;
+        }).then(treeConstruct => {
+            return blog.crBlob(repo, JSON.stringify(tpjs))
+                .then(resp => {
+                    treeConstruct.push({
+                        "path": 'template.json',
                         "mode": "100644",
                         "type": "blob",
-                        "sha": m.sha
-                    });
-                    res(treeconstruct);
-                }, failed: (m) => {
-                    notice('更新索引失败', true);
-                    loadhide();
-                }
-            })
-        }).then((data) => {
-            return new Promise((res, rej) => {
-                blog.cr(window.accesstoken, window.githubrepo, JSON.stringify(tpjs), {
-                    success: (m) => {
-                        data.push({
-                            "path": 'template.json',
-                            "mode": "100644",
-                            "type": "blob",
-                            "sha": m.sha
-                        });
-                        res(data);
-                    }, failed: (m) => {
-                        notice('更新索引模板失败', true);
-                        loadhide();
-                    }
+                        "sha": resp.sha
+                    })
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
                 })
-            })
-        }).then((data) => {
-            return new Promise((res, rej) => {
-                blog.cr(window.accesstoken, window.githubrepo, indexpage, {
-                    success: (m) => {
-                        data.push({
-                            "path": 'index.html',
-                            "mode": "100644",
-                            "type": "blob",
-                            "sha": m.sha
-                        });
-                        res(data);
-                    }, failed: (m) => {
-                        notice('首页更新失败', true);
-                        loadhide();
-                    }
+        }).then(treeConstruct => {
+            return blog.crBlob(repo, indexPage)
+                .then(resp => {
+                    treeConstruct.push({
+                        "path": 'index.html',
+                        "mode": "100644",
+                        "type": "blob",
+                        "sha": resp.sha
+                    })
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
                 })
-            })
-        }).then((data) => {
-            data.push({/*从树中移除文件，*/
-                "path": filename,
+        }).then(treeConstruct => {
+            treeConstruct.push({ // 从树中移除文件
+                "path": fileName,
+                "mode": "160000",
+                "type": "commit",
+                "sha": null
+            }, {// 移除旧索引
+                "path": prevMName,
                 "mode": "160000",
                 "type": "commit",
                 "sha": null
             });
-            data.push({/*移除旧索引*/
-                "path": recentmjn,
-                "mode": "160000",
-                "type": "commit",
-                "sha": null
-            });
-            blog.gpush(window.accesstoken, window.githubrepo, data, "Delete post/page", {
-                success: (m) => {
-                    window.mainjson.content = Base64.encode(JSON.stringify(tj));
-                    window.tjson = JSON.stringify(tpjs);/*更新本地的json*/
-                    renderlist(); /*渲染最新文章列表*/
+            return blog.gPush(repo, treeConstruct, 'Delete post or page')
+                .then(res => {
+                    window.mainJson = JSON.stringify(mj);
+                    window.tJson = JSON.stringify(tpjs);/*更新本地的json*/
+                    delete window.htmls[fileName];// 删除变量储存的post
+                    renderList(); /*渲染最新文章列表*/
                     notice('删除成功');
-                    addnew();
-                    loadhide();
-                }, failed: (m) => {
-                    notice('删除:更新push失败', true);
-                    loadhide();
-                }
-            })
-        })
+                    addNew(); // 清空文章编辑区
+                    loadHide();
+                }, rej => {
+                    throw rej;
+                })
+        }).catch(e => {
+            notice('删除失败', true);
+            loadHide();
+            console.log(e);
+        });
     }
 }
 
-function postopen(id) { /*编辑文章*/
-    loadshow();
-    var tj = JSON.parse(Base64.decode(window.mainjson.content.replace(/[\r\n]/g, ""))); /*获得json*/
-    var ifpage = false;
-    if (tj['postindex'][id]['link']) {
-        ifpage = true; /*是页面*/
-    }
-    let loadpost = function (ct) {
-        loadhide();
-        var ht = Base64.decode(ct);
-        var title = Base64.decode(tj['postindex'][id]['title']);
-        if (ifpage) {
-            var date = tj['postindex'][id]['link'];
-        } else {
-            var date = tj['postindex'][id]['date'];
-        }
-        var tags = tj['postindex'][id]['tags'];
-        var content = (B.gt('PostContent', 'PostContentEnd', ht)).trim(); /*去除内容首尾的空格*/
-        SC('content').value = dehtml(content);
+function postOpen(id) { /*编辑文章*/
+    loadShow();
+    let mj = JSON.parse(window.mainJson), /*获得json*/
+        ifPage = mj['postindex'][id]['link'] ? true : false,
+        fileName = ifPage ? mj['postindex'][id]['link'] + '.html' : 'post-' + id + '.html',
+        repo = window.githubRepo;
+    let loadPost = function (html) {
+        loadHide();
+        let ht = Base64.decode(html),
+            currentPostObj = mj['postindex'][id],
+            title = Base64.decode(currentPostObj['title']),
+            date = ifPage ? currentPostObj['link'] : currentPostObj['date'],
+            tags = currentPostObj['tags'],
+            content = (B.gt('PostContent', 'PostContentEnd', ht)).trim(); /*去除内容首尾的空格*/
+        SC('content').value = deHtml(content); // html标签解码
         SC('tag').value = tags;
         SC('title').value = title;
         SC('date').value = date;
-        addshow();
-        editpost = id; /*设定当前编辑文章*/
+        addShow(); // 显示"+"按钮
+        editPost = id; /*设定当前编辑文章*/
     }
-    var filename = 'post-' + id + '.html';
-    if (ifpage) { /*如果是页面*/
-        filename = tj['postindex'][id]['link'] + '.html';
-    }
-    if (!window.htmls[filename]) {
-        var ot = this;
-
-        blog.getfileblob(window.accesstoken, window.githubrepo, blog.findfilesha(filename), true, {
-            success: function (m) { /*已经初始化*/
-                loadpost(m.content);
-                window.htmls[filename] = m.content; /*已经加载过的文章先存着*/
-            },
-            failed: function (msg) {
-                loadhide();
+    if (!window.htmls[fileName]) {
+        blog.findFileSha(repo, fileName)
+            .then(fileSha => {
+                return blog.getFileBlob(repo, fileSha)
+                    .then(resp => {
+                        loadPost(resp.content);
+                        window.htmls[fileName] = resp.content; //已经加载过的文章先存着
+                    }, rej => {
+                        throw rej;
+                    })
+            }, rej => {
+                throw rej;
+            }).catch(e => {
+                loadHide();
                 notice('加载文章失败');
                 notice('No such post.');
-            }
-        });
+                console.log(e);
+            })
     } else {
-        loadpost(window.htmls[filename]);
+        loadPost(window.htmls[fileName]); // 加载过的直接从本地读取
     }
 }
 
-function addnew() {
-    addhide();
-    editpost = 'none'; /*设定当前无编辑*/
+function addNew() { // 清空文章编辑区
+    addHide(); // 隐藏"+"按钮
+    editPost = 'none'; /*设定当前无编辑*/
     SC('content').value = '';
     SC('tag').value = '';
     SC('title').value = '';
-    SC('date').value = '';
+    SC('date').value = getDate();
 }
 document.onkeydown = function (event) { /*Search Enter Listener*/
-    var e = event || window.event;
-    if (e && e.key == 'Enter') {
-        var v = SC('search').value;
+    if (event.key == 'Enter') {
+        let v = SC('search').value;
         if (v !== '' && SC('search') == document.activeElement) {
             SC('sbr').style.zIndex = 50;
             SC('sbr').style.opacity = 1;
             SC('sbr').innerHTML = "<p class='scitemp'><a class='scitema' href='#Searching..'>搜索中...</a></p>";
-            searchrender(v);
+            searchRender(v);
         } else {
             return true;
         }
@@ -814,49 +733,49 @@ document.onkeydown = function (event) { /*Search Enter Listener*/
     }
 };
 
-function searchrender(v) {
-    var rendertp = '';
-    var tj = JSON.parse(Base64.decode(window.mainjson.content.replace(/[\r\n]/g, ""))); /*获得json*/
-    var pt = tj['postindex'];
-    for (var i in pt) {
-        var tt = (Base64.decode(pt[i]['title'])).toLowerCase();
-        var cc = (Base64.decode(pt[i]['intro'])).toLowerCase();
-        var dd = (pt[i]['date']).toLowerCase();
-        var tg = (pt[i]['tags']).toLowerCase();
+function searchRender(v) {
+    let renderTp = '',
+        mj = JSON.parse(window.mainJson), /*获得json*/
+        pt = mj['postindex'];
+    for (let i in pt) {
+        let tt = (Base64.decode(pt[i]['title'])).toLowerCase(),
+            cc = (Base64.decode(pt[i]['intro'])).toLowerCase(),
+            dd = (pt[i]['date']).toLowerCase(),
+            tg = (pt[i]['tags']).toLowerCase();
         v = v.toLowerCase();
         if (tt.indexOf(v) !== -1 || cc.indexOf(v) !== -1 || dd.indexOf(v) !== -1 || tg.indexOf(v) !== -1) {
-            rendertp += "<p class='scitemp'><a class='scitema' href='javascript:void(0);' onclick='postopen(" + i + ")'>" + tt + "</a></p>";
+            renderTp += "<p class='scitemp'><a class='scitema' href='javascript:void(0);' onclick='postOpen(" + i + ")'>" + tt + "</a></p>";
         }
     }
-    if (rendertp == '') {
-        rendertp += "<h2>啥都没找到TAT</h2>";
+    if (renderTp == '') {
+        renderTp += "<h2>啥都没找到TAT</h2>";
     }
-    rendertp = "<a class='closebtn' href='javascript:void(0);' onclick='sbrclose()'>×</a>" + rendertp; /*关闭按钮*/
-    SC('sbr').innerHTML = rendertp;
+    renderTp = "<a class='closebtn' href='javascript:void(0);' onclick='sbrClose()'>×</a>" + renderTp; /*关闭按钮*/
+    SC('sbr').innerHTML = renderTp;
 }
 
-function sbrclose() {
-    SC('sbr').style.zIndex = -1;
-    SC('sbr').style.opacity = 0;
+function sbrClose() {
+    wear(SC('sbr'), {
+        'opacity': 0,
+        'zIndex': -1
+    });
     SC('sbr').innerHTML = '';
 }
 
-function addshow() {
+function addShow() {
     SC('adbtn').style.display = 'block';
     setTimeout(function () {
         SC('adbtn').style.opacity = 1;
-    },
-        100);
+    }, 100);
 }
 
-function addhide() {
+function addHide() {
     SC('adbtn').style.opacity = 0;
-    setTimeout(function () {
+    aniChecker(SC('adbtn'), () => {
         SC('adbtn').style.display = 'none';
-    },
-        1000);
+    }, true);
 }
-function insertAtCursor(e, str) {
+function insertAtCursor(e, str) { // 在输入指针处插入字符串
     let startPos = e.selectionStart,
         insertLen = str.length,
         strLen = e.value.length,
@@ -865,11 +784,12 @@ function insertAtCursor(e, str) {
     e.value = beforeStr + str + afterStr;
     e.selectionStart = e.selectionEnd = startPos + insertLen;
 }
-SC('date').placeholder = getdate(); /*预设日期*/
+SC('date').placeholder = getDate(); /*预设日期*/
+SC('date').value = getDate();
 document.addEventListener('keydown', function (e) {/*监听ctrl+S保存*/
     if (e.code == 'KeyS' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        tempsave();
+        tempSave();
     } else if (e.code == 'KeyV' && e.altKey && SC('content') == document.activeElement) { // alt + V在指定地方插入视频标签
         e.preventDefault();
         let link = prompt('输入视频URL:', '');

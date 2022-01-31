@@ -1,8 +1,8 @@
-/*Scripts for Github Actions - SomeBottle*/
+/*
+Scripts for Github Actions - SomeBottle
+感谢文章点明道路：https://zhuanlan.zhihu.com/p/54877720
+*/
 "use strict";
-window.ua = '';
-window.authstatu = false;
-window.gstate = 0;
 /*任务完成状况*/
 
 function timestamp() {
@@ -10,238 +10,165 @@ function timestamp() {
     return a;
 }
 
-function gh() {
-    this.getfileshas = function (token, repo, asyn, cb, hascommitsha = false) {
-        this.getbasetree(token, repo, hascommitsha).then((data) => {
-            return new Promise(function (res, rej) {
-                window.gstate += 1;
-                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/trees/' + data.basetreesha + '?' + timestamp(), {}, {
-                    success: function (msg) {
-                        let t = JSON.parse(msg).tree;
-                        cb.success(t);
-                        res(t);
-                        window.gstate -= 1;
-                    },
-                    failed: function (m) {
-                        cb.failed(m);
-                        res(m);
-                        console.log('[GetBaseTree]Failed');
-                        window.gstate -= 1;
+function gh(token) {
+    var accessToken = token,// 私有属性
+        githubUser = '',
+        fileShas = {}; // sha列表缓存
+    this.getFileShas = function (repo, hasCommitSha = false) { // 获取文件的sha列表(仓库名，主动提供上一次的commitSha)
+        return this.getBaseTree(repo, hasCommitSha)
+            .then(data => $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/trees/' + data.baseTreeSha + '?' + timestamp(), 'get', 'token ' + accessToken))
+            .then(resp => resp.json(), rej => {
+                notice('获取BaseTree失败');
+                console.log('Failed to get BaseTree:' + rej);
+                throw rej;
+            })
+            .then(json => {
+                delete fileShas[repo]; // 删掉仓库名对应的sha列表缓存
+                return Promise.resolve(json.tree);
+            })
+            .catch(e => Promise.reject(e));
+    }
+    this.findFileSha = function (repo, file2find) { // 根据文件找到对应sha
+        return (fileShas[repo] ? Promise.resolve(fileShas[repo]) : this.getFileShas(repo))
+            .then(data => {
+                let found = false;
+                fileShas[repo] = data;
+                Object.keys(data).forEach(i => {
+                    if (data[i].path == file2find) {
+                        found = data[i].sha;
                     }
-                },
-                    'get', 'token ' + token, asyn);
+                })
+                return new Promise((res, rej) => {
+                    found ? res(found) : rej('Failed to find fileSha');
+                });
             });
-        });
     }
-    this.findfilesha = function (filetofind) {
-        if (window.fileshas) {
-            let fs = window.fileshas;
-            for (var i in fs) {
-                if (fs[i].path == filetofind) return fs[i].sha;
-            }
-        }
-    }
-    this.getfileblob = function (token, repo, sha, asyn, cb) {
-        /*获得文件信息*/
-        return new Promise(function (res, rej) {
-            window.gstate += 1;
-            $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/blobs/' + sha + '?' + timestamp(), {}, {
-                success: function (msg) {
-                    let t = JSON.parse(msg);
-                    cb.success(t);
-                    res(t);
-                    window.gstate -= 1;
-                },
-                failed: function (m) {
-                    cb.failed(m);
-                    res(m);
-                    console.log('[GetFileBlob]Failed');
-                    window.gstate -= 1;
-                }
-            },
-                'get', 'token ' + token, asyn);
-        });
-    }
-    this.getbasetree = function (token, repo, hascommitsha = false) {/*获得basetree的sha，返回promise对象*/
-        window.gstate += 1;
-        return new Promise(function (res, rej) {
-            let pushdata = {};
-            if (!hascommitsha) {
-                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/ref/heads/main', "", {/*获得ref*/
-                    success: function (m) {
-                        pushdata.lastcommitsha = JSON.parse(m).object.sha;/*储存上次的commitsha*/
-                        res(pushdata);
-                    },
-                    failed: function (m) {
-                        console.log("[Push]Failed to get ref");
-                        window.gstate -= 1;
-                    }
-                }, "get", 'token ' + token, true);
-            } else {
-                pushdata.lastcommitsha = hascommitsha;
-                res(pushdata);
-            }
-        }).then((data) => {
-            return new Promise(function (res, rej) {
-                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/commits/' + data.lastcommitsha, "", {
-                    success: function (m) {
-                        data.basetreesha = JSON.parse(m).tree.sha;
-                        res(data);
-                    },
-                    failed: function (m) {
-                        console.log("[Push]Failed to get basetree");
-                        window.gstate -= 1;
-                    }
-                }, "get", 'token ' + token, true);
+    this.getFileBlob = function (repo, sha) {// 获得文件Blob数据
+        return $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/blobs/' + sha + '?' + timestamp(), 'get', 'token ' + accessToken)
+            .then(resp => resp.json(), rej => {
+                notice('获取文件Blob失败');
+                console.log('Failed to get Blob:' + rej);
+                throw rej;
             })
-        })
+            .then(json => Promise.resolve(json))
+            .catch(e => Promise.reject(e));
     }
-    this.gpush = function (token, repo, treeconstruct, commitmsg, cb) {/*模拟git push部分提交更新仓库*/
-        window.gstate += 1;
-        this.getbasetree(token, repo).then((data) => {
-            return new Promise(function (res, rej) {/*更新树*/
-                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/trees', {
-                    "base_tree": data.basetreesha, // commit tree 的 sha
-                    "tree": treeconstruct
-                }, {
-                    success: function (m) {
-                        data.treesha = JSON.parse(m).sha;
-                        res(data);
-                    },
-                    failed: function (m) {
-                        console.log("[Push]Failed to update tree");
-                        cb.failed(m);
-                        window.gstate -= 1;
-                    }
-                }, "post", 'token ' + token, true);
+    this.getBaseTree = function (repo, hasCommitSha = false) {/*获得basetree的sha，返回promise对象*/
+        let pushData = {
+            'lastCommitSha': hasCommitSha
+        };
+        return (
+            hasCommitSha ? Promise.resolve(pushData) : $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/ref/heads/main', 'get', 'token ' + accessToken)
+                .then(resp => resp.json(), rej => {
+                    notice('无法获得上一个CommitSha');
+                    console.log('Failed to get the last commit sha:' + rej);
+                    throw rej;
+                }).then(json => {
+                    pushData['lastCommitSha'] = json.object.sha;// 获得上一次的sha
+                    return Promise.resolve(pushData);
+                })
+        ).then(data => {
+            return $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/commits/' + data.lastCommitSha, 'get', 'token ' + accessToken)
+                .then(resp => resp.json(), rej => {
+                    notice('获取CommitBaseTreeSha失败');
+                    console.log('Failed to get the commit\'s base tree sha:' + rej);
+                    throw rej;
+                })
+                .then(json => {
+                    data['baseTreeSha'] = json.tree.sha;
+                    return Promise.resolve(data);
+                })
+        }).catch(e => Promise.reject(e));// 接住所有的错误并reject
+    }
+    this.gPush = function (repo, treeConstruct, commitMsg) {/*模拟git push部分提交更新仓库*/
+        return this.getBaseTree(repo)
+            .then(data => {
+                return $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/trees?' + timestamp(), 'post', 'token ' + accessToken, {
+                    'base_tree': data.baseTreeSha,
+                    'tree': treeConstruct
+                }).then(resp => resp.json(), rej => {
+                    notice('生成tree失败');
+                    console.log('Failed to generate tree:' + rej);
+                    throw rej;
+                }).then(json => {
+                    data.treeSha = json.sha;
+                    return Promise.resolve(data);
+                })
+            }).then(data => {
+                return $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/commits?' + timestamp(), 'post', 'token ' + accessToken, {
+                    'message': commitMsg,
+                    'parents': [data.lastCommitSha],// 上一次的commitSha
+                    'tree': data.treeSha
+                }).then(resp => resp.json(), rej => {
+                    notice('生成commit失败');
+                    console.log('Failed to generate commit:' + rej);
+                    throw rej;
+                }).then(json => {
+                    data.commitSha = json.sha;
+                    return Promise.resolve(data);
+                })
+            }).then(data => { // 将指针指向最新的commit
+                return $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/refs/heads/main?' + timestamp(), 'patch', 'token ' + accessToken, {
+                    'sha': data.commitSha,
+                    'force': true
+                }).then(resp => resp.json(), rej => {
+                    notice('更新ref失败');
+                    console.log('Failed to update ref:' + rej);
+                    throw rej;
+                }).then(json => {
+                    return Promise.resolve(json);
+                })
+            }).catch(e => Promise.reject(e));// 接住所有的错误并reject
+    }
+    this.getFile = function (repo, file) { /*获得文件内容，本API最多只支持1M大小文件 https://docs.github.com/en/rest/reference/repos#get-repository-content*/
+        return $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/contents/' + file + '?' + timestamp(), 'get', 'token ' + accessToken)
+            .then(resp => resp.json(), rej => {
+                notice('获取文件失败');
+                console.log('[getFile]Failed to get file:' + rej);
+                throw rej;
             })
-        }).then((data) => {
-            return new Promise(function (res, rej) {/*创建提交*/
-                $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/commits', {
-                    "message": commitmsg,
-                    "parents": [data.lastcommitsha],// 上次 commit 的sha
-                    "tree": data.treesha
-                }, {
-                    success: function (m) {
-                        data.commitsha = JSON.parse(m).sha;
-                        res(data);
-                    },
-                    failed: function (m) {
-                        console.log("[Push]Failed to make commit");
-                        cb.failed(m);
-                        window.gstate -= 1;
-                    }
-                }, "post", 'token ' + token, true);
+            .then(json => {
+                console.log('[getFile]Successfully get ' + file);
+                return Promise.resolve(json);
             })
-        }).then((data) => {/*调整指针指向最新commit*/
-            $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/refs/heads/main', {
-                "sha": data.commitsha,
-                "force": true
-            }, {
-                success: function (m) {
-                    data.commitsha = JSON.parse(m).sha;
-                    cb.success(m);
-                    window.gstate -= 1;
-                },
-                failed: function (m) {
-                    console.log("[Push]Failed to update ref.");
-                    cb.failed(m);
-                    window.gstate -= 1;
-                }
-            }, "patch", 'token ' + token, true);
-        })
+            .catch(e => Promise.reject(e));
     }
-    this.getfile = function (token, repo, file, asyn, cb) {
-        /*获得文件信息*/
-        return new Promise(function (res, rej) {
-            window.gstate += 1;
-            $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/contents/' + file + '?' + timestamp(), {}, {
-                success: function (msg) {
-                    console.log('[GetFile]Successfully get ' + file);
-                    let t = JSON.parse(msg);
-                    cb.success(t);
-                    res(t);
-                    window.gstate -= 1;
-                },
-                failed: function (m) {
-                    cb.failed(m);
-                    res(m);
-                    console.log('[GetFile]Failed');
-                    window.gstate -= 1;
-                }
-            },
-                'get', 'token ' + token, asyn);
-        });
-    }
-    this.getusr = function (token, asyn, cb) {
-        loadshow();
-        $.ft('https://api.github.com/user', {}, {
-            success: function (m) {
-                loadhide();
-                let j = JSON.parse(m);
-                window.githubuser = j.login;
-                cb.success();
-            },
-            failed: function (m) {
-                loadhide();
+    this.getUsr = function () { // 获得用户信息
+        return $.ft('https://api.github.com/user?' + timestamp(), 'get', 'token ' + accessToken)
+            .then(resp => resp.json(), rej => {
                 notice('获取用户信息失败');
-                cb.failed();
-            }
-        },
-            'get', 'token ' + token, asyn);
+                console.log('[getUsr]Failed to get user info:' + rej);
+                throw rej;
+            })
+            .then(json => {
+                githubUser = json.login;
+                return Promise.resolve(json);
+            })
+            .catch(e => Promise.reject(e));
     }
-    this.getrepo = function (token, repo, asyn, callback) {
-        /*获得repo信息*/
-        window.gstate += 1;
-        $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '?' + timestamp(), {}, {
-            success: function (msg) {
-                let t = JSON.parse(msg);
-                if (t.message == 'Not Found') {
-                    t = 'empty';
-                }
-                callback.success(t);
-                window.gstate -= 1;
-            },
-            failed: function (m) {
-                callback.failed(m);
-                console.log('[GetRepo]Failed');
-                window.gstate -= 1;
-            }
-        },
-            'get', 'token ' + token, asyn);
+    this.getRepo = function (repo) { // 获得仓库信息
+        return $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '?' + timestamp(), 'get', 'token ' + accessToken)
+            .then(resp => resp.json(), rej => {
+                notice('获取仓库信息失败');
+                console.log('[getRepo]Failed to get repo info:' + rej);
+                throw rej;
+            })
+            .then(json => {
+                return Promise.resolve(json);
+            })
+            .catch(e => Promise.reject(e));
     }
-    this.cr = async function (token, repo, content, callback) {
-        /*创建blob*/
-        window.gstate += 1;
-        $.ft('https://api.github.com/repos/' + window.githubuser + '/' + repo + '/git/blobs' + '?' + timestamp(), {
-            content: Base64.encode(content),
-            encoding: "base64"
-        }, {
-            success: function (m) {
-                callback.success(JSON.parse(m));
-                console.log('[CreateBlob]Success');
-                window.gstate -= 1;
-            },
-            failed: function (m, p) {
-                callback.failed(JSON.parse(m));
-                console.log('[CreateBlob]Failed');
-                window.gstate -= 1;
-            }
-        }, 'post', 'token ' + token, true);
-    }
-    this.crypt = function (token, key, dec = false) {
-        try {
-            if (!$.ce(token) || !$.ce(key)) {
-                return false;
-            } else if (!dec) {
-                return CryptoJS.RC4.encrypt(token, key);
-            } else {
-                let decrypt = CryptoJS.RC4.decrypt(token, key);
-                return CryptoJS.enc.Utf8.stringify(decrypt);
-            }
-        } catch (e) {
-            return '';
-        }
+    this.crBlob = function (repo, content) { // 创建blob
+        return $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/blobs?' + timestamp(), 'post', 'token ' + accessToken, {
+            'content': Base64.encode(content),
+            'encoding': 'base64'
+        }).then(resp => resp.json(), rej => {
+            notice('创建blob失败');
+            console.log('[createBlob]Failed to create blob:' + rej);
+            throw rej;
+        }).then(json => {
+            console.log('[createBlob]Successfully created the blob');
+            return Promise.resolve(json);
+        }).catch(e => Promise.reject(e));
     }
 }
-var blog = new gh();

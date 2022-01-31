@@ -1,17 +1,24 @@
 <h2 id="t" class="t">-O-</h2>
-<div id="nt"></div>
+<div id="noticeWrapper" class="noticeWrapper"></div>
 <div class='f' id='f'>
     <p><input type='text' id='r' placeholder='Repo..' /></p>
 </div>
+<p class='b' id='b' style="opacity: 1; margin-top: 0px; top: auto; bottom: 20px;">
+    <input id='bt' type='button' value='→' onclick='typer()'>
+</p>
 <script src='./jcs/i.js'></script>
 <script>
     listener();
     SC('r').value = lc('githubrepo');
     SC('t').style.opacity = 1;
-    setTimeout(function() {
-        SC('f').style.opacity = 1;
-        SC('f').style.marginTop = '0px';
+    SC('f').style.display = 'block';
+    aniChecker(SC('t'), () => {
+        wear(SC('f'), {
+            'opacity': 1,
+            'margin-top': '0px'
+        });
+        SC('bt').style.opacity = 1;
         notice('请输入博客仓库名');
         notice('Please enter the repo name.');
-    }, 500);
+    }, true);
 </script>

@@ -1,24 +1,23 @@
 /*Initialization - SomeBottle*/
 "use strict";
 $bueue.de(true);
+$bueue.re(true); // 清空队列
 
 function typer() { /*重定义typer*/
-    var repo = SC('r').value;
-    if ($.ce(repo)) {
-        window.githubrepo = SC('r').value;
-        loadshow();
-        blog.getrepo(window.accesstoken, repo, true, {
-            success: function (m) {
-                loadhide();
-                SC('f').style.marginTop = '1000px';
-                setTimeout(initialcheck, 1000);
-                lc('githubrepo', window.githubrepo);
-            },
-            failed: function (m) {
-                listener();
-                notice('No Such Repo.');
-                loadhide();
-            }
+    let repo = SC('r').value;
+    if ($.notEmpty(repo)) {
+        window.githubRepo = repo;// 在window对象上注册githubRepo
+        loadShow();
+        blog.getRepo(repo).then(data => { // 能抓取到仓库信息，说明仓库存在
+            loadHide();
+            SC('f').style.marginTop = '1000px';
+            SC('bt').style.opacity = 0;
+            setTimeout(initialCheck, 1000);
+            lc('githubrepo', repo);
+        }, rej => { // 抓取不到仓库信息，说明仓库不存在
+            listener();
+            notice('No Such Repo.');
+            loadHide();
         });
         document.onkeydown = function () {
             return true;
@@ -26,147 +25,115 @@ function typer() { /*重定义typer*/
     }
 }
 
-function initialcheck() { /*检查是否初始化*/
-    loadshow();
-    var j, mj, pi;
-    new Promise(function (res, rej) {
-        console.log('Trying to get templatejson from the remote repo.');
-        blog.getfile(window.accesstoken, window.githubrepo, 'template.json', true, { /*获得仓库模板内容*/
-            success: function (k) {
-                j = Base64.decode(k['content']);
-                window.tjson = j;
-                mj = JSON.parse(j);
-                res(k);
-            },
-            failed: function (m) { /*未初始化*/
-                console.log('No template.json in the remote repo.');
-                $.ft('./template/template.json', {}, { /*获得本地模板内容*/
-                    success: function (k) {
-                        window.tjson = JSON.parse(k); /*储存模板json*/
-                        initialization();
-                    },
-                    failed: function (k) {
-                        notice('Initialization Failed.');
-                    }
-                }, 'get', '');
-            }
-        });
-    }).then(function (d) {
-        return new Promise(function (res, rej) {
-            blog.getfile(window.accesstoken, window.githubrepo, mj['templatehtmls']['postitem'], true, { /*获得postitem模板内容*/
-                success: function (k) {
-                    pi = Base64.decode(k['content']);
-                    window.htmls['postitem.html'] = pi;
-                    res(k);
-                },
-                failed: function (k) {
-                    notice('Failed to get Necessary Template.');
-                    loadhide();
-                    errshow();
-                }
-            });
-        });
-    }).then(function (d) {
-        return new Promise(function (res, rej) { /*check main.json*/
-            blog.getfileshas(window.accesstoken, window.githubrepo, true, {
-                success: function (m) { /*已经初始化*/
-                    window.fileshas = m;
-                    let mainJsonSha = blog.findfilesha(mj['mainjson']);
-                    console.log('mainJsonSha: ' + mainJsonSha);
-                    if (mainJsonSha) {
-                        res(mainJsonSha);/*返回MainJson的sha值*/
-                    } else {
-                        notice('Retrying to get file shas.');
-                        window.test += 1;
-                        rej('failed');
-                    }
-                },
-                failed: function (msg) {
-                    notice('Failed to get file shas.');
-                    loadhide();
-                    errshow();
-                }
-            });
-        });
-    }).catch(e => {
-        initialcheck();
-        throw 'failed, retrying';
-    }).then(function (d) {
-        blog.getfileblob(window.accesstoken, window.githubrepo, d, true, {
-            success: function (m) { /*已经初始化*/
-                window.mainjson = m;
-                loadhide();
-                PJAX.jump('editor.html'); /*Jump*/
-            },
-            failed: function (msg) {
-                notice('Failed to get Main.json.');
-                loadhide();
-                errshow();
-            }
-        });
-    })
+function initialCheck() { /*检查是否初始化*/
+    let tj, parsed, repo = window.githubRepo;
+    loadShow();
     notice('Checking...');
+    blog.getFile(repo, 'template.json')
+        .then(data => {
+            tj = Base64.decode(data.content);
+            window.tJson = tj; // 在window对象上注册templateJson变量(注意这里是原json文件)
+            parsed = JSON.parse(tj);
+            return Promise.resolve(true); // 让then方法继续往下执行
+        }, rej => {
+            $.ft('./template/template.json')
+                .then(resp => resp.text(), rej => {
+                    notice('尝试初始化失败');
+                })
+                .then(json => {
+                    window.tJson = json;
+                    initialization(); // 触发初始化
+                })
+            throw 'Turn to initialization';
+        }).then(res => {
+            return blog.getFile(repo, parsed['templatehtmls']['postitem'])
+                .then(data => {
+                    window.htmls['postitems.html'] = Base64.decode(data.content); // 获取并临时储存postitems.html
+                    return Promise.resolve(true); // 让then方法继续往下执行
+                }, rej => {
+                    errShow();
+                    throw 'Failed to get Necessary Template:';
+                })
+        }).then(res => {
+            console.log('MainJson:', parsed['mainjson']);
+            return blog.findFileSha(repo, parsed['mainjson'])
+                .then(data => Promise.resolve(data), rej => {
+                    errShow();
+                    console.log(rej);
+                    throw 'Failed to get Main Json sha.';
+                });
+        }).then(sha => {
+            return blog.getFileBlob(repo, sha)
+                .then(json => {
+                    //注意!!!这里的修改!!!保证了和上面tJson风格统一，后面cp.js要好好改改
+                    window.mainJson = Base64.decode(json.content.replace(/[\r\n]/g, "")); // 抓取并储存仓库的mainJson
+                    loadHide();
+                    PJAX.jump('editor.html'); /*Jump*/
+                }, rej => {
+                    errShow();
+                    throw 'Failed to get Main Json.';
+                });
+        })
+        .catch(e => {
+            notice(e);
+            console.log(e);
+            loadHide();
+        });
 }
 
 function initialization() { /*初始化*/
-    if (confirm('即将帮您初始化博客，是否继续？\nReady for initialization, please confirm to continue.')) {
+    let repo = window.githubRepo, tj = JSON.parse(window.tJson);
+    if (confirm('即将帮您初始化博客，是否继续？\nReady for initialization, please confirm to continue.\n\n!!!注意!!!请保证博客仓库未经过初始化，否则会覆盖关键数据。')) {
         notice('Initializing...');
-        var tm = window.tjson['alltp'], treeconstruct = [];
-        for (var it in tm) {
-            console.log('file:' + tm[it]);
-            (function (tmt) {
+        loadShow();
+        let templates = tj['alltp'], treeConstruct = [];
+        for (var i in templates) {
+            let currentTplt = templates[i];
+            console.log('Uploading file: ' + currentTplt);
+            (function (file) {
                 $bueue.c(function () {
-                    $.ft('./template/' + tmt, {}, {
-                        success: function (m) {
-                            notice(tmt);
-                            blog.cr(window.accesstoken, window.githubrepo, m, {
-                                success: function (f) {
-                                    treeconstruct.push({
-                                        "path": tmt,
-                                        "mode": "100644",
-                                        "type": "blob",
-                                        "sha": f.sha
-                                    });
-                                    $bueue.next();
-                                },
-                                failed: function (m) {
-                                    notice('初始化出错', true);
-                                    notice('请删除template.json.');
-                                    notice('重新初始化.');
-                                    errshow();
-                                }
+                    $.ft('./template/' + file).then(resp => resp.text(), rej => {
+                        throw rej;
+                    }).then(content => {
+                        return blog.crBlob(repo, content).then(resp => {
+                            treeConstruct.push({
+                                path: file,
+                                mode: '100644',
+                                type: 'blob',
+                                sha: resp.sha
                             });
-                        },
-                        failed: function (m) {
-                            notice('初始化出错', true);
-                            notice('请删除template.json.');
-                            notice('重新初始化.');
-                            errshow();
-                        }
-                    }, 'get', '');
+                            notice(file + '已上传');
+                            $bueue.next();
+                        }, rej => {
+                            throw rej;
+                        })
+                    }).catch(e => {
+                        notice('初始化出错', true);
+                        notice('请删除template.json.');
+                        notice('重新初始化.');
+                        console.log('Initialization failed: ' + e);
+                        errShow();
+                    })
                 });
-            })(tm[it]); /*闭包传参，终于解决了！>A<*/
+            })(currentTplt); /*闭包传参，终于解决了！>A<*/
             /*添加队列*/
         }
-        $bueue.c(() => { notice("All template blobs have been made"); });
+        $bueue.c(() => { notice("所有文件的Blob均已创建"); });
         $bueue.start(); /*队列启动*/
-        var checkt = setInterval(function () {
-            if ($bueue.state == 3 && window.gstate <= 0) {
-                blog.gpush(window.accesstoken, window.githubrepo, treeconstruct, "Initial commit of -O-", {
-                    success: (m) => {
+        let checker = setInterval(function () {
+            if ($bueue.state == 3) {
+                clearInterval(checker);
+                blog.gPush(repo, treeConstruct, 'Initial commit of blog')
+                    .then(resp => {
                         notice('Finished');
-                        notice('五秒后将刷新页面');
+                        notice('即将进入编辑页面');
                         SC('t').style.opacity = 0;
-                        setTimeout(function () {
-                            location.reload();
-                        }, 5000);
-                        loadhide();
-                        clearInterval(checkt);
-                    }, failed: (m) => {
+                        setTimeout(initialCheck, 1000);
+                        loadHide();
+                    }, rej => {
                         notice("Commit提交失败", true);
-                        errshow();
-                    }
-                });/*push commit*/
+                        errShow();
+                    });
             }
         }, 1000);
     } else {

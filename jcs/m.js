@@ -1,25 +1,25 @@
 "use strict";
+var step = 1;
 window.htmls = new Array(); /*TemplatePreload*/
 if (!window.htmls['index.html']) {
-    $.ft('./template/index.html', '', {
-        success: function (m) {
-            window.htmls['index.html'] = m;
-        },
-        failed: function (m) { /*Failed*/
-            errshow();
-        }
-    }, 'get', '');
+    $.ft('./template/index.html')
+        .then(resp => resp.text(), rej => {
+            errShow();
+            throw 'Failed to get the template: ' + rej;
+        })
+        .then(resp => {
+            window.htmls['index.html'] = resp;
+        });
 } /*TemplatePreloadFinished*/
 setTimeout(function () {
     SC('t').style.opacity = 1;
     SC('b').style.opacity = 1;
 }, 500);
-var step = 1;
 window.addEventListener('pjaxstart', function () { /*加载动画*/
-    loadshow();
+    loadShow();
 }, false);
 window.addEventListener('pjaxfinish', function () {
-    loadhide();
+    loadHide();
 }, false);
 
 function lc(v, t) {
@@ -29,59 +29,67 @@ function lc(v, t) {
         localStorage[v] = t;
     }
 }
-if (lc('secretcode') == undefined) {/*初始化本地储存*/
+if (!lc('secretcode')) {/*初始化本地储存*/
     lc('secretcode', '');
 }
-if (lc('githubrepo') == undefined) {/*初始化本地储存*/
+if (!lc('githubrepo')) {/*初始化本地储存*/
     lc('githubrepo', '');
 }
 
 function typer() {
     if (step == 1) {
-        var code = lc('secretcode');
-        if (code !== '') {
+        let code = lc('secretcode'), btnElems = SC('b');
+        if ($.notEmpty(code)) {
             SC('n').style.display = 'none';
         }
-        SC('b').style.marginTop = '500px';
-        SC('b').style.opacity = 0;
-        SC('f').style.marginTop = '0px';
-        setTimeout(function () {
-            SC('b').style.marginTop = '0px';
-            SC('b').style.top = 'auto';
-            SC('b').style.bottom = '20px';
-            SC('bt').value = 'Get';
-            SC('b').style.opacity = 100;
+        wear(btnElems, {
+            'margin-top': '500px',
+            'opacity': 0
+        });
+        SC('f').style.display = 'block';
+        aniChecker(btnElems, () => {
+            wear(btnElems, {
+                'margin-top': '0px',
+                'opacity': 1,
+                'top': 'auto',
+                'bottom': '20px'
+            });
+            SC('bt').value = '→';
+            SC('f').style.marginTop = '0px';
             listener();
-        }, 1000);
+        }, true);
         step += 1;
     } else if (step >= 2) {/*get/set tokencode*/
-        var pass = SC('p').value, code = lc('secretcode'), token;
-        if (code !== '') {
-            token = blog.crypt(code, pass, true);
+        let pass = SC('p').value, code = lc('secretcode'), token, tokenInput = SC('n').value;
+        if ($.notEmpty(pass)) {
+            if ($.notEmpty(code)) {
+                token = $.crypt(code, pass, true);// RC4加密
+            } else if ($.notEmpty(tokenInput)) {
+                token = tokenInput;
+                lc('secretcode', $.crypt(token, pass));
+            }
         } else {
-            token = SC('n').value;
-            lc('secretcode', blog.crypt(token, pass));
+            notice('请输入密码');
+            return false;
         }
-        if (code !== '' && $.ce(pass) || code == '' && $.ce(pass) && $.ce(token)) {
-            window.accesstoken = token;
-            blog.getusr(window.accesstoken, true, {
-                success: function () {
-                    PJAX.sel('container');
-                    PJAX.jump('./check.html');
-                }, failed: function () {
-                    SC('n').style.display = 'block';/*弹出token键入框*/
-                    notice('请检查token是否正确');
-                    lc('secretcode', '');
-                }
-            });
-        }
+        loadShow();
+        window.blog = new gh(token); // 初始化github部分
+        blog.getUsr().then(res => {
+            PJAX.sel('container');
+            PJAX.jump('./check.html');
+            loadHide();
+        }, rej => {
+            SC('n').style.display = 'block';/*弹出token键入框*/
+            notice('请检查token是否正确');
+            lc('secretcode', ''); // 清除本地储存的token
+            loadHide();
+        });
     }
 }
 
 function listener() { /*回车监听*/
     document.onkeydown = function (event) {
-        var e = event || window.event;
-        if (e && e.keyCode == 13) {
+        if (event.key == 'Enter') {
             typer();
         }
     };

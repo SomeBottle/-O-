@@ -62,7 +62,7 @@ if (typeof ($) !== 'object') {
         }
         script = null;
     }
-    $.aniChecker = function (element, func) { /*css3变换检查器(元素,执行完毕执行的函数)*/
+    $.aniChecker = function (element, func) { /*css3动画检查器(元素,执行完毕执行的函数)*/
         let chosenTester = '', testers = {
             'animation': 'animationend',
             'OAnimation': 'oAnimationEnd',
@@ -174,7 +174,7 @@ if (typeof ($) !== 'object') {
         if (title.length <= 0) { /*还没有加过<title>*/
             let titleElement = document.createElement('title');
             titleElement.innerHTML = theTitle;
-            head.appendChild(te);
+            head.appendChild(titleElement);
         } else {
             title[0].innerHTML = theTitle;
         }
@@ -510,11 +510,8 @@ if (!B) { /*PreventInitializingTwice*/
             mj = null;
         },
         cd: function (rendered) { /*covercutter封面<ifcover>去除器*/
-            while (rendered.indexOf('<ifcover>') !== -1) {
-                let coverHtml = B.gt('<ifcover>', '</ifcover>', rendered, true);
-                rendered = B.r(rendered, '<ifcover>' + coverHtml + '</ifcover>', ''); /*没有封面图就删掉整段*/
-            }
-            return rendered;
+            let pattern = new RegExp('<ifcover.*?>(.*?)</ifcover.*?>', 'gis');
+            return rendered.replaceAll(pattern, '');
         },
         clothFirstRendered: false,
         /*渲染过的cloth,main放在这里*/
@@ -546,6 +543,9 @@ if (!B) { /*PreventInitializingTwice*/
             let pattern = /^\d+$/g;
             return !pattern.test(num.toString());
         },
+        isDate: function (num) {
+            return new RegExp('^\\d{4}?(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1])$', 'gi').test(num);
+        },
         currentPageType: '',/*20210919记录renderer获取到的pagetype*/
         isPost: false,//是不是页面，不是页面就是文章20220115
         renderer: function (fcontent = false) { /*(fcontent=是否指定内容)*/
@@ -572,7 +572,7 @@ if (!B) { /*PreventInitializingTwice*/
                     renders = that.r(post, 'postcontent', that.lazyPre($.mark(content.trim())), true), /*unescape and Analyse md*/
                     alltags = [];
                 renders = that.r(renders, 'posttitle', title, true);
-                if (that.notNumber(date)) { // 是页面
+                if (!that.isDate(date)) { // 是页面
                     tags = ifPageTp;
                 } else { /*Tag Process*/
                     alltags = tags.split(',');
@@ -599,7 +599,7 @@ if (!B) { /*PreventInitializingTwice*/
                 } else { /*没有封面，按标签一起删掉*/
                     renders = that.cd(renders);
                 }
-                if (that.notNumber(date)) { /*是页面，就不显示评论了*/
+                if (!that.isDate(date)) { /*是页面，就不显示评论了*/
                     let beforeEnd = renders.split('{(:PostEnd)}')[0] + '<!--PostEnd-->',
                         afterComment = '<!--Footer-->' + renders.split('{(Footer:)}')[1];
                     renders = beforeEnd + afterComment;
