@@ -119,6 +119,8 @@
          {(PostTag)}{[tags]}{(PostTagEnd)}  文章tags
          {(PostID)}{[pid]}{(PostIDEnd)}  文章pid  
          {(PostCover)}{[cover]}{(PostCoverEnd)}  (此处可能为none)文章封面，具体看上方封面设置
+         {(PubTime)}{[pubtime]}{(PubTimeEnd)} 初次发布时间戳(毫秒级)
+         {(EditTime)}{[edittime]}{(EditTimeEnd)}  最近一次编辑时间戳(毫秒级)
          {(PageType)}{[type]}{(PageTypeEnd)}  用于指定页面类型  
          <script src="./main.js?233"></script>
          ```
