@@ -1,6 +1,6 @@
-/*ControlPosts4.5.0 - SomeBottle20211021*/
+/*ControlPosts5.0.0 - SomeBottle202202*/
 "use strict";
-var mark = function (content) {
+const mark = function (content) {
     return window.markdownit({ html: true, linkify: true })
         .use(window.markdownItAnchor, {
             permalink: window.markdownItAnchor.permalink.linkInsideHeader({
@@ -9,31 +9,9 @@ var mark = function (content) {
             })
         })
         .render(content);
-}
-var editPost = 'none',
-    tpjs = JSON.parse(window.tJson), // 这样防止tpjs直接挂上tJson的引用导致问题(某种意义上的深复制)
-    choice = 0,
-    timer;
-renderList(); /*渲染最新文章列表*/
+}, pidReplacePattern = new RegExp('\\{\\s*?pid\\s*?\\}', 'gi');
 
-function randomMJ() { /*获得随机的mainJson文件名*/
-    let str = Math.random().toString(36).substring(5);
-    return 'main.' + str + '.json';
-}
-
-function getDate() { /*获得今天日期*/
-    var dt = new Date();
-    var month = dt.getMonth() + 1,
-        day = dt.getDate();
-    if (month >= 1 && month <= 9) {
-        month = "0" + month;
-    }
-    if (day >= 1 && day <= 9) {
-        day = "0" + day;
-    }
-    return dt.getFullYear() + month.toString() + day.toString();
-}
-var B = { /*Replace Part*/
+const B = { /*Replace Part*/
     r: function (origin, from, to, forTemplate = false, replaceAll = true) { /*别改这里！，没有写错！(All,Original,ReplaceStr,IfTemplate[false,'['(true),'('],IfReplaceAll)*/
         if (forTemplate) {
             origin = (forTemplate == '(') ? origin.replace(new RegExp('\\{\\(' + from + '\\)\\}', (replaceAll ? 'g' : '') + 'i'), () => to) : origin.replace(new RegExp('\\{\\[' + from + '\\]\\}', (replaceAll ? 'g' : '') + 'i'), () => to); /*20201229替换{[xxx]}和{(xxx)}一类模板，这样写目的主要是利用正则忽略大小写进行匹配*/
@@ -58,20 +36,64 @@ var B = { /*Replace Part*/
     }
 }
 
+var editPost = 'none',
+    tpjs = JSON.parse(window.tJson), // 这样防止tpjs直接挂上tJson的引用导致问题(某种意义上的深复制)
+    choice = 0,
+    timer,
+    configs = localStorage['oEditorConfigs']; // 获得面板配置
+
+function loadConfigs(manual = false) { // 如果本地没有配置，就抓取配置(manual参数供手动下载配置)
+    let repo = window.githubRepo;
+    if (!configs || manual) {
+        loadShow();
+        blog.findFileSha(repo, barnDir + 'editorConfigs.json').then((sha) => {
+            return blog.getFileBlob(repo, sha).then(resp => {
+                let parsed = Base64.decode(resp.content);
+                configs = parsed;
+                localStorage['oEditorConfigs'] = configs; // 覆盖本地配置
+                notice('成功从仓库下载配置');
+            }, rej => {
+                throw rej;
+            })
+        }, rej => {
+            throw rej;
+        }).catch(e => {
+            console.log(`Failed to download config: ${e}`);
+            if (manual) notice('下载配置失败'); // 如果是手动下载就提示一下
+            loadHide();
+        });
+    }
+}
+
+function randomMJ() { /*获得随机的mainJson文件名*/
+    let str = Math.random().toString(36).substring(5);
+    return 'main.' + str + '.json';
+}
+
+function getDate() { /*获得今天日期*/
+    var dt = new Date();
+    var month = dt.getMonth() + 1,
+        day = dt.getDate();
+    if (month >= 1 && month <= 9) {
+        month = "0" + month;
+    }
+    if (day >= 1 && day <= 9) {
+        day = "0" + day;
+    }
+    return dt.getFullYear() + month.toString() + day.toString();
+}
+
 function renderList() {
     let mj = JSON.parse(window.mainJson), /*获得json*/
         renderTp = '',
-        nowRender = 0,
-        maxRender = 8; /*最多加载多少最新文章*/
-    for (let i in mj['dateindex']) { // 找最新的几篇文章
-        if (nowRender >= maxRender) {
-            break;
-        }
-        let id = parseInt(i.replace('post', '')),
-            title = Base64.decode(mj['postindex'][id]['title']);
-        renderTp += "<p class='postitemp'><a class='postitema' href='javascript:void(0);' onclick='postOpen(" + id + ")'>" + title + "</a></p>";
-        nowRender += 1;
-    }
+        maxRender = 20, /*最多加载多少最新文章*/
+        dIndexes = mj['dateindex'] || [],
+        dtSlice = dIndexes.slice(0, maxRender); // 对数组进行切片，取出最前面的20篇文章
+    dtSlice.forEach((item) => {
+        let pid = item[0], // 取出文章的id
+            title = Base64.decode(mj['postindex'][pid]['title']); // 取出文章的标题
+        renderTp += "<p class='postitemp'><a class='postitema' href='javascript:void(0);' onclick='postOpen(" + pid + ")'>" + title + "</a></p>";
+    });
     if (renderTp == '') {
         renderTp += '<p class=\'postitemp\'><a class=\'postitema\' href=\'javascript:void(0);\'>还没有文章呢</a></p>';
     }
@@ -85,7 +107,7 @@ function chooseSth() {
     } else {
         SC('fbtn').style.backgroundColor = '#0080ff';
     }
-    let txt = new Array('编辑/发布', '预览', '保存草稿', '读取草稿', '删除', '预览前置', '生成归档', '取消');
+    let txt = new Array('编辑/发布', '预览', '保存草稿', '读取草稿', '删除', '更多配置', '生成归档', '取消');
     SC('fbtn').innerHTML = txt[choice - 1] || txt.slice(-1);
     clearTimeout(timer);
     timer = setTimeout(function () {
@@ -117,8 +139,9 @@ function chooseSth() {
                 }
                 break;
             case 6:
-                console.log('预览前置');
-                beforePreviewHtml();
+                console.log('更多配置');
+                //beforePreviewHtml();
+                configShow();
                 break;
             case 7:
                 console.log('生成归档');
@@ -143,6 +166,14 @@ function scriptCutter(h) { /*处理script标签，用上正则2021.11.6*/
         return p2.trim() ? p1 + '/*' + p2 + '*/' + p3 : match;
     });
 }
+function findDateIndex(dIndexes, postID) { // 根据文章id找出对应的日期数组下标2022.2.4
+    for (let i = 0, len = dIndexes.length; i < len; i++) {
+        if (dIndexes[0] == postID) { // 日期数组每个元素储存[文章ID,文章日期]
+            return i;
+        }
+    }
+    return -1;
+}
 function beforePreviewHtml() {
     localStorage.OBeforePreview = localStorage.OBeforePreview || '';
     let getPre = prompt('请输入你在预览body部分中要插入的前置html\n（用于文章中需要外部js库的脚本预览)', localStorage.OBeforePreview);
@@ -165,7 +196,7 @@ function tagArchive() { /*生成tag和归档页面*/
         arcPagePath = tpjs['generatehtmls']['archives'], /*获得配置的页面文件名，默认archive.html*/
         repo = window.githubRepo,
         mj = JSON.parse(window.mainJson), /*获得json*/
-        mainTp = window.htmls['index.html'], /*Tags*/
+        mainTp = window.htmls['index'], /*Tags*/
         renderTg = B.r(mainTp, 'title', 'Tags', true),
         renderArc = B.r(mainTp, 'title', 'Archives', true);
     renderTg = B.r(renderTg, 'titlemiddle', '-', true);
@@ -234,16 +265,17 @@ function transDate(v) { /*date transformer*/
 
 function indexRenderer(mj) { // 首页渲染者
     let pageTp = tpjs['templatehtmls']['postlist'], /*获得配置的页面模板名，默认postlist.otp.html*/
-        mainTp = window.htmls['index.html'],
-        itemTp = window.htmls['postitems.html'],
-        postIDs = mj['dateindex'],
+        mainTp = window.htmls['index'],
+        itemTp = window.htmls['postitems'],
+        dIndexes = mj['dateindex'],
         listRender = '',
         maxRender = parseInt(mj['posts_per_page']), /*每页最大渲染数*/
         nowRender = 0;
     itemTp = B.gt('PostItem', 'PostItemEnd', itemTp); /*有项目的模板*/
-    for (let i in postIDs) {
+    for (let i = 0, len = dIndexes.length; i < len; i++) {
         if (nowRender < maxRender) {
-            let pid = i.replace('post', ''),
+            let item = dIndexes[i],
+                pid = item[0],
                 pt = mj['postindex'][pid];
             if (!pt['link']) { /*排除页面在外*/
                 let render = B.r(itemTp, 'postitemtitle', Base64.decode(pt.title), true);
@@ -294,10 +326,10 @@ function tempSave() { // 保存草稿
         pj.push(savev);
         localStorage[key] = JSON.stringify(pj);
     }
-    putter('otitle', title);
-    putter('odate', date);
-    putter('otag', tag);
-    putter('ocontent', content);
+    putter('oEditorTitle', title);
+    putter('oEditorDate', date);
+    putter('oEditorTag', tag);
+    putter('oEditorContent', content);
     notice('保存成功');
 }
 
@@ -309,28 +341,27 @@ function readSave() {
         else return pj;
     }
     let askWords = '',
-        drafts = getter('otitle');
+        drafts = getter('oEditorTitle');
     for (let i in drafts) askWords += '序号:' + i + ' 保存时间:' + drafts[i]['t'] + '\n';
     let draftNo = parseInt(prompt('请输入要读取的草稿序号\n' + askWords + '\n\n这会覆盖你目前的内容', '')),
-        value = getter('otitle', draftNo);
+        value = getter('oEditorTitle', draftNo);
     if (value && draftNo >= 0) {
         SC('title').value = value['v'];
-        SC('date').value = getter('odate', draftNo)['v'];
-        SC('tag').value = getter('otag', draftNo)['v'];
-        SC('content').value = getter('ocontent', draftNo)['v'];
+        SC('date').value = getter('oEditorDate', draftNo)['v'];
+        SC('tag').value = getter('oEditorTag', draftNo)['v'];
+        SC('content').value = getter('oEditorContent', draftNo)['v'];
     } else {
         notice('无此草稿');
     }
 }
 
 function preview() {
-    var content = SC('content').value, restored = scriptRestore(content);
-    /*SC('sbr').style.zIndex = 50;
-    SC('sbr').style.opacity = 1;
-    SC('sbr').innerHTML = '<a class=\'closebtn\' href=\'javascript:void(0);\' onclick=\'sbrClose()\'>×<\/a><h2>Preview:<\/h2><style>img{max-width:100%;}</style>' + md.makeHtml(content);*/
-    let preWin = window.open('');
+    let content = SC('content').value,
+        restored = scriptRestore(content),
+        preWin = window.open(''),
+        parsedCfg = configs ? JSON.parse(configs) : { 'beforePreview': '' };
     preWin.opener = null;
-    preWin.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown-light.css' rel="stylesheet" /></head><body>${localStorage.OBeforePreview || ''}<div class='markdown-body'>${mark(restored)}</div></body>`);
+    preWin.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown-light.css' rel="stylesheet" /></head><body>${parsedCfg['beforePreview']}<div class='markdown-body'>${mark(restored)}</div></body>`);
     preWin.document.close();
 }
 
@@ -339,36 +370,49 @@ function coverDrawer() { /*提取当前content的封面图片*/
     return matching ? matching[1] : '';
 }
 
+function linkValid(link) {
+    let pattern = new RegExp('^(?<!\\.)[\\-_A-Za-z0-9][.\\-_A-Za-z0-9]+[\\-_A-Za-z0-9](?!\\.)$', 'gi');
+    return (link.trim() !== 'index' && pattern.test(link)); // 链接不能是index.html，同时只能是. - _ 英文字母大小写 数字，且开头结尾不能是.
+}
+
 function edit() {
-    let postTp = tpjs['templatehtmls']['post'], /*获得配置的页面模板名，默认post.otp.html*/
+    let introLen = 100, // 截取内容长度
+        postTp = tpjs['templatehtmls']['post'], /*获得配置的页面模板名，默认post.otp.html*/
         title = SC('title').value,
-        date = SC('date').value,
+        dateVal = SC('date').value,
         tag = SC('tag').value,
         content = scriptCutter(SC('content').value),
-        ifPage = false;/*是否是页面*/
+        date = $.notEmpty(dateVal) ? dateVal : getDate(),// 如果日期为空就选用默认日期
+        intro = mark(content)
+            .replace(/<\/?.+?>/g, "")
+            .substring(0, introLen)
+            .replace(/[ ]/g, "")
+            .replace(/[\r\n]/g, ""), // 提取文章前面小部分作为intro
+        ifPage = $.isDate(date) ? false : true;/*是否是页面*/
+
     if (!$.notEmpty(title)) {
         notice('标题不能为空哦');
         return false;
     }
-    if (!$.notEmpty(date)) { // 如果日期为空就选用默认日期
-        date = getDate();
+    if (content.length > introLen) {
+        intro += '...';
     }
-    if (!$.isDate(date)) { // 判断是不是页面
-        ifPage = true;
+    if (ifPage) { // 如果是页面
         if (tpjs.alltp.includes(date + '.html')) {
             notice('链接名与模板重复！');
             notice('请更换');
             return false; /*跳出函数*/
+        } else if (!linkValid(date)) { // 如果链接名不合法
+            notice('链接名不合法');
+            notice('只能是 . - _ 英文字母 数字');
+            notice('不能以.开头或结尾');
+            return false;
         }
         tag = ''; /*页面不显示标签*/
     }
-    let intro = (((mark(content).replace(/<\/?.+?>/g, "")).substring(0, 100)).replace(/[ ]/g, "")).replace(/[\r\n]/g, ""); // 提取文章前面小部分作为intro
-    if (content.length >= 70) {
-        intro += '...';
-    }
     if (confirm('真的要发布嘛？')) {
         let mj = JSON.parse(window.mainJson), /*获得mainjson*/
-            mainTp = window.htmls['index.html'], /*RenderArea*/
+            mainTp = window.htmls['index'], /*RenderArea*/
             render = B.r(mainTp, 'title', title, true);
         render = B.r(render, 'titlemiddle', '-', true);
         render = B.r(render, 'date', date, true);
@@ -379,74 +423,38 @@ function edit() {
         render = B.r(render, 'type', postTp, true);
         render = B.r(render, 'sitename', mj['name'], true); /*设定title*/
         /*RenderFinish*/
-        if (mj[0] == 'initialized') { /*删除默认内容*/
+        /*处理文章索引*/
+        mj['postnum'] = mj['postnum'] || 0;// 初始化文章数量
+        mj['postindex'] = mj['postindex'] || new Object();// 初始化文章索引
+        if (!mj['dateindex'] || !(mj['dateindex'] instanceof Array)) { // 初始化日期索引
+            mj['dateindex'] = new Array(); // 日期索引是数组储存(有序)2022.2.4
+        }
+        if (mj[0] == 'initialized') { /*删除MainJson默认内容*/
             delete mj[0];
-        } /*处理文章索引*/
-        if (!mj['postnum']) { // 初始化文章数量
-            mj['postnum'] = 0;
-        }
-        if (!mj['postindex']) { // 初始化文章索引
-            mj['postindex'] = new Object();
-        }
-        if (!mj['dateindex'] || typeof (mj['dateindex']) !== 'object') { // 初始化日期索引
-            mj['dateindex'] = new Object();
         }
         let currentNo = mj['postnum'], // 目前的文章序号
-            commit = 'New post'; // Commit内容
-        if (editPost !== 'none') { /*是发布，还是编辑？*/
+            commit = 'New Post', // Commit内容
+            dIndexes = mj['dateindex'], // 日期索引
+            postDateInd = dIndexes.length,
+            pageLink = ifPage ? date : ''; /*指定编辑的页面的link(不带.html)*/
+        date = ifPage ? getDate() : date; // 如果是页面，日期就是今天
+        if (editPost !== 'none') { // 是编辑
             currentNo = editPost;
-            commit = 'Edit post';
-        } else {
+            postDateInd = findDateIndex(dIndexes, currentNo); // 找到当前文章对应的日期索引
+            commit = 'Edit Post';
+        } else { // 是发布
             mj['postnum'] += 1; // 文章数量+1
         }
         render = B.r(render, 'pid', currentNo, true); /*设定pid*/
         /*Render---------------------*/
-        let pageLink = ''; /*指定编辑的页面的link(不带.html)*/
-        if (ifPage) { /*如果是页面直接获取当前时间*/
-            pageLink = date; // 此时日期一栏填的是页面链接
-            date = getDate();
-        }
-        mj['dateindex']['post' + currentNo] = date + currentNo.toString(); /*利用date进行排序*/
-        /*排查日期序列最长length*/
-        let maxDateLen = 0;
-        for (let i in mj['dateindex']) {
-            var lens = (mj['dateindex'][i]).toString().length;
-            if (lens > maxDateLen) {
-                maxDateLen = lens;
-            }
-        } /*自动补全日期序列不足的*/
-        for (let i in mj['dateindex']) {
-            var ndt = mj['dateindex'][i];
-            var lens = (ndt).toString().length;
-            if (lens < maxDateLen) {
-                var pid = (i.replace('post', '')).toString();
-                var leftlen = maxDateLen - lens;
-                var st = 0;
-                var zeroes = '';
-                while (st < leftlen) {
-                    zeroes += (0).toString();
-                    st += 1;
-                }
-                var datelength = getDate().toString().length; /*千年虫？*/
-                var ldt = ndt.toString().substring(0, datelength);
-                var rdt = ndt.toString().substring(lens - pid.length); /*先把日期和pid拆解*/
-                var rpid = rdt.toString().replace(pid, zeroes + pid); /*单独处理pid,位数不够，用零来凑*/
-                mj['dateindex'][i] = parseInt(ldt + rpid);
-            }
-        }
-        var datearray = new Array();
-        for (var dts in mj['dateindex']) {
-            datearray.push(Array(dts, parseInt(mj['dateindex'][dts]))); /*转二维数组*/
-        }
-        mj['dateindex'] = new Object();
-        datearray = (datearray.sort(function (a, b) {
-            return a[1] - b[1];
-        })).reverse(); /*二维数组排序，感谢Ghosin*/
-        window.testarray = datearray;
-        for (var d in datearray) { /*丢回对象*/
-            var ditem = datearray[d];
-            mj['dateindex'][ditem[0]] = ditem[1];
-        }
+        /*日期排序-------------------*/
+        dIndexes[postDateInd] = [currentNo, date]; // 日期数组元素[文章序号,日期]
+        dIndexes.sort((a, b) => { // 排序
+            let factor1 = b[1] - a[1], // 因素1：日期新旧
+                factor2 = b[0] - a[0]; // 因素2：文章序号大小
+            return factor1 === 0 ? factor2 : factor1; // 因素1排不出时用因素2进行排序
+        });
+        /*日期排序结束-------------------*/
         let recentLink = '', /*如果是页面，储存修改之前的页面名*/
             currentPostObj = mj['postindex'][currentNo] || new Object(); // 目前正在操作的postindex对象
         if (editPost !== 'none') {
@@ -461,11 +469,14 @@ function edit() {
                 return false; /*跳出函数*/
             }
         }
+        let currentTime = timestamp(), // 毫秒级时间戳
+            pubTime = currentPostObj['pubTime'] || currentTime; // 发布日期(不要改动此行位置)
         currentPostObj = {
             'title': Base64.encode(title),
             'date': date,
             'intro': Base64.encode(intro),
-            'tags': tag
+            'tags': tag,
+            'editTime': currentTime // 上一次编辑的日期
         };
         let editCover = coverDrawer(); /*文章封面支持20190810*/
         if (editCover) { // 编辑器里指定了封面
@@ -479,11 +490,16 @@ function edit() {
             render = B.r(render, 'cover', 'none', true); /*没有封面也要替换掉占位符*/
         }
         loadShow();
-        let fileName = 'post-' + currentNo + '.html';
+        let fileName = 'post-' + currentNo + '.html';// 构建文件名
+        /*登记发布时间和编辑时间*/
+        render = B.r(render, 'pubtime', pubTime, true);
+        render = B.r(render, 'edittime', currentTime, true);
+        /*登记完成*/
         if (ifPage) { /*如果是页面则用指定链接*/
             currentPostObj['link'] = pageLink; /*如果是页面就储存pagelink*/
             fileName = pageLink + '.html';
         }
+        currentPostObj['pubTime'] = pubTime; // 如果不存在发布日期，就储存当前日期
         mj['postindex'][currentNo] = currentPostObj; /*储存文章信息*/
         let indexPage = indexRenderer(mj), /*渲染首页*/
             prevMName = tpjs['mainjson'], /*上一次的main.json名字*/
@@ -504,7 +520,7 @@ function edit() {
             return blog.crBlob(repo, JSON.stringify(mj))
                 .then(resp => {
                     treeConstruct.push({
-                        path: tpjs['mainjson'],
+                        path: barnDir + tpjs['mainjson'], // MainJson作为博客核心文件放在barnDir/下
                         mode: "100644",
                         type: "blob",
                         sha: resp.sha
@@ -530,7 +546,7 @@ function edit() {
             return blog.crBlob(repo, JSON.stringify(tpjs))
                 .then(resp => {
                     treeConstruct.push({
-                        path: 'template.json',
+                        path: `${barnDir}template.json`, // TemplateJson作为博客核心文件放在barn/下
                         mode: "100644",
                         type: "blob",
                         sha: resp.sha
@@ -541,7 +557,7 @@ function edit() {
                 })
         }).then(treeConstruct => {
             treeConstruct.push({
-                "path": prevMName,
+                "path": barnDir + prevMName,
                 "mode": "160000",
                 "type": "commit",
                 "sha": null
@@ -560,7 +576,7 @@ function edit() {
                     throw rej;
                 })
         }).then(resp => {
-            return blog.getFileShas(repo, resp.object.sha) // 刷新fileShas缓存列表，详见g.js
+            return blog.getBaseShas(repo, resp.object.sha) // 刷新fileShas缓存列表，详见g.js
                 .then(res => {
                     window.mainJson = JSON.stringify(mj); /*更新本地json*/
                     window.tJson = JSON.stringify(tpjs);
@@ -590,16 +606,17 @@ function delPost(id) { /*删除文章*/
         loadShow();
         let ifPage = currentPostObj.link ? true : false, // 是不是页面
             fileName = ifPage ? currentPostObj.link + '.html' : 'post-' + id + '.html',
-            repo = window.githubRepo;
+            repo = window.githubRepo,
+            postDateInd = findDateIndex(mj['dateindex'], id); // 找到当前文章在日期列表中的索引
         delete mj['postindex'][id]; // 删除postindex中文章对象
-        delete mj['dateindex']['post' + id]; // 删除dateindex中文章元素
+        delete mj['dateindex'][postDateInd]; // 删除dateindex中对应元素
         let indexPage = indexRenderer(mj), /*渲染首页*/
             prevMName = tpjs['mainjson']; /*上一次的main.json名字*/
         tpjs['mainjson'] = randomMJ(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
         blog.crBlob(repo, JSON.stringify(mj)).then(resp => {
             let treeConstruct = [];
             treeConstruct.push({
-                "path": tpjs['mainjson'],
+                "path": barnDir + tpjs['mainjson'], // MainJson作为博客核心文件放在barn/下
                 "mode": "100644",
                 "type": "blob",
                 "sha": resp.sha
@@ -611,7 +628,7 @@ function delPost(id) { /*删除文章*/
             return blog.crBlob(repo, JSON.stringify(tpjs))
                 .then(resp => {
                     treeConstruct.push({
-                        "path": 'template.json',
+                        "path": `${barnDir}template.json`, // TemplateJson作为博客核心文件放在barn/下
                         "mode": "100644",
                         "type": "blob",
                         "sha": resp.sha
@@ -640,7 +657,7 @@ function delPost(id) { /*删除文章*/
                 "type": "commit",
                 "sha": null
             }, {// 移除旧索引
-                "path": prevMName,
+                "path": barnDir + prevMName,
                 "mode": "160000",
                 "type": "commit",
                 "sha": null
@@ -717,21 +734,6 @@ function addNew() { // 清空文章编辑区
     SC('title').value = '';
     SC('date').value = getDate();
 }
-document.onkeydown = function (event) { /*Search Enter Listener*/
-    if (event.key == 'Enter') {
-        let v = SC('search').value;
-        if (v !== '' && SC('search') == document.activeElement) {
-            SC('sbr').style.zIndex = 50;
-            SC('sbr').style.opacity = 1;
-            SC('sbr').innerHTML = "<p class='scitemp'><a class='scitema' href='#Searching..'>搜索中...</a></p>";
-            searchRender(v);
-        } else {
-            return true;
-        }
-    } else {
-        return true;
-    }
-};
 
 function searchRender(v) {
     let renderTp = '',
@@ -750,16 +752,24 @@ function searchRender(v) {
     if (renderTp == '') {
         renderTp += "<h2>啥都没找到TAT</h2>";
     }
-    renderTp = "<a class='closebtn' href='javascript:void(0);' onclick='sbrClose()'>×</a>" + renderTp; /*关闭按钮*/
-    SC('sbr').innerHTML = renderTp;
+    SC('sbrContent').innerHTML = renderTp;
+}
+
+function sbrShow() {
+    SC('sbr').style.display = 'block';
+    setTimeout(() => {
+        SC('sbr').style.opacity = 1;
+    }, 50);
 }
 
 function sbrClose() {
     wear(SC('sbr'), {
-        'opacity': 0,
-        'zIndex': -1
+        'opacity': 0
     });
-    SC('sbr').innerHTML = '';
+    aniChecker(SC('sbr'), () => {
+        SC('sbr').style.display = 'none';
+        SC('sbrContent').innerHTML = '';
+    }, true);
 }
 
 function addShow() {
@@ -775,6 +785,7 @@ function addHide() {
         SC('adbtn').style.display = 'none';
     }, true);
 }
+
 function insertAtCursor(e, str) { // 在输入指针处插入字符串
     let startPos = e.selectionStart,
         insertLen = str.length,
@@ -784,18 +795,109 @@ function insertAtCursor(e, str) { // 在输入指针处插入字符串
     e.value = beforeStr + str + afterStr;
     e.selectionStart = e.selectionEnd = startPos + insertLen;
 }
-SC('date').placeholder = getDate(); /*预设日期*/
-SC('date').value = getDate();
-document.addEventListener('keydown', function (e) {/*监听ctrl+S保存*/
+
+async function configShow() { // 展示配置面板
+    loadShow();
+    let cache = window.htmls['configs'],
+        configItems = await (cache ? Promise.resolve(cache) : $.ft('configs.html').then(resp => resp.text(), rej => {
+            throw rej;
+        })),
+        template = `<div class="markdown-body">${configItems}</div>`,
+        parsedCfg = '',
+        cfgElems = SC('sbrContent').getElementsByClassName('cfgInput'); // 获得所有配置输入元素
+    loadHide();
+    window.htmls['configs'] = configItems; // 临时存着
+    SC('sbrContent').innerHTML = template;
+    if (!configs) { // 如果配置仍然未载入就采用默认配置
+        parsedCfg = {
+            'rss': false,
+            'sitemap': false,
+            'postLinkPattern': 'post-{pid}',
+            'beforePreview': ''
+        }
+        configs = JSON.stringify(parsedCfg);
+    } else {
+        parsedCfg = JSON.parse(configs); // 配置存在
+    }
+    for (let elem of cfgElems) { // 填充配置
+        let key = elem.getAttribute('data-id');
+        elem.onchange = configUpdate; // 绑定change事件
+        switch (elem.type) {
+            case 'checkbox':
+                elem.checked = parsedCfg[key];
+                break;
+            default:
+                let value = parsedCfg[key];
+                configValid(key, value); // 这里主要起刷新postPermanentLink预览的作用
+                elem.value = value;
+        }
+    }
+    sbrShow();
+}
+
+function useLinkPattern(link, pid) { // 套上文章链接pattern
+    return link.replaceAll(pidReplacePattern, pid);
+}
+
+function configValid(key, val) { // 检查配置项是否合法
+    if (key == 'postLinkPattern') {
+        let applied = useLinkPattern(val, 'pid'); // 先去掉{pid}的{}以便linkValid判断
+        if (linkValid(applied) && pidReplacePattern.test(val)) {
+            SC('postPermanentLink').innerHTML = useLinkPattern(val, '450') + '.html';
+            return true;
+        } else {
+            notice('链接无效');
+            return false;
+        }
+    } else {
+        return true;
+    }
+}
+
+function configUpdate(e) { // 触发配置改变
+    let elem = e.target, // 获得事件触发元素
+        parsedCfg = JSON.parse(configs), // 这里默认configs是存在的！
+        key = elem.getAttribute('data-id');
+    switch (elem.type) {
+        case 'checkbox':
+            parsedCfg[key] = elem.checked;
+            break;
+        default:
+            let value = elem.value;
+            if (configValid(key, value)) {
+                parsedCfg[key] = value;
+            } else {
+                notice('请重新设置')
+                return false;
+            }
+    }
+    configs = JSON.stringify(parsedCfg); // 更新配置
+    localStorage['oEditorConfigs'] = configs; // 存入localStorage
+    notice('配置已更新');
+}
+
+SC('date').value = getDate(); /*预设日期*/
+document.addEventListener('keydown', function (e) {/*监听按键*/
+    let actElem = document.activeElement;
     if (e.code == 'KeyS' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         tempSave();
-    } else if (e.code == 'KeyV' && e.altKey && SC('content') == document.activeElement) { // alt + V在指定地方插入视频标签
+    } else if (e.code == 'KeyV' && e.altKey && SC('content') == actElem) { // alt + V在指定地方插入视频标签
         e.preventDefault();
         let link = prompt('输入视频URL:', '');
         if (link) insertAtCursor(SC('content'), `<video controls="controls" style="max-width:100%" src="${link}"></video>`);
-    } else if (e.key == 'Tab' && SC('content') == document.activeElement) {
+    } else if (e.key == 'Tab' && actElem.tagName.toLowerCase() == 'textarea') {
         e.preventDefault();
-        insertAtCursor(SC('content'), '    '); // 一个Tab换四个空格
+        insertAtCursor(actElem, '    '); // 一个Tab换四个空格
+    } else if (e.key == 'Enter') { // 回车搜索
+        let v = SC('search').value;
+        if ($.notEmpty(v) && SC('search') == actElem) {
+            sbrShow();
+            SC('sbrContent').innerHTML = "<p class='scitemp'><a class='scitema' href='#Searching..'>搜索中...</a></p>";
+            searchRender(v);
+        }
     }
 });
+
+renderList(); // 渲染最新文章列表
+loadConfigs(); // 如果本地没有配置就尝试从仓库下载

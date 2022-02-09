@@ -13,10 +13,11 @@
    * Simple: https://github.com/isnowfy/simple  
    
 ## 特点💊  
-   * 模板可配置  
-   * 支持页码，标签页，归档页  
+   * 原生JavaScript
+   * PJAX
+   * 支持模板
+   * 支持标签页，归档页  
    * 自带简单搜索功能，支持```介入搜索```    
-   * 原生PJAX  
    * 甚至只需要Github Pages #)3 ) 
    * 硬核图片Lazyload  
    * 平滑回滚至头部 2ax=V²（完全可以用原生的scroll啊喂！）  
@@ -49,7 +50,7 @@
    
    * **不要不要不要修改模板的```index.html```**，本身这个模板也只是一个媒介，并不会被直接上传到博客仓库，在前台并不展现外观，另外若修改index.html需要修改后台部分的（所以还是不要瞎折腾啦=A=）  
    
-   * **不要向```cloth.otp.html```的```<clothhead>```里面**引入js文件，不然**并不会**执行/引入，反之你可以在```<clothhead>```以外部分引入```<script>```.  
+   * **不要向```cloth.otp.html```的```<clothhead>```里面**添加```<script>```标签，不然**并不会**执行/引入，反之你可以在```<clothhead>```以外部分引入```<script>```.  
    
 ## 关于搜索🔍  
    * 在文章列表页通过hash访问 ```#!搜索内容``` 可以进行搜索，需要注意的是，由于索引文件的限制，只支持根据**文章部分内容和标题，标签，日期**这类的搜索.  
@@ -84,9 +85,8 @@
      
      | 项目 | 值 |  
      |:-------:|:-------:|  
-     | alltp | 所有要部署到仓库的模板文件，不建议修改，不能有图片一类的媒体文件 |
-     | necessary | 加载页面时一定要加载的几个模板，无论你访问博客的哪个页面这几个模板都会载入浏览器缓存 |  
-     | include | 所有的模板文件 |  
+     | alltp | 所有要部署到仓库的模板文件，**不建议**修改（博客**初始化**时会被部署到```./barn/```目录下） |
+     | necessary | 加载页面时一定要加载的几个模板，无论你访问博客的哪个页面这几个模板都会载入浏览器缓存 |   
      | usemain | 使用main.json的几个模板，当你访问使用这几个模板的页面时加载过程会等待main.json载入完毕 |  
      | templatehtmls | 指定各类模板对应的文件，如果部署后修改了这里，上面几个项目中的模板文件名也要进行修改 |  
      | generatehtmls | 主要是tags和archives模板对应的页面文件 |  
@@ -99,6 +99,9 @@
      ![](https://wx4.sinaimg.cn/large/ed039e1fly1g5uh69qklvg20fa0b47rf)  
      
    * **模板特殊占位**   
+
+     0. **除**```index.html```的**模板**都能使用```{[barndir]}```占位符，这个占位符会被替换为博客**核心文件**所在的相对目录。  
+        默认核心文件存在```./barn/```下，```{[barndir]}```也就会被替换为```barn/```。  
      
      1. index.html **媒介页面(不要修改，不影响外观)**  
          ```html
@@ -229,6 +232,66 @@
 
       每个数组元素是一个对象，```id```是原标题的id；而```name```是原标题内容(自动去除**可能含有的a标签**)；```index```则是标题权重，```<h1>-<h6>```对应权重```0-5```。
 
+   * 当前文章信息  
+
+      每次**文章或页面**载入完毕后，程序会把文章信息储存在一个对象中：  
+
+      ```javascript
+      B.currentPostInfo
+      ```
+
+      1. 当访问的是**文章**时，其内容为：  
+
+         ```javascript
+         {  
+            cover: "none", // 封面图片URL
+            date: "20220206", // 文章日期
+            editTime: 1644416432224, // 文章上一次被编辑的时间戳(毫秒级)
+            pid: "6", // 文章/页面唯一id
+            pubTime: 1644415998546, // 文章发布时间戳(毫秒级,一旦发布就不会变)
+            tags: "日常", // 文章的标签们
+            title: "Hello7" // 文章标题
+         }
+         ```
+
+      2. 当访问的是**用户创建的页面**时，其内容为：
+
+         ```javascript
+         {
+            cover: "https://ae01.alicdn.com/kf/He6234e196550496abff612ee2f209cd9n.jpg", // 封面图片URL
+            editTime: 1644417418735, // 页面上一次被编辑的时间戳(毫秒级)
+            link: "testpage", // 页面链接
+            pid: "7", // 文章/页面唯一id
+            pubTime: 1644415284074, // 页面发布时间戳(毫秒级,一旦发布就不会变)
+            tags: "", // 页面的标签们，暂时一直为空
+            title: "New Page" // 页面标题
+         }
+         ```
+
+      3. 访问其他页面时：返回 ```false```。
+
+   * 页面渲染后回调  
+
+      ```javascript
+      B.callAfterRender(callBackFunction);
+      ```
+
+      通过这个方法，你可以注册一个回调函数```callBackFunction```。每当页面渲染完毕（以及所有JavaScript脚本执行完毕），程序会调用这个回调函数。  
+
+      传入回调函数的第一个参数为**当前页面的模板名**。  
+
+      例如：  
+
+      ```javascript
+      B.callAfterRender((pageType)=>{
+         console.log(pageType);
+      })
+      ```
+
+      当我访问**文章列表页**（博客首页）时，等页面渲染完，控制台会输出：```postlist.otp.html```。  
+
+      > 你可以把这个方法写到**模板文件**中！
+
    * 导航栏相关  
       ```javascript
       B.nav*
@@ -294,7 +357,7 @@
    
    * 获得当前时间戳  
       ```javascript
-      timestamp();
+      timestamp(); // 毫秒级
       ```
 
 ## main.json可配置项🔧  
@@ -307,6 +370,7 @@
    * [JS-Base64](https://github.com/dankogai/js-base64)  
    * [Crypto-JS](https://github.com/brix/crypto-js)  
    * [Bueue.js](https://github.com/SomeBottle/Bueue.js)  
+   * [github-markdown-css](https://github.com/sindresorhus/github-markdown-css)  
    
 ## 感谢❤  
    * Ghosin 提了非常多很不错的意见！  

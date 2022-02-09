@@ -1,0 +1,23 @@
+<h2>RSS</h2>
+<p><input type="checkbox" data-id="rss" class="cfgInput"></input>&nbsp;发布/编辑时生成<code>rss.xml</code></p>
+
+<h2>Sitemap</h2>
+<p><input data-id="sitemap" type="checkbox" class="cfgInput"></input>&nbsp;发布/编辑时生成<code>sitemap.xml</code></p>
+
+<h2>文章链接模式</h2>
+<p>默认情况下每篇<b>新文章</b>发布后生成的永久链接形如<code>post-233.html</code>，而这个配置项允许你更改其为其他的模样。</p>
+<p><code>{pid}</code>代指<b>文章ID</b>，在模式中可以多次出现。（PS: 你无需输入<code>.html</code>）</p>
+<p><input type="text" data-id="postLinkPattern" style="color: #333333;font-size: 1.2em;" placeholder="post-{pid}" class="cfgInput"></input>
+</p>
+<p>假如文章ID是<code>450</code>，依模式生成的永久链接为：<code id="postPermanentLink">---</code></p>
+
+<h2>预览前置内容</h2>
+<p>在编辑器进行预览的时候可能需要外部内容引入，你在下面输入的<code>HTML</code>内容将会在每次预览时被加入<b>页面内容头部</b>。</p>
+<textarea style="resize:none;height:20em;font-size: 1em;" placeholder="在这里输入HTML" data-id="beforePreview" class="cfgInput"></textarea>
+
+<h2>配置同步</h2>
+<p>首先，上面几项配置在修改的同时就会被储存至<b>本地</b><code>localStorage</code>;</p>
+<p>在进行<code>发布/编辑</code>操作的时候，上面几项配置将会被写成<code>JSON</code>文件并上传至博客仓库<b>核心目录</b>。</p>
+<p>但值得注意的是，编辑器配置默认是从<b>本地</b>读取的，只有当<b>本地不存在配置时</b>才会尝试从仓库拉取配置json。</p>
+<p>当然，下面有一个按钮可供手动从仓库拉取配置并<b>覆盖本地配置</b>：</p>
+<input type="button" value="下载配置" style="border: 2px dashed;" onclick="loadConfigs(true)"></input>

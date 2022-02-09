@@ -1,5 +1,7 @@
-/*FrontMainJS ver4.7.0 - SomeBottle*/
+/*FrontMainJS ver5.0.0 - SomeBottle*/
 "use strict";
+const barnDir = 'barn/', // 博客核心文件相对目录，请不要修改
+    mainHost = window.location.host;
 if (typeof ($) !== 'object') {
     var $ = new Object();
     var SC = function (e) { /*元素选择器*/
@@ -80,12 +82,21 @@ if (typeof ($) !== 'object') {
         }
         element.addEventListener(chosenTester, callBack);
     }
-    $.scriptCircle = function (content, retry = 0) {/*20210522执行脚本的延迟函数，在$.script导入的js没有完全载入之前页面中的js会在此处滞留。所有js载入成功后会执行页面中的js*/
-        if ($.loadingJS > 0) {
-            setTimeout(function () { $.scriptCircle(content, retry + 1) }, 100);/*循环延迟*/
-        } else {
-            for (var i in content) setTimeout("try{" + content[i] + "}catch(e){console.log('Page script Error: ' + e.message);}", 0);
-        }
+    $.scriptCircle = function (content) {/*20210522执行脚本的延迟函数，在$.script导入的js没有完全载入之前页面中的js会在此处滞留。所有js载入成功后会执行页面中的js*/
+        let retry = 0;
+        return new Promise((res) => {
+            let timer = setInterval(() => {
+                if ($.loadingJS > 0) {
+                    retry += 1;
+                } else {
+                    clearInterval(timer);
+                    content.forEach((script) => {
+                        setTimeout("try{" + script + "}catch(e){console.log('Page script Error: ' + e.message);}", 0);
+                    });
+                    setTimeout(() => res('done'), 10); // 页面js载入完毕，仍然用setTimeout
+                }
+            }, 100);
+        });
     }
     $.attrs = function (element) {/*20210722获得元素所有属性并返回数组，用于修复script掉属性的问题*/
         let attrArr = {};
@@ -101,26 +112,28 @@ if (typeof ($) !== 'object') {
         return html.replace(new RegExp('^(?:\\/\\*)([\\s\\S]*?)(?:\\*\\/)$', 'gi'), (match, p1) => p1);
     }
     $.ht = function (html, element, scriptInclude = true) { /*元素内容设置器(html,element,run script or not when ht)*/
-        let theElement = SC(element), pageScripts = [];
+        let theElement = SC(element),
+            pageScripts = [],
+            rejMsg = 'Unable to find the Element:' + element;
         if (!theElement) {
-            console.log('Unable to find the Element:' + e);
-            return false;
-        }
-        theElement.innerHTML = html;
-        let allTags = theElement.getElementsByTagName('script');
-        for (var o = 0, len = allTags.length; o < len; o++) {
-            if (allTags[o].src !== undefined && allTags[o].src !== null && allTags[o].src !== '') {
-                $.script(allTags[o].src, allTags[o]);
-            } else {
-                var h = allTags[o].innerHTML;
-                if (scriptInclude) { /*是否去除注释执行*/
-                    h = $.scriptRestore(h.trim());
+            console.log(rejMsg);
+            return Promise.reject(rejMsg);
+        } else {
+            theElement.innerHTML = html;
+            let allTags = theElement.getElementsByTagName('script');
+            for (var o = 0, len = allTags.length; o < len; o++) {
+                if (allTags[o].src !== undefined && allTags[o].src !== null && allTags[o].src !== '') {
+                    $.script(allTags[o].src, allTags[o]);
+                } else {
+                    var h = allTags[o].innerHTML;
+                    if (scriptInclude) { /*是否去除注释执行*/
+                        h = $.scriptRestore(h.trim());
+                    }
+                    pageScripts.push(h);/*综合一下页面中的js*/
                 }
-                pageScripts.push(h);/*综合一下页面中的js*/
             }
+            return $.scriptCircle(pageScripts); // 传回Promise
         }
-        $.scriptCircle(pageScripts);
-        theElement = allTags = null; /*释放*/
     }
     $.trimMark = function (url) { /*PreventURLProblem(F*ck QQ Querying URI*/
         var a = url;
@@ -230,8 +243,9 @@ if (!B) { /*PreventInitializingTwice*/
     } else {
         var ldLocalUsed = false;
     }
-    $.ft('./loading.otp.html')
+    $.ft(`${barnDir}loading.otp.html`)
         .then(resp => {
+            resp = B.r(resp, 'barndir', barnDir, true); // 处理模板中的{[barndir]}标签
             if (!ldLocalUsed) { /*如果本地已经有了就不热更新了20200808*/
                 B.hr('<loadingarea></loadingarea>', resp);
                 $.ldParse(resp); /*解析加载页*/
@@ -240,8 +254,8 @@ if (!B) { /*PreventInitializingTwice*/
         }, rej => {
             console.log('LoadingPage Load Failed -> ' + rej);
         });
-    $.script('./library.js'); /*Include Library Once*/
-    $.script('./search.js'); /*Include Search.js Once*/
+    $.script(`${barnDir}library.js`); /*Include Library Once*/
+    $.script(`${barnDir}search.js`); /*Include Search.js Once*/
     window.tpHtmls = new Object();/*Prepare for the HTMLS variable.*/
     var B = { /*B Part*/
         morePerPage: 0,
@@ -341,9 +355,9 @@ if (!B) { /*PreventInitializingTwice*/
             return h.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&#039;/g, "\'").replace(/&#39;/g, "\'").replace(/&quot;/g, "\"");
         },
         gt: function (between, and, useContent = false, notTemplate = false) { /*htmlget(between,and,content,NotTemplate=false)*/
-            let element = useContent ? useContent : SC('html').innerHTML;
+            let content = useContent ? useContent : SC('html').innerHTML;
             try { /*notTemplate=false，也就是模板中匹配的时候，默认匹配{(xxx)}和{(xxx)}之间的内容*/
-                let contentAfter = notTemplate ? element.split(between)[1] : element.split(new RegExp('\\{\\(' + between + '\\)\\}', 'i'))[1], /*正则支持大小写忽略*/
+                let contentAfter = notTemplate ? content.split(between)[1] : content.split(new RegExp('\\{\\(' + between + '\\)\\}', 'i'))[1], /*正则支持大小写忽略*/
                     contentBetween = notTemplate ? contentAfter.split(and)[0] : contentAfter.split(new RegExp('\\{\\(' + and + '\\)\\}', 'i'))[0];
                 return contentBetween;
             } catch (e) {
@@ -414,13 +428,13 @@ if (!B) { /*PreventInitializingTwice*/
                 that.loadshow();
                 let pageType = that.gt('PageType', 'PageTypeEnd', contents); /*Get Page Type*/
                 /*用Promise改写20220115*/
-                Promise.resolve(window.tpJson ? false : $.ft('template.json')) // 抓取template.json
+                Promise.resolve(window.tpJson ? false : $.ft(`${barnDir}template.json`)) // 抓取barn/template.json
                     .then(tpJson => {
                         if (tpJson) window.tpJson = JSON.parse(tpJson);
                         let condition = (!window.mainJson && window.tpJson['usemain'].includes(pageType)); //有页面需要mainJson时才获取
-                        return Promise.resolve(condition ? $.ft(window.tpJson['mainjson'], '') : false); // false代表不用获取
-                    }, rej => {// 获得template.json失败
-                        throw 'TemplateJson Load Failed -> ' + rej;
+                        return Promise.resolve(condition ? $.ft(barnDir + window.tpJson['mainjson'], '') : false); // false代表不用获取
+                    }, rej => {
+                        throw 'TemplateJson Load Failed -> ' + rej; // 获得template.json失败
                     })
                     .then(mainJson => {
                         if (mainJson) {
@@ -440,18 +454,19 @@ if (!B) { /*PreventInitializingTwice*/
                     })
                     .then(res => {
                         that.preventScript(); /*剔除已加载scripts*/
-                        let j = window.tpJson;
+                        let j = window.tpJson,
+                            tpNames = j['templatehtmls'];
                         j['necessary'].push(pageType); /*Pagetype Pushed*/
-                        if (pageType == j['templatehtmls']['postlist']) {/*如果是文章列表页，就还需要载入单个文章列表项的模板20211020*/
-                            j['necessary'].push(j['templatehtmls']['postitem']); /*Extra Load*/
+                        if (pageType == tpNames['postlist']) {/*如果是文章列表页，就还需要载入单个文章列表项的模板20211020*/
+                            j['necessary'].push(tpNames['postitem']); /*Extra Load*/
                         }
-                        for (var i in j['necessary']) {
-                            if (that.templateLoaded.indexOf(j['necessary'][i]) == -1) {
+                        for (let i in j['necessary']) {
+                            if (!that.templateLoaded.includes(j['necessary'][i])) {
                                 that.templateOnload += 1;
                                 let useCache = false,
-                                    theCache = q('r', 'template-' + j['necessary'][i], '', '', ''),
-                                    tpHtmls = window.tpHtmls, /*Test Cache*/
-                                    tpName = j['necessary'][i];
+                                    tpName = j['necessary'][i],
+                                    theCache = q('r', 'template-' + tpName, '', '', ''),
+                                    tpHtmls = window.tpHtmls; /*Test Cache*/
                                 if (theCache['c']) { /*如果有缓存，先装载缓存*/
                                     useCache = true;
                                     console.log('Preload the template locally: ' + tpName);
@@ -460,8 +475,9 @@ if (!B) { /*PreventInitializingTwice*/
                                     that.templateOnload -= 1;
                                 }
                                 ((tpName) => {
-                                    $.ft(j['necessary'][i])
+                                    $.ft(barnDir + tpName)
                                         .then(rawHtml => {
+                                            rawHtml = B.r(rawHtml, 'barndir', barnDir, true); // 处理模板中的{[barndir]}标签
                                             tpHtmls[tpName] = rawHtml;
                                             if (!useCache) {
                                                 that.templateLoaded.push(tpName);
@@ -498,15 +514,23 @@ if (!B) { /*PreventInitializingTwice*/
         itemPageFixer: function () {/*文章列表不显示页面，修复去除页面后对于文章列表的计算错误20211020*/
             let that = this,
                 mj = window.mainJson, /*get json*/
-                counter = 1; /*项目计数*/
-            for (var po in mj['dateindex']) {
-                let nowItemPage = that.itemPage, /*重要！不要调换位置*/
-                    pid = po.replace('post', ''),
-                    postIndex = mj['postindex'][pid];
-                if (counter <= nowItemPage && postIndex['link']) that.itemPage += 1;
-                counter += 1;
+                nowItemPage = that.itemPage;
+            for (let i = 0; i < nowItemPage; i++) {
+                let item = mj['dateindex'][i];
+                if (item) {
+                    let pid = item[0], // 取出文章ID
+                        postIndex = mj['postindex'][pid];
+                    if (postIndex['link']) that.itemPage += 1; // 如果是页面，已载入到的项目下标+1
+                }
             }
-            that.itemPage -= 1; /*项目会多计算一个，减去*/
+            /*
+                itemPage代表**已经**载入到的文章列表项目的下标
+                itemPage是从0开始的项目下标，但无论是posts_per_page还是indexPageChecker里的计算都是从1开始计算的项目数，
+                因此在itemPage被itemPageFixer修正后，再减去1，以获得正确的项目下标，以便于后续操作（主要用于more函数）。
+                比如itemPage是0,减去1后是-1，但是more函数是从itemPage的**下一位**开始的，所以正好是-1+1=0位下标。
+                记于2022.2.5 - SomeBottle
+            */
+            that.itemPage -= 1;
             mj = null;
         },
         cd: function (rendered) { /*covercutter封面<ifcover>去除器*/
@@ -519,8 +543,9 @@ if (!B) { /*PreventInitializingTwice*/
             let that = this,
                 j = window.tpJson,
                 tps = window.tpHtmls,
-                cloth = tps[j['templatehtmls']['cloth']],
-                main = tps[j['templatehtmls']['main']];
+                tpNames = j['templatehtmls'],
+                cloth = tps[tpNames['cloth']],
+                main = tps[tpNames['main']];
             if (!that.clothFirstRendered) { /*还没有渲染cloth,main模板*/
                 console.log('Document rendered with clothes.(๑•̀ㅂ•́)و✧');
                 let render1 = that.r(main, 'contents', '<div id=\'contentcontainer\'></div>', true), /*预设好id以便后面调用*/
@@ -552,39 +577,57 @@ if (!B) { /*PreventInitializingTwice*/
             let that = this,
                 j = window.tpJson,
                 tps = window.tpHtmls,
-                comment = tps[j['templatehtmls']['comment']],
+                tpNames = j['templatehtmls'],
+                comment = tps[tpNames['comment']],
                 mj = window.mainJson, /*get json*/
                 pageTitle = (that.gt('MainTitle', 'MainTitleEnd', fcontent)).replace(/<\/?.+?>/g, ""), /*Get Page Title(No html characters)*/
-                pageType = that.gt('PageType', 'PageTypeEnd', fcontent); /*Get Page Type*/
+                pageType = that.gt('PageType', 'PageTypeEnd', fcontent), /*Get Page Type*/
+                htmlPromise; // 针对$.ht预留一个存放Promise的变量
             that.currentPageType = pageType;
+            that.currentPostInfo = false; // 重置当前文章信息
             that.isPost = false;
-            if (pageType == j['templatehtmls']['post']) {
+            if (pageType == tpNames['post']) {
                 let content = that.deHtml(that.gt('PostContent', 'PostContentEnd', fcontent)), /*Get Post Content*/
                     title = that.gt('PostTitle', 'PostTitleEnd', fcontent), /*Get Post Title*/
                     date = that.gt('PostDate', 'PostDateEnd', fcontent), /*Get Post Date*/
                     tags = that.gt('PostTag', 'PostTagEnd', fcontent), /*Get Post Content*/
                     pid = that.gt('PostID', 'PostIDEnd', fcontent), /*Get Post ID*/
-                    cover = that.gt('PostCover', 'PostCoverEnd', fcontent), /*Get Post Cover*/
-                    post = tps[j['templatehtmls']['post']],
+                    cover = that.gt('PostCover', 'PostCoverEnd', fcontent),
+                    /*Get Post Cover*/
+                    pubTime = that.gt('PubTime', 'PubTimeEnd', fcontent),
+                    editTime = that.gt('EditTime', 'EditTimeEnd', fcontent),/* 获得发布和上次编辑的时间*/
+                    post = tps[tpNames['post']],
                     tagsTp = that.gt('PostTagsTemplate', 'PostTagsTemplateEnd', post),/*20210919获得tags模板*/
                     tagsDelimiter = that.gt('PostTagsDelimiter', 'PostTagsDelimiterEnd', post),/*20210919获得tags分隔部分*/
                     ifPageTp = that.gt('IfPage', 'IfPageEnd', post),/*如果是页面，标签的部分就显示这里面的内容*/
                     renders = that.r(post, 'postcontent', that.lazyPre($.mark(content.trim())), true), /*unescape and Analyse md*/
-                    alltags = [];
+                    allTags = [],
+                    postInfo = { // 更新currentPostInfo
+                        title: title,
+                        date: date,
+                        tags: tags,
+                        pid: pid,
+                        cover: cover || '',
+                        pubTime: pubTime ? Number(pubTime) : 0,
+                        editTime: editTime ? Number(editTime) : 0
+                    }
                 renders = that.r(renders, 'posttitle', title, true);
                 if (!that.isDate(date)) { // 是页面
                     tags = ifPageTp;
+                    delete postInfo['date'];
+                    postInfo['link'] = date; // 如果是页面，就把日期属性改成link
                 } else { /*Tag Process*/
-                    alltags = tags.split(',');
+                    allTags = tags.split(',');
                     tags = '';
-                    alltags.forEach(function (v, i) {
+                    allTags.forEach(function (v, i) {
                         let filled = that.r(tagsTp, 'tagurl', j['generatehtmls']['tags'] + '#' + encodeURIComponent(v), true);
                         filled = that.r(filled, 'tagname', v, true);
                         tags += filled;
-                        if (i !== (alltags.length - 1)) tags += tagsDelimiter;/*如果不是最后一个标签就加分隔部分*/
+                        if (i !== (allTags.length - 1)) tags += tagsDelimiter;/*如果不是最后一个标签就加分隔部分*/
                     });
                     that.isPost = true; // 更新属性：是文章
                 }
+                that.currentPostInfo = postInfo; // 更新currentPostInfo
                 renders = that.r(renders, 'posttags', tags, true);
                 renders = that.r(renders, 'postdate', $.dt(date), true);
                 renders = that.r(renders, 'comments', comment, true); /*LoadCommentsForPost*/
@@ -594,29 +637,29 @@ if (!B) { /*PreventInitializingTwice*/
                 renders = that.r(renders, 'PageType', '<!--[PageType]', '(', false); /*SetPageType*/
                 renders = that.r(renders, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                 /*CoverProcess*/
-                if (cover && cover !== 'none' && cover !== '') {
+                if (cover && cover !== 'none') {
                     renders = that.r(renders, 'postcover', cover, true); /*设定封面*/
                 } else { /*没有封面，按标签一起删掉*/
                     renders = that.cd(renders);
                 }
                 if (!that.isDate(date)) { /*是页面，就不显示评论了*/
-                    let beforeEnd = renders.split('{(:PostEnd)}')[0] + '<!--PostEnd-->',
-                        afterComment = '<!--Footer-->' + renders.split('{(Footer:)}')[1];
+                    let beforeEnd = renders.split(new RegExp('\\{\\(:PostEnd\\)\\}', 'gi'))[0] + '<!--PostEnd-->',
+                        afterComment = '<!--Footer-->' + renders.split(new RegExp('\\{\\(Footer:\\)\\}', 'gi'))[1];
                     renders = beforeEnd + afterComment;
                 }
                 renders = that.gt('PostTemplate', 'PostTemplateEnd', renders);
                 that.checkFirstRender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                 $.title(pageTitle); /*设置title*/
-                $.ht(that.delTempTags(renders), 'contentcontainer');
+                htmlPromise = $.ht(that.delTempTags(renders), 'contentcontainer');
                 $.aniChecker($.alterClass($.loadSettings['listening'], '', false, true), function () {
                     that.lazyCheck(); /*lazyLoad初次检测*/
                 });
                 that.applyAfterLoad(() => { if (SC(theanchor)) SC(theanchor).scrollIntoView(); });
                 window.addEventListener('scroll', B.lazyCheck, false); /*只有文章页面监听懒加载20210909*/
                 renders = j = null; /*释放*/
-            } else if (pageType == j['templatehtmls']['postlist']) {
+            } else if (pageType == tpNames['postlist']) {
                 let content = that.deHtml(that.gt('PostContent', 'PostContentEnd', fcontent)), /*Get Post Content*/
-                    listTemplate = tps[j['templatehtmls']['postlist']],
+                    listTemplate = tps[tpNames['postlist']],
                     postListTp = that.gt('PostListTemplate', 'PostListTemplateEnd', listTemplate),
                     moreBtn = that.gt('MoreBtn', 'MoreBtnEnd', listTemplate),
                     backBtn = that.gt('BackBtn', 'BackBtnEnd', listTemplate);
@@ -630,12 +673,12 @@ if (!B) { /*PreventInitializingTwice*/
                 that.itemPageFixer(); /*修复因忽略页面而造成的列表重复*/
                 that.checkFirstRender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                 $.title(pageTitle); /*设置标题*/
-                $.ht(that.delTempTags(renders), 'contentcontainer');
+                htmlPromise = $.ht(that.delTempTags(renders), 'contentcontainer');
                 renders = null; /*释放*/
                 that.backChecker();/*检查是否显示后退按钮*/
                 that.indexPageChecker();
                 var timer = setInterval(function () { /*CheckIndexPage*/
-                    if (that.gt('<!--[PageType]', '[PageTypeEnd]-->', false, true) !== j['templatehtmls']['postlist']) { /*跳离index页了*/
+                    if (that.gt('<!--[PageType]', '[PageTypeEnd]-->', false, true) !== tpNames['postlist']) { /*跳离index页了*/
                         console.log('Jumped out of the index page w(ﾟДﾟ)w');
                         that.switchPage = 0;/*(和morebtn有关)将单页文章展示归零*/
                         clearInterval(timer);
@@ -644,8 +687,8 @@ if (!B) { /*PreventInitializingTwice*/
                     }
                     that.indexPageChecker();
                 }, 100);
-            } else if (pageType == j['templatehtmls']['archives']) {
-                let ar = tps[j['templatehtmls']['archives']],
+            } else if (pageType == tpNames['archives']) {
+                let ar = tps[tpNames['archives']],
                     /*get entire html*/
                     archiveMain = that.gt('Archives', 'ArchivesEnd', ar),
                     /*Get archive main html*/
@@ -660,14 +703,15 @@ if (!B) { /*PreventInitializingTwice*/
                     rdArcItems = '',
                     /*archive item render*/
                     year = 0;
-                for (let post in dateIndexes) {
-                    let currentYear = (dateIndexes[post].toString()).substring(0, 4); /*get years*/
+                for (let i = 0, len = dateIndexes.length; i < len; i++) {
+                    let item = dateIndexes[i],
+                        currentYear = item[1].toString().substring(0, 4);// 获得当前年份
                     if (currentYear !== year) {
                         year = currentYear;
                         if (rdArcItems !== '') rdSections = that.r(rdSections, 'archiveitems', rdArcItems, true), rdArcItems = ''; /*apply items to section*/
                         rdSections += that.r(archiveTemp, 'archiveyear', currentYear, true); /*render year section*/
                     }
-                    let pid = post.replace('post', ''),
+                    let pid = item[0], // 取出文章ID
                         title = Base64.decode(mj['postindex'][pid]['title']),
                         date = mj['postindex'][pid]['date'],
                         itemLink = mj['postindex'][pid]['link'] ? mj['postindex'][pid]['link'] + '.html' : 'post-' + pid + '.html',/*render items*/
@@ -684,10 +728,10 @@ if (!B) { /*PreventInitializingTwice*/
                 renders = that.r(renders, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                 that.checkFirstRender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                 $.title(pageTitle); /*设置标题*/
-                $.ht(that.delTempTags(renders), 'contentcontainer');
+                htmlPromise = $.ht(that.delTempTags(renders), 'contentcontainer');
                 renders = rdArcItems = rdSections = j = null; /*释放*/
-            } else if (pageType == j['templatehtmls']['tags']) {
-                let tagsTp = tps[j['templatehtmls']['tags']],
+            } else if (pageType == tpNames['tags']) {
+                let tagsTp = tps[tpNames['tags']],
                     tagsMain = that.gt('Tags', 'TagsEnd', tagsTp),
                     /*Get tag main html*/
                     tagItemTp = that.gt('TagItemTemplate', 'TagItemTemplateEnd', tagsTp),
@@ -736,7 +780,7 @@ if (!B) { /*PreventInitializingTwice*/
                 renders = that.r(renders, 'PageTypeEnd', '[PageTypeEnd]-->', '(', false); /*SetPageType*/
                 that.checkFirstRender(); /*检查是否已经在页面中渲染cloth和main 20210125*/
                 $.title(pageTitle); /*设置标题*/
-                $.ht(that.delTempTags(renders), 'contentcontainer');
+                htmlPromise = $.ht(that.delTempTags(renders), 'contentcontainer');
                 renders = null; /*释放*/
             }
             that.tpcheckStatus = false; /*模板检查拼接完毕*/
@@ -747,9 +791,25 @@ if (!B) { /*PreventInitializingTwice*/
             that.generateCata(); // 生成目录数组20220113
             that.navcheck(); /*进行导航栏检查*/
             window.dispatchEvent(PJAX.PJAXFinish); /*调用事件隐藏loading浮层20201229*/
+            htmlPromise.then(res => {
+                let func = that.rendererCallBack;
+                if (typeof func == 'function') {
+                    /*执行callAfterRender设置的回调函数，传入当前的pageType*/
+                    func(pageType);
+                }
+            }, rej => {
+                console.log(rej);
+            });
             mj = tps = null;
         },
-        catalogue: [], // 目录数组
+        rendererCallBack: false, // renderer回调函数
+        callAfterRender: function (callBackFunc) { // 设置renderer回调函数
+            if (typeof callBackFunc == 'function') {
+                this.rendererCallBack = callBackFunc;
+            }
+        },
+        currentPostInfo: false, // 当前文章信息对象
+        catalogue: [], // 文章目录数组
         generateCata: function () {/*目录生成器20220113*/
             let container = SC('contentcontainer'),
                 elements = container.querySelectorAll('*'), // 获得文章中所有元素
@@ -770,7 +830,7 @@ if (!B) { /*PreventInitializingTwice*/
                     generated.push(objToPush);
                 }
             });
-            this.catalogue = generated;
+            this.catalogue = generated; // 储存当前文章目录
         },
         backChecker: function () {/*检查后退按钮是否显示*/
             SC('backbtn').style.display = this.realPage == 1 ? 'none' : 'initial';
@@ -790,16 +850,16 @@ if (!B) { /*PreventInitializingTwice*/
                 mj = window.mainJson, /*get json*/
                 dIndexes = mj['dateindex'],
                 pIndexes = mj['postindex'],
-                postlist = new Array(),
+                postList = new Array(),
                 renderTgs = '';
-            for (var i in dIndexes) { /*Sel Posts in the order of date*/
-                var pid = i.replace('post', '');
+            for (let i = 0, len = dIndexes.length; i < len; i++) { // 按日期顺序取出文章
+                let pid = dIndexes[i][0]; // 获得文章ID
                 if (pIndexes[pid]['tags'].indexOf(tag) !== -1) {
-                    postlist.push(pid);
+                    postList.push(pid);
                 }
             }
             renderTgs += '<ul>';
-            postlist.forEach(function (item) {
+            postList.forEach(function (item) {
                 let post = pIndexes[item],
                     link = 'post-' + item + '.html',
                     date = $.dt(post['date']);
@@ -967,45 +1027,40 @@ if (!B) { /*PreventInitializingTwice*/
         more: function (checkerTrigger = false) { /*(是否由pageChecker触发(用于适配indexpagechecker20200812)*/
             let that = this,
                 j = window.tpJson,
-                start = that.itemPage + 1, /*当前列表起始文章id，在之前的文章项目序号上+1就是了*/
+                start = that.itemPage + 1, /*紧接**已加载**到的项目下标itemPage的下一项开始*/
                 counter = 0,
-                itemId = 0,
                 listRender = '',
                 mj = window.mainJson, /*get json*/
                 postItemTp = window.tpHtmls[j['templatehtmls']['postitem']],
                 ptTp = that.gt('PostItem', 'PostItemEnd', postItemTp),/*有项目的模板*/
                 noItemTp = that.gt('NoItem', 'NoItemEnd', postItemTp), /*无项目的模板*/
                 maxRender = parseInt(mj['posts_per_page']),
-                dIndexes = mj['dateindex'],
-                remainPages = 0;/*这个变量记录的是还有多少文章没有加载，似乎没什么用，但我还是留着吧，说不定以后有用20211021*/
-            for (var i in dIndexes) {
-                if (start <= itemId) {/*从start=itemId的时候开始处理，也就是找到当前加载的分片的文章起始id*/
-                    if (counter < maxRender) {/*从文章项目起始id开始载入maxRender(posts_per_page)个项目，制成当前的分片*/
-                        let pid = i.replace('post', ''),
-                            thePost = mj['postindex'][pid];
-                        if (!thePost['link']) { /*排除页面在外，文章列表不显示页面*/
-                            let renders = B.r(ptTp, 'postitemtitle', Base64.decode(thePost.title), true);
-                            renders = B.r(renders, 'postitemintro', Base64.decode(thePost.intro) + '...', true);
-                            renders = B.r(renders, 'postitemdate', $.dt(thePost.date), true);
-                            renders = B.r(renders, 'postitemtags', thePost.tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
-                            renders = B.r(renders, 'postitemlink', 'post-' + pid + '.html', true);
-                            if (thePost['cover']) { /*如果有封面*/
-                                renders = B.r(renders, 'postcover', thePost['cover'], true); /*把页面也算入*/
-                            } else {
-                                renders = that.cd(renders); /*没有封面就删掉所有<ifcover>*/
-                            }
-                            listRender += renders; /*渲染到列表模板*/
-                            renders = null;
-                        } else {/*不显示页面，要去除页面占用的载入数量counter，但同时下一个列表的起始id itemPage要增加*/
-                            that.itemPage += 1;
-                            counter -= 1;
+                dIndexes = mj['dateindex'];
+            for (let i = start, len = dIndexes.length; i < len; i++) { /*从start为下标的项目开始处理，也就是找到当前加载的分片的文章起始id*/
+                let item = dIndexes[i];
+                if (counter < maxRender && item) {/*从文章项目起始id开始载入maxRender(posts_per_page)个项目，制成当前的分片*/
+                    let pid = item[0],// 取出文章ID
+                        thePost = mj['postindex'][pid];
+                    if (!thePost['link']) { /*排除页面在外，文章列表不显示页面*/
+                        let renders = B.r(ptTp, 'postitemtitle', Base64.decode(thePost.title), true);
+                        renders = B.r(renders, 'postitemintro', Base64.decode(thePost.intro) + '...', true);
+                        renders = B.r(renders, 'postitemdate', $.dt(thePost.date), true);
+                        renders = B.r(renders, 'postitemtags', thePost.tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
+                        renders = B.r(renders, 'postitemlink', 'post-' + pid + '.html', true);
+                        if (thePost['cover']) { /*如果有封面*/
+                            renders = B.r(renders, 'postcover', thePost['cover'], true); /*把页面也算入*/
+                        } else {
+                            renders = that.cd(renders); /*没有封面就删掉所有<ifcover>*/
                         }
-                        counter += 1;
-                    } else {
-                        remainPages += 1; /*剩余没加载文章数量*/
+                        listRender += renders; /*渲染到列表模板*/
+                        renders = null;
+                    } else {/*不显示页面，要去除页面占用的载入数量counter，但同时下一个列表的起始id itemPage要增加*/
+                        that.itemPage += 1;
+                        counter -= 1;
                     }
-                } else {
-                    itemId += 1;
+                    counter += 1;
+                } else { /*处理maxRender个项目后跳出循环*/
+                    break;
                 }
             }
             if (listRender == '') { /*渲染出来什么都没有就是没有更多文章了*/
@@ -1040,7 +1095,6 @@ if (!B) { /*PreventInitializingTwice*/
 }
 
 /*Simple PJAX For Front MAIN - SomeBottle*/
-let mainHost = window.location.host;
 if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
     var PJAX = {
         index: window.history.state === null ? 1 : window.history.state.page,

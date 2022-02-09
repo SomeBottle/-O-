@@ -29,7 +29,7 @@ function initialCheck() { /*检查是否初始化*/
     let tj, parsed, repo = window.githubRepo;
     loadShow();
     notice('Checking...');
-    blog.getFile(repo, 'template.json')
+    blog.getFile(repo, `${barnDir}template.json`)
         .then(data => {
             tj = Base64.decode(data.content);
             window.tJson = tj; // 在window对象上注册templateJson变量(注意这里是原json文件)
@@ -46,9 +46,9 @@ function initialCheck() { /*检查是否初始化*/
                 })
             throw 'Turn to initialization';
         }).then(res => {
-            return blog.getFile(repo, parsed['templatehtmls']['postitem'])
+            return blog.getFile(repo, barnDir + parsed['templatehtmls']['postitem'])
                 .then(data => {
-                    window.htmls['postitems.html'] = Base64.decode(data.content); // 获取并临时储存postitems.html
+                    window.htmls['postitems'] = Base64.decode(data.content); // 获取并临时储存postitems.html
                     return Promise.resolve(true); // 让then方法继续往下执行
                 }, rej => {
                     errShow();
@@ -56,7 +56,7 @@ function initialCheck() { /*检查是否初始化*/
                 })
         }).then(res => {
             console.log('MainJson:', parsed['mainjson']);
-            return blog.findFileSha(repo, parsed['mainjson'])
+            return blog.findFileSha(repo, barnDir + parsed['mainjson'])
                 .then(data => Promise.resolve(data), rej => {
                     errShow();
                     console.log(rej);
@@ -92,12 +92,12 @@ function initialization() { /*初始化*/
             console.log('Uploading file: ' + currentTplt);
             (function (file) {
                 $bueue.c(function () {
-                    $.ft('./template/' + file).then(resp => resp.text(), rej => {
+                    $.ft('./template/' + file).then(resp => resp.text(), rej => { // responce.text()返回utf8编码流，这样可以上传图片
                         throw rej;
                     }).then(content => {
                         return blog.crBlob(repo, content).then(resp => {
                             treeConstruct.push({
-                                path: file,
+                                path: barnDir + file, // 博客核心文件全部放在barn/下
                                 mode: '100644',
                                 type: 'blob',
                                 sha: resp.sha

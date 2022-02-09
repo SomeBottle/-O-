@@ -163,28 +163,46 @@ body {
     }
 }
 
-.lb {
+.panel {
     position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 98%;
+    display: flex;
+    flex-direction: row;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.lb {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 20%;
     background-color: #BDBDBD;
     border-radius: 12px;
-    box-shadow: 0 0 40px 1px #A4A4A4;
+    box-shadow: 0 0 2em 1px #a4a4a4;
     transition: 2s ease;
+    margin: .7em;
 }
 
 .rb {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 98%;
-    width: 75%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    flex: 1;
     border-radius: 12px;
     transition: 2s ease;
+    margin: .7em;
+}
+
+.rbb {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    background-color: #E6E6E6;
+    border-radius: 12px;
 }
 
 .rbt {
@@ -193,22 +211,44 @@ body {
     height: 20%;
     background-color: #E6E6E6;
     border-radius: 12px;
+    margin-bottom: .5em;
+}
+
+.rp {
+    /*recent posts*/
+    position: relative;
+    width: 100%;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.rp::-webkit-scrollbar,
+.sbr::-webkit-scrollbar {
+    display: none;
 }
 
 .sbr {
     position: absolute;
-    z-index: -1;
+    display: none;
+    z-index: 2;
     opacity: 0;
     width: 100%;
     height: 100%;
     background-color: white;
     border-radius: 12px;
-    overflow-y: scroll;
-    transition: 1s ease;
+    overflow-y: auto;
+    transition: .5s ease;
+}
+
+.sbrContent {
+    position: relative;
+    padding: .2em 1em;
+    max-width: 100%;
 }
 
 .closebtn {
-    position: absolute;
+    position: fixed;
+    z-index: 3;
     font-size: 40px;
     margin-right: 20px;
     text-decoration: none;
@@ -231,28 +271,21 @@ body {
     color: #6E6E6E;
 }
 
-.rbb {
-    position: relative;
-    margin-top: 2%;
-    width: 100%;
-    height: 78%;
-    background-color: #E6E6E6;
-    border-radius: 12px;
-}
-
 .fm {
     /*Submit Area*/
     position: relative;
-    top: 100%;
-    transform: translateY(-100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     height: 128px;
+    width: 100%;
 }
 
 .sinput {
     /*search input*/
     position: relative;
+    flex: 1;
     width: 100%;
-    background-color: #F2F2F2;
     border-radius: 12px;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
@@ -263,95 +296,14 @@ body {
     border: 0;
     background-color: #F2F2F2;
     padding: 14px 10px 14px 10px;
-    font-size: 30px;
-    outline: 0;
-}
-
-.tinput {
-    /*title input*/
-    position: absolute;
-    width: 100%;
-    height: 50%;
-    background-color: #F2F2F2;
-    border-radius: 12px;
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
-    transition: 1s ease;
-    font-family: '\5FAE\8F6F\96C5\9ED1';
-    color: #424242;
-    text-align: left;
-    border: 0;
-    background-color: #F2F2F2;
-    padding: 14px 10px 14px 10px;
-    font-size: 30px;
-    outline: 0;
-}
-
-.tagico {
-    position: absolute;
-    height: 50%;
-    width: auto;
-    border-radius: 12px;
-    top: 50%;
-    z-index: 2;
-}
-
-.taginput {
-    /*tag input*/
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    top: 50%;
-    background-color: #F2F2F2;
-    border-radius: 12px;
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
-    transition: 1s ease;
-    font-family: '\5FAE\8F6F\96C5\9ED1';
-    color: #424242;
-    text-align: right;
-    border: 0;
-    background-color: #F2F2F2;
-    padding: 14px 10px 14px 10px;
-    font-size: 30px;
-    outline: 0;
-}
-
-.dateico {
-    position: absolute;
-    height: 50%;
-    left: 50%;
-    width: auto;
-    border-radius: 12px;
-    top: 50%;
-    z-index: 2;
-}
-
-.dateinput {
-    /*date input*/
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    top: 50%;
-    right: 0px;
-    background-color: #F2F2F2;
-    border-radius: 12px;
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
-    transition: 1s ease;
-    font-family: '\5FAE\8F6F\96C5\9ED1';
-    color: #424242;
-    text-align: right;
-    border: 0;
-    background-color: #F2F2F2;
-    padding: 14px 10px 14px 10px;
-    font-size: 30px;
+    font-size: 1.5em;
     outline: 0;
 }
 
 .fb {
     /*Submit Button*/
     position: relative;
+    flex: 1;
     width: 100%;
     cursor: hand;
     font-family: '\5FAE\8F6F\96C5\9ED1';
@@ -373,6 +325,85 @@ body {
 .fb:hover {
     /*Submit Button*/
     background-color: #2E64FE;
+}
+
+.tinput {
+    /*title input*/
+    position: absolute;
+    width: 100%;
+    height: 50%;
+    border-radius: .4em;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    transition: 1s ease;
+    font-family: '\5FAE\8F6F\96C5\9ED1';
+    color: #424242;
+    text-align: left;
+    border: 0;
+    background-color: #F2F2F2;
+    padding: 14px 10px 14px 10px;
+    font-size: 30px;
+    outline: 0;
+}
+
+.tagico {
+    position: absolute;
+    height: 50%;
+    width: auto;
+    border-radius: 12px;
+    top: 50%;
+    z-index: 1;
+}
+
+.taginput {
+    /*tag input*/
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 50%;
+    background-color: #F2F2F2;
+    border-bottom-left-radius: .4em;
+    border-bottom-right-radius: 0px;
+    transition: 1s ease;
+    font-family: '\5FAE\8F6F\96C5\9ED1';
+    color: #424242;
+    text-align: right;
+    border: 0;
+    background-color: #F2F2F2;
+    padding: 14px 10px 14px 10px;
+    font-size: 1.5em;
+    outline: 0;
+}
+
+.dateico {
+    position: absolute;
+    height: 50%;
+    left: 50%;
+    width: auto;
+    border-radius: 12px;
+    top: 50%;
+    z-index: 1;
+}
+
+.dateinput {
+    /*date input*/
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 50%;
+    right: 0px;
+    background-color: #F2F2F2;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: .4em;
+    transition: 1s ease;
+    font-family: '\5FAE\8F6F\96C5\9ED1';
+    color: #424242;
+    text-align: right;
+    border: 0;
+    background-color: #F2F2F2;
+    padding: 14px 10px 14px 10px;
+    font-size: 1.5em;
+    outline: 0;
 }
 
 .adbtn {
@@ -398,18 +429,6 @@ body {
     background-color: #2E64FE;
 }
 
-.rp {
-    /*recent posts*/
-    position: inherit;
-    width: 100%;
-    height: 60%;
-    overflow-y: auto;
-}
-
-.rp::-webkit-scrollbar {
-    display: none;
-}
-
 .postitemp {
     text-align: center;
     padding: 0 5px 0 5px;
@@ -429,7 +448,6 @@ body {
 textarea {
     overflow: auto;
     font-family: '\5FAE\8F6F\96C5\9ED1';
-    color: #424242;
     text-align: left;
     border: 0;
     background-color: #FBF5F5;
@@ -437,7 +455,7 @@ textarea {
     width: 100%;
     border-radius: 10px;
     padding: 14px 10px 14px 10px;
-    font-size: 1.5em;
+    font-size: 1.3em;
     outline: 0;
 }
 
@@ -455,50 +473,40 @@ textarea {
 }
 
 @media screen and (max-width: 740px) {
-    .rp {
-        z-index: 100;
-    }
     body {
         overflow-x: hidden;
         overflow-y: auto;
     }
-    .lb {
-        left: 50%;
-        top: 10px;
-        transform: translateX(-50%);
-        height: 20%;
-        width: 98%;
+    .panel {
+        flex-direction: column;
     }
-    .rb {
-        right: 50%;
-        top: 20%;
-        margin-top: 20px;
-        transform: translateX(50%);
-        height: 100%;
-        width: 98%;
+    .lb {
+        width: auto;
+        height: 20%;
+    }
+    .panel {
+        height: 120%;
     }
     .sinput {
         /*search input*/
-        width: 50%;
-        top: 100%;
         border-top-right-radius: 0px;
         border-bottom-left-radius: 12px;
-        transform: translateY(-100%);
     }
     .fb {
         /*Submit Button*/
-        width: 50%;
-        top: 100%;
         border-top-right-radius: 12px;
         border-bottom-left-radius: 0px;
-        transform: translateY(-100%);
-        height: 68px;
-        float: right;
     }
     .fm {
-        top: 0px;
-        height: 100%;
+        flex-direction: row;
+        height: auto;
         transform: none;
+    }
+    .dateinput {
+        font-size: 1em;
+    }
+    .taginput {
+        font-size: 1em;
     }
 }
 

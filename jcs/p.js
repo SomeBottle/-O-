@@ -1,7 +1,6 @@
 /*Simple PJAX - SomeBottle*/
 "use strict";
-var mainhost = window.location.host;
-if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
+if (!PJAX) { /*防止重初始化*/
 	var PJAX = {
 		PJAXStart: new CustomEvent('pjaxstart'),
 		PJAXFinish: new CustomEvent('pjaxfinish'),

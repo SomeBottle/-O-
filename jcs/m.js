@@ -1,26 +1,7 @@
 "use strict";
+const barnDir = 'barn/'; // 博客核心文件相对目录，请不要修改
 var step = 1;
 window.htmls = new Array(); /*TemplatePreload*/
-if (!window.htmls['index.html']) {
-    $.ft('./template/index.html')
-        .then(resp => resp.text(), rej => {
-            errShow();
-            throw 'Failed to get the template: ' + rej;
-        })
-        .then(resp => {
-            window.htmls['index.html'] = resp;
-        });
-} /*TemplatePreloadFinished*/
-setTimeout(function () {
-    SC('t').style.opacity = 1;
-    SC('b').style.opacity = 1;
-}, 500);
-window.addEventListener('pjaxstart', function () { /*加载动画*/
-    loadShow();
-}, false);
-window.addEventListener('pjaxfinish', function () {
-    loadHide();
-}, false);
 
 function lc(v, t) {
     if (t == null || t == undefined) {
@@ -28,12 +9,6 @@ function lc(v, t) {
     } else {
         localStorage[v] = t;
     }
-}
-if (!lc('secretcode')) {/*初始化本地储存*/
-    lc('secretcode', '');
-}
-if (!lc('githubrepo')) {/*初始化本地储存*/
-    lc('githubrepo', '');
 }
 
 function typer() {
@@ -94,3 +69,32 @@ function listener() { /*回车监听*/
         }
     };
 }
+
+if (!lc('secretcode')) {/*初始化本地储存*/
+    lc('secretcode', '');
+}
+if (!lc('githubrepo')) {/*初始化本地储存*/
+    lc('githubrepo', '');
+}
+
+if (!window.htmls['index']) {
+    $.ft('./template/index.html')
+        .then(resp => resp.text(), rej => {
+            errShow();
+            throw 'Failed to get the template: ' + rej;
+        })
+        .then(resp => {
+            window.htmls['index'] = resp;
+        });
+}
+/*TemplatePreloadFinished*/
+setTimeout(function () {
+    SC('t').style.opacity = 1;
+    SC('b').style.opacity = 1;
+}, 500);
+window.addEventListener('pjaxstart', function () { /*加载动画*/
+    loadShow();
+}, false);
+window.addEventListener('pjaxfinish', function () {
+    loadHide();
+}, false);
