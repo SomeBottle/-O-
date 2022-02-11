@@ -135,6 +135,9 @@ if (typeof ($) !== 'object') {
             return $.scriptCircle(pageScripts); // 传回Promise
         }
     }
+    $.useLinkPattern = function (link, pid) { // 套上文章永久链接pattern
+        return link.replaceAll(new RegExp('\\{\\s*?pid\\s*?\\}', 'gi'), pid);
+    }
     $.trimMark = function (url) { /*PreventURLProblem(F*ck QQ Querying URI*/
         var a = url;
         let b = a.split('?');
@@ -144,7 +147,7 @@ if (typeof ($) !== 'object') {
             return a;
         }
     }
-    $.dt = function (v) { /*date transformer*/
+    $.dt = function (v) { /*date transformer -> ISO 8601*/
         if (Number(v) >= 10000000) {
             let dt = String(v),
                 md = dt.slice(-4),
@@ -519,8 +522,8 @@ if (!B) { /*PreventInitializingTwice*/
                 let item = mj['dateindex'][i];
                 if (item) {
                     let pid = item[0], // 取出文章ID
-                        postIndex = mj['postindex'][pid];
-                    if (postIndex['link']) that.itemPage += 1; // 如果是页面，已载入到的项目下标+1
+                        currentPostObj = mj['postindex'][pid];
+                    if (currentPostObj['link']) that.itemPage += 1; // 如果是页面，已载入到的项目下标+1
                 }
             }
             /*
@@ -712,9 +715,12 @@ if (!B) { /*PreventInitializingTwice*/
                         rdSections += that.r(archiveTemp, 'archiveyear', currentYear, true); /*render year section*/
                     }
                     let pid = item[0], // 取出文章ID
-                        title = Base64.decode(mj['postindex'][pid]['title']),
-                        date = mj['postindex'][pid]['date'],
-                        itemLink = mj['postindex'][pid]['link'] ? mj['postindex'][pid]['link'] + '.html' : 'post-' + pid + '.html',/*render items*/
+                        currentPostObj = mj['postindex'][pid],
+                        postLinkPattern = currentPostObj['permalink'] || 'post-{pid}', // 获得文章永久链接模板，这里兼容旧版本
+                        permalink = $.useLinkPattern(postLinkPattern, pid), // 文章永久链接
+                        title = Base64.decode(currentPostObj['title']),
+                        date = currentPostObj['date'],
+                        itemLink = currentPostObj['link'] ? currentPostObj['link'] + '.html' : permalink + '.html',/*render items*/
                         itemrender = that.r(archiveItemTemp, 'archiveitemlink', itemLink, true);
                     itemrender = that.r(itemrender, 'archiveitemtitle', title, true);
                     itemrender = that.r(itemrender, 'archiveitemdate', $.dt(date), true);
@@ -859,9 +865,11 @@ if (!B) { /*PreventInitializingTwice*/
                 }
             }
             renderTgs += '<ul>';
-            postList.forEach(function (item) {
-                let post = pIndexes[item],
-                    link = 'post-' + item + '.html',
+            postList.forEach(function (pid) {
+                let post = pIndexes[pid],
+                    postLinkPattern = post['permalink'] || 'post-{pid}', // 获得文章永久链接模板，这里兼容旧版本
+                    permalink = $.useLinkPattern(postLinkPattern, pid), // 文章永久链接
+                    link = permalink + '.html',
                     date = $.dt(post['date']);
                 if (post['link']) {
                     link = post['link'] + '.html';
@@ -937,15 +945,17 @@ if (!B) { /*PreventInitializingTwice*/
                             pIndexes[i]['intro'] = Base64.decode(pIndexes[i]['intro']);
                         }
                         queryWd = queryWd.toLowerCase(); /*大小写忽略*/
-                        function renderList(postIndexes, id) {
-                            let pt = postIndexes,
-                                i = id, tt = pt[i]['title'], cc = pt[i]['intro'], dd = pt[i]['date'], tags = pt[i]['tags'],
+                        function renderList(postIndexes, pid) {
+                            let currentPostObj = postIndexes[pid],
+                                postLinkPattern = currentPostObj['permalink'] || 'post-{pid}', // 获得文章永久链接模板，这里兼容旧版本
+                                permalink = $.useLinkPattern(postLinkPattern, pid),// 文章永久链接
+                                tt = currentPostObj['title'], cc = currentPostObj['intro'], dd = currentPostObj['date'], tags = currentPostObj['tags'],
                                 renders = B.r(postItemTp, 'postitemtitle', tt, true);
                             renders = B.r(renders, 'postitemintro', cc + '...', true);
                             renders = B.r(renders, 'postitemdate', $.dt(dd), true);
                             renders = B.r(renders, 'postitemtags', tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
-                            renders = pt[i]['link'] ? B.r(renders, 'postitemlink', pt[i]['link'] + '.html', true) : B.r(renders, 'postitemlink', 'post-' + i + '.html', true);/*针对和文章不同的页面特殊处理*/
-                            renders = pt[i]['cover'] ? B.r(renders, 'postcover', pt[i]['cover'], true) : that.cd(renders);/*如果有封面就上封面，没封面就整段删掉*/
+                            renders = currentPostObj['link'] ? B.r(renders, 'postitemlink', currentPostObj['link'] + '.html', true) : B.r(renders, 'postitemlink', permalink + '.html', true);/*针对和文章不同的页面特殊处理*/
+                            renders = currentPostObj['cover'] ? B.r(renders, 'postcover', currentPostObj['cover'], true) : that.cd(renders);/*如果有封面就上封面，没封面就整段删掉*/
                             pt = null;
                             return renders;
                         }
@@ -1040,15 +1050,17 @@ if (!B) { /*PreventInitializingTwice*/
                 let item = dIndexes[i];
                 if (counter < maxRender && item) {/*从文章项目起始id开始载入maxRender(posts_per_page)个项目，制成当前的分片*/
                     let pid = item[0],// 取出文章ID
-                        thePost = mj['postindex'][pid];
-                    if (!thePost['link']) { /*排除页面在外，文章列表不显示页面*/
-                        let renders = B.r(ptTp, 'postitemtitle', Base64.decode(thePost.title), true);
-                        renders = B.r(renders, 'postitemintro', Base64.decode(thePost.intro) + '...', true);
-                        renders = B.r(renders, 'postitemdate', $.dt(thePost.date), true);
-                        renders = B.r(renders, 'postitemtags', thePost.tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
-                        renders = B.r(renders, 'postitemlink', 'post-' + pid + '.html', true);
-                        if (thePost['cover']) { /*如果有封面*/
-                            renders = B.r(renders, 'postcover', thePost['cover'], true); /*把页面也算入*/
+                        currentPostObj = mj['postindex'][pid];
+                    if (!currentPostObj['link']) { /*排除页面在外，文章列表不显示页面*/
+                        let renders = B.r(ptTp, 'postitemtitle', Base64.decode(currentPostObj.title), true),
+                            postLinkPattern = currentPostObj['permalink'] || 'post-{pid}', // 获得文章永久链接模板，这里兼容旧版本
+                            permalink = $.useLinkPattern(postLinkPattern, pid); // 文章永久链接
+                        renders = B.r(renders, 'postitemintro', Base64.decode(currentPostObj.intro) + '...', true);
+                        renders = B.r(renders, 'postitemdate', $.dt(currentPostObj.date), true);
+                        renders = B.r(renders, 'postitemtags', currentPostObj.tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
+                        renders = B.r(renders, 'postitemlink', permalink + '.html', true);
+                        if (currentPostObj['cover']) { /*如果有封面*/
+                            renders = B.r(renders, 'postcover', currentPostObj['cover'], true); /*把页面也算入*/
                         } else {
                             renders = that.cd(renders); /*没有封面就删掉所有<ifcover>*/
                         }

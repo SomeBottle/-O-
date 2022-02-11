@@ -9,7 +9,7 @@ const mark = function (content) {
             })
         })
         .render(content);
-}, pidReplacePattern = new RegExp('\\{\\s*?pid\\s*?\\}', 'gi');
+}, pidReplacePattern = new RegExp('\\{\\s*?pid\\s*?\\}', 'gi'); // 文章永久链接模板{pid}替换pattern
 
 const B = { /*Replace Part*/
     r: function (origin, from, to, forTemplate = false, replaceAll = true) { /*别改这里！，没有写错！(All,Original,ReplaceStr,IfTemplate[false,'['(true),'('],IfReplaceAll)*/
@@ -40,7 +40,7 @@ var editPost = 'none',
     tpjs = JSON.parse(window.tJson), // 这样防止tpjs直接挂上tJson的引用导致问题(某种意义上的深复制)
     choice = 0,
     timer,
-    configs = localStorage['oEditorConfigs']; // 获得面板配置
+    configs = localStorage['oEditorConfigs']; // 获得面板配置，可能为undefined
 
 function loadConfigs(manual = false) { // 如果本地没有配置，就抓取配置(manual参数供手动下载配置)
     let repo = window.githubRepo;
@@ -58,6 +58,13 @@ function loadConfigs(manual = false) { // 如果本地没有配置，就抓取�
         }, rej => {
             throw rej;
         }).catch(e => {
+            let initCfg = {
+                'rss': false,
+                'sitemap': false,
+                'postLinkPattern': 'post-{pid}',
+                'beforePreview': ''
+            }
+            configs = configs || JSON.stringify(initCfg); // 如果configs为空就初始化一下
             console.log(`Failed to download config: ${e}`);
             if (manual) notice('下载配置失败'); // 如果是手动下载就提示一下
             loadHide();
@@ -278,11 +285,13 @@ function indexRenderer(mj) { // 首页渲染者
                 pid = item[0],
                 pt = mj['postindex'][pid];
             if (!pt['link']) { /*排除页面在外*/
-                let render = B.r(itemTp, 'postitemtitle', Base64.decode(pt.title), true);
+                let render = B.r(itemTp, 'postitemtitle', Base64.decode(pt.title), true),
+                    postLinkPattern = currentPostObj['permalink'] || 'post-{pid}', // 获得文章永久链接模板，这里兼容旧版本
+                    permalink = useLinkPattern(postLinkPattern, pid);
                 render = B.r(render, 'postitemintro', Base64.decode(pt.intro) + '...', true);
                 render = B.r(render, 'postitemdate', transDate(pt.date), true);
                 render = B.r(render, 'postitemtags', pt.tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
-                render = B.r(render, 'postitemlink', 'post-' + pid + '.html', true);
+                render = B.r(render, 'postitemlink', permalink + '.html', true);
                 if (pt['cover']) {
                     render = B.r(render, 'postcover', pt['cover'], true); /*如果有封面图就渲染一下*/
                 } else {
@@ -359,7 +368,7 @@ function preview() {
     let content = SC('content').value,
         restored = scriptRestore(content),
         preWin = window.open(''),
-        parsedCfg = configs ? JSON.parse(configs) : { 'beforePreview': '' };
+        parsedCfg = JSON.parse(configs);
     preWin.opener = null;
     preWin.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown-light.css' rel="stylesheet" /></head><body>${parsedCfg['beforePreview']}<div class='markdown-body'>${mark(restored)}</div></body>`);
     preWin.document.close();
@@ -388,13 +397,16 @@ function edit() {
             .substring(0, introLen)
             .replace(/[ ]/g, "")
             .replace(/[\r\n]/g, ""), // 提取文章前面小部分作为intro
-        ifPage = $.isDate(date) ? false : true;/*是否是页面*/
+        ifPage = $.isDate(date) ? false : true,/*是否是页面*/
+        parsedCfg = JSON.parse(configs), // 解析当前配置
+        cfgLinkPattern = parsedCfg['postLinkPattern'], // 获得文章永久链接模板
+        editing = (editPost !== 'none'); // 是否是编辑模式
 
     if (!$.notEmpty(title)) {
         notice('标题不能为空哦');
         return false;
     }
-    if (content.length > introLen) {
+    if (content.length > introLen) { // 文章内容超过截取长度就加上省略号
         intro += '...';
     }
     if (ifPage) { // 如果是页面
@@ -438,7 +450,7 @@ function edit() {
             postDateInd = dIndexes.length,
             pageLink = ifPage ? date : ''; /*指定编辑的页面的link(不带.html)*/
         date = ifPage ? getDate() : date; // 如果是页面，日期就是今天
-        if (editPost !== 'none') { // 是编辑
+        if (editing) { // 是编辑
             currentNo = editPost;
             postDateInd = findDateIndex(dIndexes, currentNo); // 找到当前文章对应的日期索引
             commit = 'Edit Post';
@@ -457,7 +469,7 @@ function edit() {
         /*日期排序结束-------------------*/
         let recentLink = '', /*如果是页面，储存修改之前的页面名*/
             currentPostObj = mj['postindex'][currentNo] || new Object(); // 目前正在操作的postindex对象
-        if (editPost !== 'none') {
+        if (editing) {
             recentLink = currentPostObj['link'] || '';
             if (!ifPage && recentLink) {
                 notice('你正在编辑页面');
@@ -470,13 +482,17 @@ function edit() {
             }
         }
         let currentTime = timestamp(), // 毫秒级时间戳
-            pubTime = currentPostObj['pubTime'] || currentTime; // 发布日期(不要改动此行位置)
+            pubTime = currentPostObj['pubTime'] || currentTime, // 发布日期(不要改动此行位置)
+            /*当前文章的永久链接模板（兼容了老版本，如果对象中没有permalink就默认是post-{pid}.html）*/
+            postLinkPattern = currentPostObj['permalink'] || (editing ? 'post-{pid}' : cfgLinkPattern);
         currentPostObj = {
             'title': Base64.encode(title),
             'date': date,
             'intro': Base64.encode(intro),
             'tags': tag,
-            'editTime': currentTime // 上一次编辑的日期
+            'editTime': currentTime, // 上一次编辑的日期
+            'pubTime': pubTime, // 发布日期
+            'permalink': postLinkPattern // 记录永久链接模板
         };
         let editCover = coverDrawer(); /*文章封面支持20190810*/
         if (editCover) { // 编辑器里指定了封面
@@ -490,7 +506,7 @@ function edit() {
             render = B.r(render, 'cover', 'none', true); /*没有封面也要替换掉占位符*/
         }
         loadShow();
-        let fileName = 'post-' + currentNo + '.html';// 构建文件名
+        let fileName = useLinkPattern(postLinkPattern, currentNo) + '.html';// 构建文件名
         /*登记发布时间和编辑时间*/
         render = B.r(render, 'pubtime', pubTime, true);
         render = B.r(render, 'edittime', currentTime, true);
@@ -499,7 +515,6 @@ function edit() {
             currentPostObj['link'] = pageLink; /*如果是页面就储存pagelink*/
             fileName = pageLink + '.html';
         }
-        currentPostObj['pubTime'] = pubTime; // 如果不存在发布日期，就储存当前日期
         mj['postindex'][currentNo] = currentPostObj; /*储存文章信息*/
         let indexPage = indexRenderer(mj), /*渲染首页*/
             prevMName = tpjs['mainjson'], /*上一次的main.json名字*/
@@ -583,7 +598,7 @@ function edit() {
                     notice('编辑/发布成功');
                     renderList(); /*渲染最新文章列表*/
                     loadHide();
-                    if (editPost !== 'none') {
+                    if (editing) {
                         window.htmls[fileName] = Base64.encode(render); /*更新变量储存的post*/
                     } else {
                         postOpen(currentNo); /*发布文章后跳转到编辑模式*/
@@ -605,7 +620,9 @@ function delPost(id) { /*删除文章*/
     if (currentPostObj) {
         loadShow();
         let ifPage = currentPostObj.link ? true : false, // 是不是页面
-            fileName = ifPage ? currentPostObj.link + '.html' : 'post-' + id + '.html',
+            postLinkPattern = currentPostObj['permalink'] || 'post-{pid}', // 文章永久链接模式，兼容了旧版本
+            permalink = useLinkPattern(postLinkPattern, id), // 文章永久链接
+            fileName = ifPage ? currentPostObj.link + '.html' : permalink + '.html',
             repo = window.githubRepo,
             postDateInd = findDateIndex(mj['dateindex'], id); // 找到当前文章在日期列表中的索引
         delete mj['postindex'][id]; // 删除postindex中文章对象
@@ -685,13 +702,15 @@ function delPost(id) { /*删除文章*/
 function postOpen(id) { /*编辑文章*/
     loadShow();
     let mj = JSON.parse(window.mainJson), /*获得json*/
-        ifPage = mj['postindex'][id]['link'] ? true : false,
-        fileName = ifPage ? mj['postindex'][id]['link'] + '.html' : 'post-' + id + '.html',
+        currentPostObj = mj['postindex'][id],
+        postLinkPattern = currentPostObj['permalink'] || 'post-{pid}', // 文章永久链接模式，兼容了旧版本
+        permalink = useLinkPattern(postLinkPattern, id), // 文章永久链接
+        ifPage = currentPostObj['link'] ? true : false,
+        fileName = ifPage ? currentPostObj['link'] + '.html' : permalink + '.html',
         repo = window.githubRepo;
     let loadPost = function (html) {
         loadHide();
         let ht = Base64.decode(html),
-            currentPostObj = mj['postindex'][id],
             title = Base64.decode(currentPostObj['title']),
             date = ifPage ? currentPostObj['link'] : currentPostObj['date'],
             tags = currentPostObj['tags'],
@@ -803,22 +822,11 @@ async function configShow() { // 展示配置面板
             throw rej;
         })),
         template = `<div class="markdown-body">${configItems}</div>`,
-        parsedCfg = '',
+        parsedCfg = JSON.parse(configs),
         cfgElems = SC('sbrContent').getElementsByClassName('cfgInput'); // 获得所有配置输入元素
     loadHide();
     window.htmls['configs'] = configItems; // 临时存着
     SC('sbrContent').innerHTML = template;
-    if (!configs) { // 如果配置仍然未载入就采用默认配置
-        parsedCfg = {
-            'rss': false,
-            'sitemap': false,
-            'postLinkPattern': 'post-{pid}',
-            'beforePreview': ''
-        }
-        configs = JSON.stringify(parsedCfg);
-    } else {
-        parsedCfg = JSON.parse(configs); // 配置存在
-    }
     for (let elem of cfgElems) { // 填充配置
         let key = elem.getAttribute('data-id');
         elem.onchange = configUpdate; // 绑定change事件
@@ -841,9 +849,9 @@ function useLinkPattern(link, pid) { // 套上文章链接pattern
 
 function configValid(key, val) { // 检查配置项是否合法
     if (key == 'postLinkPattern') {
-        let applied = useLinkPattern(val, 'pid'); // 先去掉{pid}的{}以便linkValid判断
+        let applied = useLinkPattern(val, '450'); // 先去掉{pid}的{}以便linkValid判断
         if (linkValid(applied) && pidReplacePattern.test(val)) {
-            SC('postPermanentLink').innerHTML = useLinkPattern(val, '450') + '.html';
+            SC('postPermanentLink').innerHTML = applied + '.html';
             return true;
         } else {
             notice('链接无效');
@@ -856,7 +864,7 @@ function configValid(key, val) { // 检查配置项是否合法
 
 function configUpdate(e) { // 触发配置改变
     let elem = e.target, // 获得事件触发元素
-        parsedCfg = JSON.parse(configs), // 这里默认configs是存在的！
+        parsedCfg = JSON.parse(configs), // 获得配置
         key = elem.getAttribute('data-id');
     switch (elem.type) {
         case 'checkbox':
