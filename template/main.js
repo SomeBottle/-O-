@@ -102,8 +102,8 @@ if (typeof ($) !== 'object') {
         let attrArr = {};
         if (element.hasAttributes()) {
             let allAttrs = element.attributes;
-            for (var i in allAttrs) {
-                if (allAttrs[i].name && allAttrs[i].value) attrArr[allAttrs[i].name] = allAttrs[i].value;
+            for (let attr of allAttrs) {
+                if (attr.name && attr.value) attrArr[attr.name] = attr.value;
             }
         }
         return attrArr;
@@ -227,8 +227,12 @@ if (typeof ($) !== 'object') {
         }
         if (returnE) return es; /*返回元素*/
         if (!(es instanceof Element)) {
-            for (var i in es) {
-                es[i] instanceof Element ? (rm ? es[i].classList.remove(operateClass) : es[i].classList.add(operateClass)) : es = es;
+            for (let elem of es) {
+                if (rm) {
+                    elem.classList.remove(operateClass);
+                } else {
+                    elem.classList.add(operateClass);
+                }
             }
         } else {
             rm ? es.classList.remove(operateClass) : es.classList.add(operateClass);
@@ -287,15 +291,15 @@ if (!B) { /*PreventInitializingTwice*/
             if (that.navList.status) {
                 let elements = document.body.getElementsByClassName(classesForNav.navclass),
                     path = that.navCurrent();
-                for (var i in elements) { /*20201229更改算法*/
-                    let comparePath = that.navCurrent(elements[i].href),
+                for (let elem of elements) { /*20201229更改算法*/
+                    let comparePath = that.navCurrent(elem.href),
                         pathPos = path.lastIndexOf(comparePath),
                         pathLen = path.length,
                         hrefLen = comparePath.length;
-                    if ((path == comparePath || (pathPos + hrefLen == pathLen && pathPos !== -1)) && elements[i] instanceof Element) {
-                        elements[i].classList.add(classesForNav.activeclass); /*设置为焦点*/
-                    } else if (elements[i] instanceof Element) {
-                        (elements[i].classList.contains(classesForNav.activeclass)) ? (elements[i].classList.remove(classesForNav.activeclass)) : comparePath = comparePath; /*取消其他的焦点*/
+                    if ((path == comparePath || (pathPos + hrefLen == pathLen && pathPos !== -1)) && elem instanceof Element) {
+                        elem.classList.add(classesForNav.activeclass); /*设置为焦点*/
+                    } else if (elem instanceof Element) {
+                        (elem.classList.contains(classesForNav.activeclass)) ? (elem.classList.remove(classesForNav.activeclass)) : comparePath = comparePath; /*取消其他的焦点*/
                     }
                 }
                 elements = null;
@@ -347,9 +351,9 @@ if (!B) { /*PreventInitializingTwice*/
         },
         preventScript: function () {
             let scriptTags = SC('html').getElementsByTagName('script');
-            for (var i in scriptTags) {
-                if (scriptTags[i].src && !$.loadedScripts.includes(scriptTags[i].src)) {
-                    $.loadedScripts.push(scriptTags[i].src);
+            for (let e of scriptTags) {
+                if (e.src && !$.loadedScripts.includes(e.src)) {
+                    $.loadedScripts.push(e.src);
                 }
             }
             scriptTags = null;
@@ -375,9 +379,9 @@ if (!B) { /*PreventInitializingTwice*/
             let temp = document.createElement('div');
             temp.innerHTML = c;
             let imgTags = temp.getElementsByTagName('img');
-            for (var p in imgTags) {
-                if (imgTags[p].src) {
-                    let theTag = imgTags[p], originData = theTag.src;
+            for (let e of imgTags) {
+                if (e.src) {
+                    let theTag = e, originData = theTag.src;
                     theTag.src = "data:image/svg+xml,%3Csvg width='302' height='27' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E %3Ctitle%3Ebackground%3C/title%3E %3Crect x='-1' y='-1' width='304' height='29' id='canvas_background' fill='none'/%3E %3Cg id='canvasGrid' display='none'%3E %3Crect id='svg_2' width='100%25' height='100%25' x='0' y='0' stroke-width='0' fill='url(%23gridpattern)'/%3E %3C/g%3E %3C/g%3E %3Cg%3E %3Ctitle%3ELayer 1%3C/title%3E %3Ctext fill='%23000000' stroke='%23000' stroke-width='0' x='129.703125' y='16.303124' id='svg_1' font-size='8' font-family='Helvetica, Arial, sans-serif' text-anchor='start' xml:space='preserve'%3Epic sleeping%3C/text%3E %3C/g%3E %3C/svg%3E";
                     if (theTag.style.width !== '') {
                         originData += '[width]' + theTag.style.width; /*记录元素原本的样式*/
@@ -394,10 +398,10 @@ if (!B) { /*PreventInitializingTwice*/
         lazyCheck: function () { /*包租婆————怎么没水了呢？*/
             if (!B.lazyLoad) return false;/*关闭了lazyLoad*/
             let H = window.innerHeight, S = document.documentElement.scrollTop || document.body.scrollTop, imgTags = document.getElementsByTagName('img');
-            for (var i in imgTags) {
-                let imgPos = imgTags[i].offsetTop;
+            for (let e of imgTags) {
+                let imgPos = e.offsetTop;
                 if (H + S > imgPos && ((H + S) - imgPos < H)) {/*修正算法，只展示在文档显示区的图片20210909*/
-                    B.lazyShow(imgTags[i]);
+                    B.lazyShow(e);
                 }
             }
             imgTags = null;
@@ -463,11 +467,10 @@ if (!B) { /*PreventInitializingTwice*/
                         if (pageType == tpNames['postlist']) {/*如果是文章列表页，就还需要载入单个文章列表项的模板20211020*/
                             j['necessary'].push(tpNames['postitem']); /*Extra Load*/
                         }
-                        for (let i in j['necessary']) {
-                            if (!that.templateLoaded.includes(j['necessary'][i])) {
+                        for (let tpName of j['necessary']) {
+                            if (!that.templateLoaded.includes(tpName)) {
                                 that.templateOnload += 1;
                                 let useCache = false,
-                                    tpName = j['necessary'][i],
                                     theCache = q('r', 'template-' + tpName, '', '', ''),
                                     tpHtmls = window.tpHtmls; /*Test Cache*/
                                 if (theCache['c']) { /*如果有缓存，先装载缓存*/
@@ -1163,10 +1166,8 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
         clearEvent: function () { /*移除所有a标签事件*/
             let that = this,
                 tags = document.getElementsByTagName("a");
-            for (var i in tags) {
-                if (typeof (tags[i].removeEventListener) == 'function') { /*防止不是函数的凑数*/
-                    tags[i].removeEventListener('click', that.clickEvent); /*取消监听A标签*/
-                }
+            for (let e of tags) {
+                e.removeEventListener('click', that.clickEvent); /*取消监听A标签*/
             }
             tags = null;
         },
@@ -1177,11 +1178,11 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             that.clearEvent(); /*先清除之前的监听器*/
             window.removeEventListener('popstate', PJAX.pjaxAutoJump);/*先移除原来的事件监听器*/
             let tags = document.getElementsByTagName("a");
-            for (var i in tags) {
-                let onc = tags[i] instanceof Element ? tags[i].getAttribute('onclick') : null; /*检查a标签是否有onclick属性20210126*/
-                if (typeof (tags[i].addEventListener) == 'function' && !onc) { /*防止不是元素的凑数，a标签带onclick属性就不监听了20210126*/
-                    tags[i].setAttribute('pjax', ''); /*设置标识*/
-                    tags[i].addEventListener('click', that.clickEvent, false); /*监听A标签*/
+            for (let e of tags) {
+                let onc = e.getAttribute('onclick'); /*检查a标签是否有onclick属性20210126*/
+                if (!onc) { /*防止不是元素的凑数，a标签带onclick属性就不监听了20210126*/
+                    e.setAttribute('pjax', ''); /*设置标识*/
+                    e.addEventListener('click', that.clickEvent, false); /*监听A标签*/
                 }
             } /*回退时触发*/
             window.addEventListener('popstate', PJAX.pjaxAutoJump, false);
@@ -1195,10 +1196,10 @@ if (PJAX == undefined || PJAX == null) { /*防止重初始化*/
             let that = this,
                 tags = document.getElementsByTagName("a"),
                 h = window.location.host;
-            for (var i in tags) {
-                if (tags[i].href !== undefined) {
-                    if (tags[i].href.indexOf(h) == -1) {
-                        that.preventUrl.push(tags[i].href);
+            for (let e of tags) {
+                if (e.href !== undefined) {
+                    if (e.href.indexOf(h) == -1) {
+                        that.preventUrl.push(e.href);
                     }
                 }
             }
