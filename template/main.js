@@ -283,7 +283,12 @@ if (!B) { /*PreventInitializingTwice*/
             conf: {}
         },
         navCurrent: function (v = '') { /*getcurrentnav*/
-            return ((-1 == v.indexOf('http') ? v = v : (v.replace(window.location.protocol + '//' + window.location.hostname, ''))) || window.location.pathname).replace('.html', ''); /*割掉尾巴*/
+            let port = window.location.port; // 算入端口
+            return (
+                (!v.includes('http') ? v : (
+                    v.replace(window.location.protocol + '//' + window.location.hostname + (port ? ':' + port : ''), '')
+                )) || window.location.pathname
+            ).replace('.html', ''); /*割掉尾巴*/
         },
         navcheck: function () { /*modify html*/
             let that = this,
