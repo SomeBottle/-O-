@@ -43,27 +43,45 @@ var editPost = 'none',
     configs = localStorage['oEditorConfigs']; // 获得面板配置，可能为undefined
 
 function loadConfigs(manual = false) { // 如果本地没有配置，就抓取配置(manual参数供手动下载配置)
-    let repo = window.githubRepo;
+    let repo = window.githubRepo,
+        initCfg = { // 初始配置
+            'siteUrl': '',
+            'siteDesc': '',
+            'siteTitle': '',
+            'rss': false, // 是否生成rss.xml
+            'sitemap': false, // 是否生成sitemap.xml
+            'postLinkPattern': 'post-{pid}', // 文章永久链接模板
+            'beforePreview': '', // 预览前置
+            'syncCfg': false // 同步配置到仓库
+        };
     if (!configs || manual) {
         loadShow();
         blog.findFileSha(repo, barnDir + 'editorConfigs.json').then((sha) => {
             return blog.getFileBlob(repo, sha).then(resp => {
-                let parsed = Base64.decode(resp.content);
+                let parsed = Base64.decode(resp.content),
+                    parsedCfg = JSON.parse(parsed),
+                    remoteCfgKeys = Object.keys(parsedCfg), // 获得远程配置的所有键
+                    initCfgKeys = Object.keys(initCfg), // 获得初始配置的所有键（因为从仓库下载直接覆盖本地了）
+                    intersection = initCfgKeys.filter(x => remoteCfgKeys.includes(x)); // 获得交集
+                /* 对下载的配置文件进行校验（可能因为版本更新会新增或减少配置项）  
+                注意这里的校验只支持单层遍历，如果以后的配置项有深层了再说。(我是觉得我只会做一层了 ;w;)
+                默认本地配置文件版本高于仓库配置文件 */
+                if (intersection.length !== initCfgKeys.length) { // 如果键交集长度不等于初始配置键的长度，说明配置文件不同
+                    intersection.forEach(key => { // 将交集部分的配置覆盖至本地
+                        initCfg[key] = parsedCfg[key];
+                    });
+                    parsed = JSON.stringify(initCfg); // 储存经过校验的配置
+                }
                 configs = parsed;
                 localStorage['oEditorConfigs'] = configs; // 覆盖本地配置
                 notice('成功从仓库下载配置');
+                loadHide();
             }, rej => {
                 throw rej;
             })
         }, rej => {
             throw rej;
         }).catch(e => {
-            let initCfg = {
-                'rss': false,
-                'sitemap': false,
-                'postLinkPattern': 'post-{pid}',
-                'beforePreview': ''
-            }
             configs = configs || JSON.stringify(initCfg); // 如果configs为空就初始化一下
             console.log(`Failed to download config: ${e}`);
             if (manual) notice('下载配置失败'); // 如果是手动下载就提示一下
@@ -175,7 +193,7 @@ function scriptCutter(h) { /*处理script标签，用上正则2021.11.6*/
 }
 function findDateIndex(dIndexes, postID) { // 根据文章id找出对应的日期数组下标2022.2.4
     for (let i = 0, len = dIndexes.length; i < len; i++) {
-        if (dIndexes[0] == postID) { // 日期数组每个元素储存[文章ID,文章日期]
+        if (dIndexes[i][0] == postID) { // 日期数组每个元素储存[文章ID,文章日期]
             return i;
         }
     }
@@ -280,13 +298,13 @@ function indexRenderer(mj) { // 首页渲染者
         nowRender = 0;
     itemTp = B.gt('PostItem', 'PostItemEnd', itemTp); /*有项目的模板*/
     for (let i = 0, len = dIndexes.length; i < len; i++) {
-        if (nowRender < maxRender) {
-            let item = dIndexes[i],
-                pid = item[0],
+        let item = dIndexes[i];
+        if (nowRender < maxRender && item) {
+            let pid = item[0],
                 pt = mj['postindex'][pid];
             if (!pt['link']) { /*排除页面在外*/
                 let render = B.r(itemTp, 'postitemtitle', Base64.decode(pt.title), true),
-                    postLinkPattern = currentPostObj['permalink'] || 'post-{pid}', // 获得文章永久链接模板，这里兼容旧版本
+                    postLinkPattern = pt['permalink'] || 'post-{pid}', // 获得文章永久链接模板，这里兼容旧版本
                     permalink = useLinkPattern(postLinkPattern, pid);
                 render = B.r(render, 'postitemintro', Base64.decode(pt.intro) + '...', true);
                 render = B.r(render, 'postitemdate', transDate(pt.date), true);
@@ -384,6 +402,82 @@ function linkValid(link) {
     return (link.trim() !== 'index' && pattern.test(link)); // 链接不能是index.html，同时只能是. - _ 英文字母大小写 数字，且开头结尾不能是.
 }
 
+// Reference: https://www.runoob.com/rss/rss-tutorial.html
+function rssGenerator(parsedMain) { // rss.xml生成器
+    let selection = parsedMain['dateindex'].slice(0, 20), // rss只放20个条目
+        rssItems = '',
+        parsedCfg = JSON.parse(configs);
+    selection.forEach(dArr => {
+        let pid = dArr[0],
+            currentPostObj = parsedMain['postindex'][pid],
+            link = currentPostObj['link'],
+            pattern = currentPostObj['permalink'] || 'post-{pid}', // 兼容老版本
+            pageLink = link ? link : useLinkPattern(pattern, pid),
+            title = enHtml(Base64.decode(currentPostObj['title'])),
+            desc = Base64.decode(currentPostObj['intro']),
+            permalink = parsedCfg['siteUrl'] + pageLink + '.html', // 文章永久链接
+            pubDate = new Date(currentPostObj['editTime'] || transDate(currentPostObj['date'])).toUTCString(), // 获得发布UTC时间(兼容了老版本)
+            tags = currentPostObj['tags'].split(',').filter(x => x && x.trim()), // 获得标签数组
+            categories = '';
+        tags.forEach(t => {
+            categories += `<category><![CDATA[${t}]]></category>`;
+        })
+        rssItems += `<item>
+        <title>${title}</title>
+        <link>${permalink}</link>
+        <guid>${permalink}</guid>
+        <description><![CDATA[${desc}]]></description>
+        ${categories}
+        <pubDate>${pubDate}</pubDate>
+    </item>
+    `;
+    });
+    return `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+    <title>${parsedCfg['siteTitle']}</title>
+    <link>${parsedCfg['siteUrl']}</link>
+    <description>${parsedCfg['siteDesc']}</description>
+    ${rssItems}
+</channel>
+</rss>`;
+}
+
+function transISODate(date) {
+    return date.toISOString().slice(0, -5) + '+00:00';
+}
+
+function sitemapGenerator(parsedMain) { // 网站地图生成器
+    let sitemapItems = '',
+        parsedCfg = JSON.parse(configs),
+        editDate = transISODate(new Date());
+    parsedMain['dateindex'].forEach(dArr => {
+        let pid = dArr[0],
+            currentPostObj = parsedMain['postindex'][pid],
+            link = currentPostObj['link'],
+            pattern = currentPostObj['permalink'] || 'post-{pid}', // 兼容老版本
+            pageLink = link ? link : useLinkPattern(pattern, pid),
+            permalink = parsedCfg['siteUrl'] + pageLink + '.html', // 文章永久链接
+            pubDate = new Date(currentPostObj['editTime'] || transDate(currentPostObj['date'])), // 获得发布时间(兼容了老版本)
+            isoDate = transISODate(pubDate), // 转换为bot接受的ISO8601格式日期
+            cover = currentPostObj['cover'],
+            imageItem = cover ? `<image:image><image:loc>${cover}</image:loc></image:image>` : '';
+        sitemapItems += `<url>
+        <loc>${permalink}</loc>
+        <lastmod>${isoDate}</lastmod>
+        ${imageItem}
+    </url>
+    `;
+    });
+    return `<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>${parsedCfg['siteUrl']}</loc>
+        <lastmod>${editDate}</lastmod>
+    </url>
+    ${sitemapItems}
+</urlset>`;
+}
+
 function edit() {
     let introLen = 100, // 截取内容长度
         postTp = tpjs['templatehtmls']['post'], /*获得配置的页面模板名，默认post.otp.html*/
@@ -395,7 +489,6 @@ function edit() {
         intro = mark(content)
             .replace(/<\/?.+?>/g, "")
             .substring(0, introLen)
-            .replace(/[ ]/g, "")
             .replace(/[\r\n]/g, ""), // 提取文章前面小部分作为intro
         ifPage = $.isDate(date) ? false : true,/*是否是页面*/
         parsedCfg = JSON.parse(configs), // 解析当前配置
@@ -514,6 +607,7 @@ function edit() {
         if (ifPage) { /*如果是页面则用指定链接*/
             currentPostObj['link'] = pageLink; /*如果是页面就储存pagelink*/
             fileName = pageLink + '.html';
+            delete currentPostObj['permalink']; // 页面就没必要储存permalink了
         }
         mj['postindex'][currentNo] = currentPostObj; /*储存文章信息*/
         let indexPage = indexRenderer(mj), /*渲染首页*/
@@ -531,6 +625,34 @@ function edit() {
             return Promise.resolve(treeConstruct);
         }, rej => {
             throw rej;
+        }).then(treeConstruct => {
+            return parsedCfg['rss'] ? (blog.crBlob(repo, rssGenerator(mj)) // 是否生成rss.xml
+                .then(resp => {
+                    treeConstruct.push({
+                        path: 'rss.xml',
+                        mode: "100644",
+                        type: "blob",
+                        sha: resp.sha
+                    });
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
+                })
+            ) : Promise.resolve(treeConstruct);
+        }).then(treeConstruct => {
+            return parsedCfg['sitemap'] ? (blog.crBlob(repo, sitemapGenerator(mj)) // 是否生成sitemap.xml
+                .then(resp => {
+                    treeConstruct.push({
+                        path: 'sitemap.xml',
+                        mode: "100644",
+                        type: "blob",
+                        sha: resp.sha
+                    });
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
+                })
+            ) : Promise.resolve(treeConstruct);
         }).then(treeConstruct => {
             return blog.crBlob(repo, JSON.stringify(mj))
                 .then(resp => {
@@ -570,6 +692,20 @@ function edit() {
                 }, rej => {
                     throw rej;
                 })
+        }).then(treeConstruct => {
+            return parsedCfg['syncCfg'] ? (blog.crBlob(repo, configs)
+                .then(resp => {
+                    treeConstruct.push({ // 将配置同步到仓库核心目录里
+                        path: `${barnDir}editorConfigs.json`,
+                        mode: "100644",
+                        type: "blob",
+                        sha: resp.sha
+                    });
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
+                })
+            ) : Promise.resolve(treeConstruct); // 没开启配置同步就不用同步了
         }).then(treeConstruct => {
             treeConstruct.push({
                 "path": barnDir + prevMName,
@@ -616,7 +752,8 @@ function edit() {
 
 function delPost(id) { /*删除文章*/
     let mj = JSON.parse(window.mainJson), /*获得json*/
-        currentPostObj = mj['postindex'][id] || '';
+        currentPostObj = mj['postindex'][id] || '',
+        parsedCfg = JSON.parse(configs);
     if (currentPostObj) {
         loadShow();
         let ifPage = currentPostObj.link ? true : false, // 是不是页面
@@ -626,7 +763,7 @@ function delPost(id) { /*删除文章*/
             repo = window.githubRepo,
             postDateInd = findDateIndex(mj['dateindex'], id); // 找到当前文章在日期列表中的索引
         delete mj['postindex'][id]; // 删除postindex中文章对象
-        delete mj['dateindex'][postDateInd]; // 删除dateindex中对应元素
+        mj['dateindex'].splice(postDateInd, 1); // 删除dateindex中对应元素(不要用delete，大教训！)
         let indexPage = indexRenderer(mj), /*渲染首页*/
             prevMName = tpjs['mainjson']; /*上一次的main.json名字*/
         tpjs['mainjson'] = randomMJ(); /*获得随机的mainjson名字(解决jsdelivr的操蛋缓存)*/
@@ -641,6 +778,34 @@ function delPost(id) { /*删除文章*/
             return Promise.resolve(treeConstruct);
         }, rej => {
             throw rej;
+        }).then(treeConstruct => {
+            return parsedCfg['rss'] ? (blog.crBlob(repo, rssGenerator(mj)) // 是否生成rss.xml
+                .then(resp => {
+                    treeConstruct.push({
+                        path: 'rss.xml',
+                        mode: "100644",
+                        type: "blob",
+                        sha: resp.sha
+                    });
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
+                })
+            ) : Promise.resolve(treeConstruct);
+        }).then(treeConstruct => {
+            return parsedCfg['sitemap'] ? (blog.crBlob(repo, sitemapGenerator(mj)) // 是否生成sitemap.xml
+                .then(resp => {
+                    treeConstruct.push({
+                        path: 'sitemap.xml',
+                        mode: "100644",
+                        type: "blob",
+                        sha: resp.sha
+                    });
+                    return Promise.resolve(treeConstruct);
+                }, rej => {
+                    throw rej;
+                })
+            ) : Promise.resolve(treeConstruct);
         }).then(treeConstruct => {
             return blog.crBlob(repo, JSON.stringify(tpjs))
                 .then(resp => {
@@ -893,7 +1058,7 @@ document.addEventListener('keydown', function (e) {/*监听按键*/
     } else if (e.code == 'KeyV' && e.altKey && SC('content') == actElem) { // alt + V在指定地方插入视频标签
         e.preventDefault();
         let link = prompt('输入视频URL:', '');
-        if (link) insertAtCursor(SC('content'), `<video controls="controls" style="max-width:100%" src="${link}"></video>`);
+        if (link) insertAtCursor(SC('content'), `< video controls = "controls" style = "max-width:100%" src = "${link}" ></video > `);
     } else if (e.key == 'Tab' && actElem.tagName.toLowerCase() == 'textarea') {
         e.preventDefault();
         insertAtCursor(actElem, '    '); // 一个Tab换四个空格

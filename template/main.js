@@ -794,7 +794,6 @@ if (!B) { /*PreventInitializingTwice*/
             PJAX.autoprevent();
             PJAX.sel('contentcontainer');
             PJAX.start();
-            that.generateCata(); // 生成目录数组20220113
             that.navcheck(); /*进行导航栏检查*/
             window.dispatchEvent(PJAX.PJAXFinish); /*调用事件隐藏loading浮层20201229*/
             htmlPromise.then(res => {
@@ -815,29 +814,6 @@ if (!B) { /*PreventInitializingTwice*/
             }
         },
         currentPostInfo: false, // 当前文章信息对象
-        catalogue: [], // 文章目录数组
-        generateCata: function () {/*目录生成器20220113*/
-            let container = SC('contentcontainer'),
-                elements = container.querySelectorAll('*'), // 获得文章中所有元素
-                titleTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-                generated = [];
-            titleTags = titleTags.filter(x => container.querySelector(x)); // 剔除文章中没有的标签
-            elements.forEach((val, ind) => {
-                let tag = val.tagName.toLowerCase(),
-                    id = val.id, // 获得元素锚点
-                    name = val.innerHTML.replace(/<a.*?>.*?<\/a>/g, '').trim(), // 获得标题内容
-                    titleIndex = titleTags.indexOf(tag), // 获得权重
-                    objToPush = {
-                        'id': id,
-                        'name': name,
-                        'index': titleIndex
-                    };
-                if (titleIndex !== -1 && id) {
-                    generated.push(objToPush);
-                }
-            });
-            this.catalogue = generated; // 储存当前文章目录
-        },
         backChecker: function () {/*检查后退按钮是否显示*/
             SC('backbtn').style.display = this.realPage == 1 ? 'none' : 'initial';
         },

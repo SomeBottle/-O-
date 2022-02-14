@@ -1,3 +1,18 @@
+<h2>RSS&Sitemap必要信息配置</h2>
+<p>这里的选项将被用于<code>rss.xml</code>以及<code>sitemap.xml</code>的生成</p>
+
+<p>请输入你的博客前台首页URL，末尾带上<code>/</code>：</p>
+<p><input type="text" data-id="siteUrl" style="color: #333333;font-size: 1.2em;" placeholder="https://xxx.github.io/" class="cfgInput"></input>
+</p>
+
+<p>请输入你的博客描述(Description)：</p>
+<p><input type="text" data-id="siteDesc" style="color: #333333;font-size: 1.2em;" placeholder="my blog" class="cfgInput"></input>
+</p>
+
+<p>请输入你的博客标题(Title)：</p>
+<p><input type="text" data-id="siteTitle" style="color: #333333;font-size: 1.2em;" placeholder="BottleBlog" class="cfgInput"></input>
+</p>
+
 <h2>RSS</h2>
 <p><input type="checkbox" data-id="rss" class="cfgInput"></input>&nbsp;发布/编辑时生成<code>rss.xml</code></p>
 
@@ -17,7 +32,8 @@
 
 <h2>配置同步</h2>
 <p>首先，上面几项配置在修改的同时就会被储存至<b>本地</b><code>localStorage</code>;</p>
-<p>在进行<code>发布/编辑</code>操作的时候，上面几项配置将会被写成<code>JSON</code>文件并上传至博客仓库<b>核心目录</b>。</p>
+<p>在进行<code>发布/编辑</code>操作的时候，上面几项配置可以被写成<code>JSON</code>文件并上传至博客仓库<b>核心目录</b>：</p>
+<p><input type="checkbox" data-id="syncCfg" class="cfgInput"></input>&nbsp;发布/编辑时<b>上传本地配置</b></p>
 <p>但值得注意的是，编辑器配置默认是从<b>本地</b>读取的，只有当<b>本地不存在配置时</b>才会尝试从仓库拉取配置json。</p>
 <p>当然，下面有一个按钮可供手动从仓库拉取配置并<b>覆盖本地配置</b>：</p>
 <input type="button" value="下载配置" style="border: 2px dashed;" onclick="loadConfigs(true)"></input>
