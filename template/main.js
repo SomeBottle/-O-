@@ -940,7 +940,6 @@ if (!B) { /*PreventInitializingTwice*/
                             renders = B.r(renders, 'postitemtags', tags.replace(/,/g, '·'), true); /*20201229加入对于文章列表单项模板中tags的支持*/
                             renders = currentPostObj['link'] ? B.r(renders, 'postitemlink', currentPostObj['link'] + '.html', true) : B.r(renders, 'postitemlink', permalink + '.html', true);/*针对和文章不同的页面特殊处理*/
                             renders = currentPostObj['cover'] ? B.r(renders, 'postcover', currentPostObj['cover'], true) : that.cd(renders);/*如果有封面就上封面，没封面就整段删掉*/
-                            pt = null;
                             return renders;
                         }
                         let localSearch = [], renderTp = '';
