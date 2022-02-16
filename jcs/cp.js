@@ -1,4 +1,4 @@
-/*ControlPosts5.0.0 - SomeBottle202202*/
+/*ControlPosts5.0.2 - SomeBottle202202*/
 "use strict";
 const mark = function (content) {
     return window.markdownit({ html: true, linkify: true })
@@ -165,7 +165,6 @@ function chooseSth() {
                 break;
             case 6:
                 console.log('更多配置');
-                //beforePreviewHtml();
                 configShow();
                 break;
             case 7:
@@ -198,11 +197,6 @@ function findDateIndex(dIndexes, postID) { // 根据文章id找出对应的日�
         }
     }
     return -1;
-}
-function beforePreviewHtml() {
-    localStorage.OBeforePreview = localStorage.OBeforePreview || '';
-    let getPre = prompt('请输入你在预览body部分中要插入的前置html\n（用于文章中需要外部js库的脚本预览)', localStorage.OBeforePreview);
-    localStorage.OBeforePreview = getPre;
 }
 function enHtml(h) { /*转义html*/
     var temp = h.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
@@ -479,17 +473,21 @@ function sitemapGenerator(parsedMain) { // 网站地图生成器
 }
 
 function edit() {
-    let introLen = 100, // 截取内容长度
+    let introLen = 200, // 截取内容长度
         postTp = tpjs['templatehtmls']['post'], /*获得配置的页面模板名，默认post.otp.html*/
         title = SC('title').value,
         dateVal = SC('date').value,
         tag = SC('tag').value,
         content = scriptCutter(SC('content').value),
         date = $.notEmpty(dateVal) ? dateVal : getDate(),// 如果日期为空就选用默认日期
-        intro = mark(content)
-            .replace(/<\/?.+?>/g, "")
-            .substring(0, introLen)
-            .replace(/[\r\n]/g, ""), // 提取文章前面小部分作为intro
+        introAllowTags = ['details', 'summary'],
+        intro = mark(
+            deHtml(content)
+                .replaceAll(new RegExp('<(\\w+?)(\\s.*)?>[\\s\\S]*?</\\1>', 'gi'), (match, tag) => (introAllowTags.includes(tag) ? match : '')) // 去除特殊标签之外的标签
+        ).replaceAll(new RegExp('(<script[\\s\\S]*?>)(?:\\/\\*)([\\s\\S]*?)(?:\\*\\/)(<\/script>)', 'gi'), () => '') // 去除所有<script>/*...*/</script>内容
+            .replace(/<\/?.+?>/g, "") // 去除所有标签
+            .replace(/[\r\n]/g, "") // 去除所有换行符
+            .substring(0, introLen),// 提取文章前面小部分作为intro
         ifPage = $.isDate(date) ? false : true,/*是否是页面*/
         parsedCfg = JSON.parse(configs), // 解析当前配置
         cfgLinkPattern = parsedCfg['postLinkPattern'], // 获得文章永久链接模板
