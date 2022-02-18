@@ -1,4 +1,4 @@
-/*FrontMainJS ver5.0.0 - SomeBottle*/
+/*FrontMainJS ver5.0.3 - SomeBottle*/
 "use strict";
 const barnDir = 'barn/', // 博客核心文件相对目录，请不要修改
     mainHost = window.location.host;
@@ -797,6 +797,7 @@ if (!B) { /*PreventInitializingTwice*/
                 htmlPromise = $.ht(that.delTempTags(renders), 'contentcontainer');
                 renders = null; /*释放*/
             }
+            that.searchWd = ''; /*重置搜索词*/
             that.tpcheckStatus = false; /*模板检查拼接完毕*/
             /*PJAX监听刷新*/
             PJAX.autoprevent();
@@ -902,7 +903,6 @@ if (!B) { /*PreventInitializingTwice*/
                         let currentPage = parseInt(whichPage), pageBefore = currentPage - 1;
                         if (that.currentPageBefore !== pageBefore && that.realPage !== currentPage) {/*翻页了，这里判断realPage是为了防止more已经被用户触发了indexpagechecker再触发一遍，造成无用的资源浪费*/
                             console.log('Page change triggered by indexPageChecker <(￣︶￣)>');
-                            that.searchWd = ''; /*不在搜索模式,重置搜索词*/
                             that.currentPageBefore = pageBefore;
                             that.itemPage = maxRender * pageBefore * that.morePerPage; /*根据页码计算当前页(每按一次“more"按钮最多展示多少页) × (当前页码-1，也就是算当前页之前的项目) × (每页能按多少次"more"按钮) 20211020补充*/
                             that.itemPageFixer(); /*修复因忽略页面而造成的列表重复*/
