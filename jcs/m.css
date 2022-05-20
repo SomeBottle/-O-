@@ -406,7 +406,7 @@ body {
     outline: 0;
 }
 
-.adbtn {
+.newPostBtn {
     position: absolute;
     right: 0;
     border: 0;
@@ -425,7 +425,7 @@ body {
     display: none;
 }
 
-.adbtn:hover {
+.newPostBtn:hover {
     background-color: #2E64FE;
 }
 
