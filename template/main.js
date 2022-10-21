@@ -1,4 +1,4 @@
-/*FrontMainJS ver5.0.3 - SomeBottle*/
+/*FrontMainJS ver5.0.4 - SomeBottle*/
 "use strict";
 const barnDir = 'barn/', // 博客核心文件相对目录，请不要修改
     mainHost = window.location.host;
@@ -521,8 +521,7 @@ if (!B) { /*PreventInitializingTwice*/
         realPage: 1,
         searchWd: '',
         hashExist: false,
-        /*渲染状态，同时队列中只能有一次渲染20200805*/
-        itemPageFixer: function () {/*文章列表不显示页面，修复去除页面后对于文章列表的计算错误20211020*/
+        itemPageFixer: function () {  /*文章列表不显示页面，修复去除页面后对于文章列表的计算错误20211020*/
             let that = this,
                 mj = window.mainJson, /*get json*/
                 nowItemPage = that.itemPage;
@@ -531,7 +530,15 @@ if (!B) { /*PreventInitializingTwice*/
                 if (item) {
                     let pid = item[0], // 取出文章ID
                         currentPostObj = mj['postindex'][pid];
-                    if (currentPostObj['link']) that.itemPage += 1; // 如果是页面，已载入到的项目下标+1
+                    if (currentPostObj['link']) {
+                        that.itemPage += 1; // 如果是页面，已载入到的项目下标+1
+                        /*
+                            这里和more函数中的处理类似，页面不计入在内,that.itemPage+1，nowItemPage也要+1，往下多检查一个元素
+                            (其实上面就写着nowItemPage = that.itemPage，这两个变量理应是一起变化的)
+                            - SomeBottle 2022.10.21
+                        */
+                        nowItemPage++;
+                    }
                 }
             }
             /*
