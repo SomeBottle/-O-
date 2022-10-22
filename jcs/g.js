@@ -85,7 +85,7 @@ function gh(token) {
             'lastCommitSha': hasCommitSha
         };
         return (
-            hasCommitSha ? Promise.resolve(pushData) : $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/ref/heads/' + branch, 'get', 'token ' + accessToken)
+            hasCommitSha ? Promise.resolve(pushData) : $.ft('https://api.github.com/repos/' + githubUser + '/' + repo + '/git/ref/heads/' + branch + '?' + timestamp(), 'get', 'token ' + accessToken)
                 .then(resp => resp.json(), rej => {
                     notice('无法获得上一个CommitSha');
                     console.log('Failed to get the last commit sha:' + rej);

@@ -1,4 +1,4 @@
-/*FrontMainJS ver5.0.4 - SomeBottle*/
+/*FrontMainJS ver5.0.6 - SomeBottle*/
 "use strict";
 const barnDir = 'barn/', // 博客核心文件相对目录，请不要修改
     mainHost = window.location.host;
