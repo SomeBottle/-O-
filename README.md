@@ -60,7 +60,7 @@
 ## 文章封面📋  
    2019.8.10，老瓶<del>闲着蛋疼</del>加了个文章封面的支持.  
    
-   ![](https://wx4.sinaimg.cn/large/ed039e1fly1g5uy7t1446j20qo0k0t9o)  
+   ![bilityPic](https://user-images.githubusercontent.com/12976469/197320262-09058d82-c302-4aaa-a7bc-0c4b1dc40315.jpeg)  
    
    编辑文章时在无论哪个位置以注释的形式插入**一条**：
    ```html  
@@ -98,7 +98,7 @@
      
    * **模板渲染简单gif**.  
    
-     ![](https://wx4.sinaimg.cn/large/ed039e1fly1g5uh69qklvg20fa0b47rf)  
+     ![render](https://user-images.githubusercontent.com/12976469/197320265-58a3a8e7-7372-4336-b901-9f61e5273a82.gif)
      
    * **模板特殊占位**   
 
