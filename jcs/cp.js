@@ -1,4 +1,4 @@
-/*ControlPosts5.0.2 - SomeBottle202202*/
+/*ControlPosts 5.0.8 - SomeBottle202306*/
 "use strict";
 const mark = function (content) {
     return window.markdownit({ html: true, linkify: true })
@@ -398,15 +398,27 @@ function linkValid(link) {
 
 // Reference: https://www.runoob.com/rss/rss-tutorial.html
 function rssGenerator(parsedMain) { // rss.xml生成器
-    let selection = parsedMain['dateindex'].slice(0, 20), // rss只放20个条目
+    const RSS_ITEMS = 20; // rss最多只放20个条目
+    const TOTAL_ITEMS = parsedMain['dateindex'].length; // 总共的条目数
+    let lastItemIndex = Math.min(RSS_ITEMS, TOTAL_ITEMS); // 从最新的文章开始提取20个条目
+    let selection = [], // 筛选出的文章
         rssItems = '',
         parsedCfg = JSON.parse(configs);
-    selection.forEach(dArr => {
-        let pid = dArr[0],
-            currentPostObj = parsedMain['postindex'][pid],
-            link = currentPostObj['link'],
-            pattern = currentPostObj['permalink'] || 'post-{pid}', // 兼容老版本
-            pageLink = link ? link : useLinkPattern(pattern, pid),
+    // 从最新的文章开始提取20个条目
+    for (let i = 0; i < lastItemIndex; i++) {
+        let pid = parsedMain['dateindex'][i][0],
+            currentPostObj = parsedMain['postindex'][pid];
+        // 排除掉页面（有link属性的是页面）
+        if (!currentPostObj['link']) {
+            selection.push([currentPostObj, pid]);
+        } else if (lastItemIndex < TOTAL_ITEMS - 1) {
+            lastItemIndex++; // 由于排除了一个页面，所以要补上一个条目数（如果还有条目的话）
+        }
+    }
+    selection.forEach(post => {
+        let [currentPostObj, pid] = post; // 解构赋值
+        let pattern = currentPostObj['permalink'] || 'post-{pid}', // 兼容老版本
+            pageLink = useLinkPattern(pattern, pid),
             title = enHtml(Base64.decode(currentPostObj['title'])),
             desc = Base64.decode(currentPostObj['intro']),
             permalink = parsedCfg['siteUrl'] + pageLink + '.html', // 文章永久链接
