@@ -1,4 +1,4 @@
-/*ControlPosts 5.0.8 - SomeBottle202306*/
+/*ControlPosts 5.0.9 - SomeBottle20240406*/
 "use strict";
 const mark = function (content) {
     return window.markdownit({ html: true, linkify: true })

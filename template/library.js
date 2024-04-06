@@ -32,9 +32,12 @@ window.MathJax = {
     },
 };
 $.script('https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/3.2.0/es5/tex-mml-svg.min.js')
-B.callAfterRender(() => {
-    setTimeout(function () {
-        MathJax.typesetPromise();
-    }, 500);
+B.callAfterRender((pageType) => {
+    if (pageType === 'post.otp.html') {
+        // 仅在文章页面渲染数学公式
+        setTimeout(function () {
+            MathJax.typesetPromise();
+        }, 500);
+    }
 });
 */
