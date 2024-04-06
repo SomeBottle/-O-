@@ -261,8 +261,6 @@ if (!B) { /*PreventInitializingTwice*/
         }, rej => {
             console.log('LoadingPage Load Failed -> ' + rej);
         });
-    $.script(`${barnDir}library.js`); /*Include Library Once*/
-    $.script(`${barnDir}search.js`); /*Include Search.js Once*/
     window.tpHtmls = new Object();/*Prepare for the HTMLS variable.*/
     var B = { /*B Part*/
         morePerPage: 0,
@@ -813,20 +811,26 @@ if (!B) { /*PreventInitializingTwice*/
             that.navcheck(); /*进行导航栏检查*/
             window.dispatchEvent(PJAX.PJAXFinish); /*调用事件隐藏loading浮层20201229*/
             htmlPromise.then(res => {
-                let func = that.rendererCallBack;
-                if (typeof func == 'function') {
-                    /*执行callAfterRender设置的回调函数，传入当前的pageType*/
-                    func(pageType);
+                let funcs = that.rendererCallBacks;
+                if (funcs instanceof Array) {
+                    /*执行 callAfterRender 添加的所有回调函数，传入当前的pageType */
+                    funcs.forEach((func) => {
+                        if (typeof func == 'function') {
+                            func(pageType);
+                        }
+                    });
                 }
             }, rej => {
                 console.log(rej);
             });
             mj = tps = null;
         },
-        rendererCallBack: false, // renderer回调函数
-        callAfterRender: function (callBackFunc) { // 设置renderer回调函数
+        // 页面渲染完成后会执行这个列表中的所有函数
+        rendererCallBacks: [], // 渲染后回调函数列表 2024.4.6
+        callAfterRender: function (callBackFunc) {
+            // 添加回调函数到列表
             if (typeof callBackFunc == 'function') {
-                this.rendererCallBack = callBackFunc;
+                this.rendererCallBacks.push(callBackFunc);
             }
         },
         currentPostInfo: false, // 当前文章信息对象
@@ -1092,6 +1096,8 @@ if (!B) { /*PreventInitializingTwice*/
             j = dIndexes = listRender = null;
         }
     };
+    $.script(`${barnDir}library.js`); /*Include Library Once*/
+    $.script(`${barnDir}search.js`); /*Include Search.js Once*/
     window.addEventListener('pjaxstart', B.loadshow, false);
     window.addEventListener('pjaxfinish', B.loadhide, false);
 }

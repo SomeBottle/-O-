@@ -377,12 +377,32 @@ function readSave() {
 }
 
 function preview() {
+    // 载入 MathJax 脚本
+    const MATHJAX_SCRIPT = `
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+            },
+            svg: {
+                fontCache: 'global'
+            },
+        };
+    </script>
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/3.2.0/es5/tex-mml-svg.min.js"></script>
+    <script>
+        setTimeout(function () {
+            MathJax.typesetPromise();
+        }, 1000);
+    </script>
+    `;
     let content = SC('content').value,
         restored = scriptRestore(content),
         preWin = window.open(''),
         parsedCfg = JSON.parse(configs);
     preWin.opener = null;
-    preWin.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown-light.css' rel="stylesheet" /></head><body>${parsedCfg['beforePreview']}<div class='markdown-body'>${mark(restored)}</div></body>`);
+    preWin.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/github-markdown-css/5.1.0/github-markdown-light.css' rel="stylesheet" /></head><body>${parsedCfg['beforePreview']}<div class='markdown-body'>${mark(restored)}</div>${MATHJAX_SCRIPT}</body>`);
     preWin.document.close();
 }
 

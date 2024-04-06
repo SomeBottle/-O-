@@ -42,15 +42,16 @@
    * 当日期一栏填的是非**日期**时会**自动切换**为**创建页面**模式，日期一栏中填的内容将作为页面链接。
       **例如**：当你填写的是```20200407```，创建的是```post-<文章ID>.html```一类的文章页面；而当你填写的是```aboutme```，创建的页面是```aboutme.html```     
    
-   * 页面不可转为文章，反之亦然.  
+   * **页面不可转为文章**，反之亦然.  
    
-   * 发布文章时js会**自动被注释**，但是访问对应页面时还是会执行的 
+   * 发布文章时页面中的内联 js 会**自动被注释**，但是访问对应页面时还是会执行的 
    
 ## 一定要注意💡  
    
    * **不要不要不要修改模板的```index.html```**，本身这个模板也只是一个媒介，并不会被直接上传到博客仓库，在前台并不展现外观，另外若修改index.html需要修改后台部分的（所以还是不要瞎折腾啦=A=）  
    
    * **不要向```cloth.otp.html```的```<clothhead>```里面**添加```<script>```标签，不然**并不会**执行/引入，反之你可以在```<clothhead>```以外部分引入```<script>```.  
+      + 关于**外部脚本的引入**请看[函数自带变量供应💬](#函数自带变量供应)。  
    
 ## 关于搜索🔍  
    * 在文章列表页通过hash访问 ```#!搜索内容``` 可以进行搜索，需要注意的是，由于索引文件的限制，只支持根据**文章部分内容和标题，标签，日期**这类的搜索.  
@@ -94,7 +95,7 @@
      | generatehtmls | 主要是tags和archives模板对应的页面文件 |  
      
      模板文件名在部署到仓库后可以进行相应的修改，同时对于**博客所在仓库**中template.json也要有所修改.  
-     *PS：```loading.otp.html```在**template.json**是**无法配置**的，请不要修改文件名.*  
+     *PS：```loading.otp.html```在**template.json**中是**无法配置**的，请不要修改文件名.*  
      
    * **模板渲染简单gif**.  
    
@@ -105,7 +106,7 @@
      0. **除**```index.html```的**模板**都能使用```{[barndir]}```占位符，这个占位符会被替换为博客**核心文件**所在的相对目录。  
         默认核心文件存在```./barn/```下，```{[barndir]}```也就会被替换为```barn/```。  
      
-     1. index.html **媒介页面(不要修改，不影响外观)**  
+     1. index.html **媒介页面 ( ⚠ 不要修改，不影响外观 )**  
          ```html
          <!--description-->
          <meta name="description" content="{[description]}" />   Description 
@@ -218,6 +219,21 @@
      
 ## 函数/自带变量供应💬  
 
+   * 外部 JavaScript 文件载入
+
+      (**常用于模板中加载外部脚本**，比如可以用在 [`library.js`](template/library.js) 中)  
+
+      ```javascript
+      // 这里以载入 Markdown-It 库为示例
+      $.script("https://cdn.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js");
+      ```  
+
+      `$.script` 对应脚本的引入在页面渲染时进行，**保证**在**内联脚本**（直接写在页面中 `<script>...</script>` 之间的脚本）执行之前全部载入。
+      
+      + **注意 1**: 模板和页面中通过 `src` 属性（即以 `<script src="..."></script>` 的形式）引入的脚本会通过 `$.script` 进行载入。  
+      + **注意 2**: 用 `$.script` 重复引入多次**相同 URL** 的外部脚本时，只有**首次引入**时会载入此脚本一次。  
+      + **注意 3**: 博客前端 `library.js` 和 `search.js` 脚本都是通过 `$.script` 载入的。
+
    * 当前文章信息  
 
       每次**文章或页面**载入完毕后，程序会把文章信息储存在一个对象中：  
@@ -259,24 +275,25 @@
    * 页面渲染后回调  
 
       ```javascript
-      B.callAfterRender(callBackFunction);
+      B.callAfterRender(callBackFunction1);
+      B.callAfterRender(callBackFunction2);
       ```
 
-      通过这个方法，你可以注册一个回调函数```callBackFunction```。每当页面渲染完毕（以及所有JavaScript脚本执行完毕），程序会调用这个回调函数。  
+      通过这个方法，你可以注册**一个或多个**回调函数```callBackFunction```。每当页面渲染完毕（以及所有JavaScript脚本执行完毕），程序会调用**所有的**回调函数。  
 
-      传入回调函数的第一个参数为**当前页面的模板名**。  
+      + 传入回调函数的第一个参数为**当前页面的模板名**。  
 
-      例如：  
+      + 例如：  
 
-      ```javascript
-      B.callAfterRender((pageType)=>{
-         console.log(pageType);
-      })
-      ```
+         ```javascript
+         B.callAfterRender((pageType)=>{
+            console.log(pageType);
+         })
+         ```
 
-      当我访问**文章列表页**（博客首页）时，等页面渲染完，控制台会输出：```postlist.otp.html```。  
+         当我访问**文章列表页**（博客首页）时，等页面渲染完，控制台会输出：```postlist.otp.html```。  
 
-      > 你可以把这个方法写到**模板文件**中！
+      > ⚠ 请不要把此方法写入到**内联脚本**中，否则可能导致相同回调函数的重复注册。但是你可以写到通过 `$.script` 引入的外部脚本中，因为 `$.script` 保证这些脚本只会被载入一次。  
 
    * 导航栏相关  
       ```javascript
