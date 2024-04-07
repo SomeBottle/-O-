@@ -240,7 +240,7 @@
       + **注意 1**: 模板和页面中通过 `src` 属性（即以 `<script src="..."></script>` 的形式）引入的脚本会通过 `$.script` 进行载入。  
       + **注意 2**: 用 `$.script` 重复引入多次**相同 URL** 的外部脚本时，只有**首次引入**时会载入此脚本一次。  
       + **注意 3**: 博客前端 `library.js` 和 `search.js` 脚本都是通过 `$.script` 载入的。  
-      + **使用例**：可以结合 `MathJax` 来进行文章页面的数学公式渲染，详情见 [`template\library.js`](template/library.js)。  
+      + **使用例**：可以结合 `MathJax` 来进行文章页面的数学公式渲染，详情见 [`template/library.js`](template/library.js)。  
 
    * 当前文章信息  
 
