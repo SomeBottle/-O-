@@ -45,6 +45,8 @@
    * **页面不可转为文章**，反之亦然.  
    
    * 发布文章时页面中的内联 js 会**自动被注释**，但是访问对应页面时还是会执行的 
+
+   * 其他使用提示请见 [wiki - 管理|后台的使用](https://github.com/SomeBottle/-O-/wiki/%E7%AE%A1%E7%90%86%7C%E5%90%8E%E5%8F%B0%E7%9A%84%E4%BD%BF%E7%94%A8)  
    
 ## 一定要注意💡  
    
@@ -160,7 +162,7 @@
          {(BackBtnEnd)}
          ```
      
-     4. post.otp.html **文章/页面单页**  **-->[具体看wiki](https://github.com/SomeBottle/-O-/wiki/%E6%A8%A1%E6%9D%BF%7CFooter%E5%92%8CPostEnd)**
+     4. post.otp.html **文章/页面单页** 
          ```html
          {(PostTemplate)}  模板开头
          {[posttitle]}  文章标题  
@@ -181,11 +183,16 @@
          <ifcover><img src='{[postcover]}'></img></ifcover>  封面标签，以及封面占位符  
          ```
 
-     5. main.otp.html **酥脆外皮**  **-->[具体看wiki](https://github.com/SomeBottle/-O-/wiki/%E6%A8%A1%E6%9D%BF%7CFooter%E5%92%8CPostEnd)**  
+         `{(:PostEnd)}` 和 `{(Footer:)}` 的说明[具体看wiki](https://github.com/SomeBottle/-O-/wiki/%E6%A8%A1%E6%9D%BF%7CFooter%E5%92%8CPostEnd)。  
+
+     5. main.otp.html **酥脆外皮**  
+
          ```html
          {[contents]}  用于渲染页面内容  
          {(Footer:)}  (需要保留) 指定页脚开始的地方  
          ```
+
+         `{(:PostEnd)}` 和 `{(Footer:)}` 的说明[具体看wiki](https://github.com/SomeBottle/-O-/wiki/%E6%A8%A1%E6%9D%BF%7CFooter%E5%92%8CPostEnd)。  
 
      6. cloth.otp.html **外衣**  
          ```html
@@ -203,7 +210,7 @@
      
         [**具体介绍看wiki**](https://github.com/SomeBottle/-O-/wiki/%E6%A8%A1%E6%9D%BF%7Ctags.otp.html)  
 
-     9. comment.otp.html **评论框页**  
+     9.  comment.otp.html **评论框页**  
         ```html
         {[pid]}  文章唯一id  
         ``` 
@@ -232,7 +239,8 @@
       
       + **注意 1**: 模板和页面中通过 `src` 属性（即以 `<script src="..."></script>` 的形式）引入的脚本会通过 `$.script` 进行载入。  
       + **注意 2**: 用 `$.script` 重复引入多次**相同 URL** 的外部脚本时，只有**首次引入**时会载入此脚本一次。  
-      + **注意 3**: 博客前端 `library.js` 和 `search.js` 脚本都是通过 `$.script` 载入的。
+      + **注意 3**: 博客前端 `library.js` 和 `search.js` 脚本都是通过 `$.script` 载入的。  
+      + **使用例**：可以结合 `MathJax` 来进行文章页面的数学公式渲染，详情见 [`template\library.js`](template/library.js)。  
 
    * 当前文章信息  
 
