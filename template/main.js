@@ -1,4 +1,4 @@
-/*FrontMainJS ver5.0.6 - SomeBottle*/
+/*FrontMainJS ver 5.0.10 - SomeBottle*/
 "use strict";
 const barnDir = 'barn/', // 博客核心文件相对目录，请不要修改
     mainHost = window.location.host;
@@ -44,11 +44,12 @@ if (typeof ($) !== 'object') {
         }
     }
     $.script = function (url, element = false) { /*外部js加载器，页面已经加载的不会重复加载*/
+        // element 如果为一个 DOM 元素，会把这个元素所有的属性都移动到 script 插入的 DOM 元素中
         let script = document.createElement("script"),
             exist = $.loadedScripts.includes(url),
             originalAttrs = element ? $.attrs(element) : {};/*20210722原本标签所带的属性要补上*/
         if (!exist) {
-            $.loadingJS += 1;/*有外部js正在载入*/
+            $.loadingJS += 1; /*标记有外部 js 正在载入*/
             $.loadedScripts.push(url);
             script.type = "text/javascript";
             script.src = url;
@@ -56,11 +57,20 @@ if (typeof ($) !== 'object') {
                 script.setAttribute(i, originalAttrs[i]);/*把原script的属性给补上*/
             }
             document.body.appendChild(script);
-            let scriptLoaded = function () {
-                $.loadingJS -= 1;/*这个外部js载入完毕*/
+            const scriptLoaded = function () {
+                $.loadingJS -= 1; /*这个外部js载入完毕*/
                 this.removeEventListener("load", scriptLoaded, false);
+                this.removeEventListener("error", scriptError, false);
             }.bind(script);
+            const scriptError = function () {
+                // 脚本载入失败，弹窗提示 20241028
+                alert(`Failed to load script: ${this.src}\n\nPlease refresh the page.\n请刷新页面。`);
+                this.removeEventListener("load", scriptLoaded, false);
+                this.removeEventListener("error", scriptError, false);
+            }.bind(script);
+            // 必须要载入时，计入待载入的脚本数
             script.addEventListener("load", scriptLoaded, false);
+            script.addEventListener("error", scriptError, false);
         }
         script = null;
     }
