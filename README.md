@@ -232,7 +232,7 @@
 
       ```javascript
       // 这里以载入 Markdown-It 库为示例
-      $.script("https://cdn.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js");
+      $.script("https://fastly.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js");
       ```  
 
       `$.script` 对应脚本的引入在页面渲染时进行，**保证**在**内联脚本**（直接写在页面中 `<script>...</script>` 之间的脚本）执行之前全部载入。

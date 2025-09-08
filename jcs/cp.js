@@ -390,7 +390,7 @@ function preview() {
             },
         };
     </script>
-    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/mathjax/3.2.0/es5/tex-mml-svg.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-svg.min.js"></script>
     <script>
         setTimeout(function () {
             MathJax.typesetPromise();
@@ -402,7 +402,7 @@ function preview() {
         preWin = window.open(''),
         parsedCfg = JSON.parse(configs);
     preWin.opener = null;
-    preWin.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/github-markdown-css/5.1.0/github-markdown-light.css' rel="stylesheet" /></head><body>${parsedCfg['beforePreview']}<div class='markdown-body'>${mark(restored)}</div>${MATHJAX_SCRIPT}</body>`);
+    preWin.document.write(`<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"><link href='https://fastly.jsdelivr.net/npm/github-markdown-css@5.1.0/github-markdown-light.css' rel="stylesheet" /></head><body>${parsedCfg['beforePreview']}<div class='markdown-body'>${mark(restored)}</div>${MATHJAX_SCRIPT}</body>`);
     preWin.document.close();
 }
 
